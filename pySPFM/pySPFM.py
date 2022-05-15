@@ -117,20 +117,32 @@ def pySPFM(
     hrf_norm = hrf_obj.generate_hrf().X_hrf_norm
 
     # Run LARS if bic or aic criteria given.
-    #  If another criteria is given, then solve with FISTA.
+    # If another criteria is given, then solve with FISTA.
     lars_criteria = ["bic", "aic"]
     fista_criteria = ["mad", "mad_update", "ut", "lut", "factor", "pcg", "eigval"]
 
+    # Run for loop only once for just temporal regularization
     if spatial_weight == 0:
         max_iter = 1
+    else:
+        # Initialize variables for spatial regularization
+        estimates_temporal = np.empty((nscans, nvoxels))
+        estimates_spatial = np.empty((nscans, nvoxels))
+        final_estimates = np.empty((nscans, nvoxels))
 
+    # Iterate between temporal and spatial regularizations
     for iter_idx in range(max_iter):
+        if spatial_weight > 0:
+            data_temp_reg = final_estimates - estimates_temporal + data_masked
+        else:
+            data_temp_reg = data_masked
+
         if criteria in lars_criteria:
             nlambdas = max_iter_factor * nscans
             # Solve LARS for each voxel with parallelization
             lars_estimates = Parallel(n_jobs=n_jobs, backend="multiprocessing")(
                 delayed(solve_regularization_path)(
-                    hrf_norm, data_masked[:, vox_idx], nlambdas, criteria
+                    hrf_norm, data_temp_reg[:, vox_idx], nlambdas, criteria
                 )
                 for vox_idx in tqdm(range(nvoxels))
             )
@@ -143,7 +155,7 @@ def pySPFM(
             fista_estimates = Parallel(n_jobs=n_jobs, backend="multiprocessing")(
                 delayed(fista)(
                     hrf_norm,
-                    data_masked[:, vox_idx],
+                    data_temp_reg[:, vox_idx],
                     criteria,
                     max_iter_fista,
                     min_iter,
@@ -175,18 +187,20 @@ def pySPFM(
         # Perform spatial regularization if a weight is given
         if spatial_weight > 0:
             # Update temporal estimates
-            xT = xT + (estimates - final_estimates)
+            estimates_temporal = estimates_temporal + (estimates - final_estimates)
 
             # Calculates for the whole volume
-            spatial_estimates = spatial_tikhonov(
-                final_estimates, final_estimates - xS + data_masked
+            estimates_tikhonov = spatial_tikhonov(
+                final_estimates, final_estimates - estimates_spatial + data_masked
             )
 
             # Update spatial estimates
-            xS = xS + (spatial_estimates - final_estimates)
+            estimates_spatial = estimates_spatial + (estimates_tikhonov - final_estimates)
 
             # Calculate final estimates
-            final_estimates = xT * (1 - spatial_weight) + spatial_weight * xS
+            final_estimates = (
+                estimates_temporal * (1 - spatial_weight) + spatial_weight * estimates_spatial
+            )
         else:
             final_estimates = estimates
 
