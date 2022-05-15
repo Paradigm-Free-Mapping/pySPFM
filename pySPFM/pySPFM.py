@@ -39,6 +39,9 @@ def pySPFM(
     min_iter=50,
     n_jobs=-1,
     spatial_weight=0,
+    spatial_lambda=1,
+    spatial_dim=3,
+    mu=0.01,
     tolerance=1e-6,
     group=0.2,
     pcg=0.8,
@@ -191,7 +194,13 @@ def pySPFM(
 
             # Calculates for the whole volume
             estimates_tikhonov = spatial_tikhonov(
-                final_estimates, final_estimates - estimates_spatial + data_masked
+                final_estimates,
+                final_estimates - estimates_spatial + data_masked,
+                mask_img,
+                max_iter_spatial,
+                spatial_dim,
+                spatial_lambda,
+                mu,
             )
 
             # Update spatial estimates

@@ -3,7 +3,37 @@ from nilearn.masking import apply_mask, unmask
 
 
 def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
+    """Spatial regularization technique based on the Tikhonov regularization as in Total Activation.
 
+    This function computes the tikhonov regularization
+
+    F(x) = min ||y - x ||^2 + lambda * ||Delta{x}||^2
+
+    Delta is the laplacian operator delta[n] = [1 -2 1]; so symmetric, in
+    matrix form Delta^T = Delta.
+
+    Parameters
+    ----------
+    estimates : numpy.array
+        Estimates (output of temporal regularization).
+    data : numpy.array
+        Observations.
+    mask : Nibabel object
+        Mask image to unmask and mask estimates (2D to 4D and back).
+    niter : int
+        Number of iterations to perform spatial regularization.
+    dim : int
+        Slice-wise regularization with dim = 2; whole-volume regularization with dim=3. Default = 3.
+    lambda_ : float
+        Spatial regularization parameter. Default = 1.
+    mu : float
+        Step size (small, ~0.01)
+
+    Returns
+    -------
+    final_estimates: np.array
+        Estimates of activity-inducing or innovation signal after spatial regularization.
+    """
     # Transform data from 2D into 4D
     estimates_vol = unmask(estimates, mask)
     data_vol = unmask(data, mask)
