@@ -1,12 +1,13 @@
 {
     "creators": [
         {
-            "name": "The pySPFM Community"
+            "name": "Eneko Uruñuela"
         }
     ],
     "keywords": [
         "neuroimaging",
-        "fMRI"
+        "fMRI",
+        "deconvolution"
     ],
     "license": "LGPL-2.1",
     "upload_type": "software"
