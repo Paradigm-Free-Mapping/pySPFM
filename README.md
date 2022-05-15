@@ -1,6 +1,6 @@
 # pySPFM
 
-A template repo to use for new repositories.
+The Python version of AFNI's [3dPFM]() and [3dMEPFM]() with some extra features like the addition of a spatial regularization similar to the one used by [Total Activation]().
 
 [![Latest Version](https://img.shields.io/pypi/v/pySPFM.svg)](https://pypi.python.org/pypi/pySPFM/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pySPFM.svg)](https://pypi.python.org/pypi/pySPFM/)
@@ -10,64 +10,10 @@ A template repo to use for new repositories.
 [![Documentation Status](https://readthedocs.org/projects/pySPFM/badge/?version=latest)](http://pySPFM.readthedocs.io/en/latest/?badge=latest)
 [![Codecov](https://codecov.io/gh/pySPFM/pySPFM/branch/main/graph/badge.svg)](https://codecov.io/gh/pySPFM/pySPFM)
 
-## Instructions
+## References
 
-1. Replace `pySPFM` with the new repo name across the whole repository.
-1. Enable the GitHub repository on Zenodo.
-1. Set up the GitHub repository on CircleCI.
-1. Set up the GitHub repository on ReadTheDocs.
-1. Make the first release on GitHub.
-   - The PyPi deployment Action will fail.
-1. Deploy to PyPi (instructions below based on [this page](https://realpython.com/pypi-publish-python-package/#publishing-to-pypi)):
-   1. `pip install twine`
-   1. `python setup.py sdist bdist_wheel`
-   1. Upload to TestPyPi:
-      1. `twine upload --repository-url https://test.pypi.org/legacy/ dist/*`
-      1. Enter TestPyPi username
-      1. Enter TestPyPi password
-   1. Upload to PyPi (if TestPyPi worked):
-      1. `twine upload dist/*`
-      1. Enter PyPi username
-      1. Enter PyPi password
-   1. Future GitHub releases should now deploy to PyPi via the Action without issue.
-1. Update the Zenodo badge now that there's a real release.
-   - You must do this _after_ deploying to PyPi because any new commits
-     after the first release will change the versioneer-managed version string.
-1. Add all important CI steps to the branch protection rules for the `main` branch.
-1. Add Integrations for the following:
-   - AllContributors
-   - Welcome
-   - CodeCov
-   - circleci-artifacts-redirector
-   - Release Drafter? Not sure if the Action can suitably replace the Integration.
-
-## Information about this configuration
-
-### Continuous integration via CircleCI
-
-The default configuration uses CircleCI and make to manage testing.
-After tests are run, code coverage information is pushed to CodeCov.
-CircleCI will also build the documentation as part of CI, and an artifact redirector
-(`circleci-artifacts-redirector`) is necessary to view the rendered documentation from each PR easily.
-
-### Versioning with versioneer
-
-Versioneer is used to automatically track and update version strings.
-
-### Linting with flake8, black, and isort
-
-flake8, black, and isort are used to manage code style.
-
-### Reference management with duecredit
-
-duecredit is used to build reference lists for the codebase.
-duecredit is included as a required dependency.
-
-### Documentation with Sphinx and ReadTheDocs
-
-The package documentation is built with Sphinx and we assume that the documentation will be hosted by ReadTheDocs.
-
-### Deployment to PyPi
-
-The package is designed to be pip installable and hosted on PyPi.
-New releases are pushed to PyPi automatically via a GitHub Action.
+- Caballero-Gaudes, C., Moia, S., Panwar, P., Bandettini, P. A., & Gonzalez-Castillo, J. (2019). A deconvolution algorithm for multi-echo functional MRI: Multi-echo Sparse Paradigm Free Mapping. NeuroImage, 202, 116081–116081. https://doi.org/10.1016/j.neuroimage.2019.116081
+- Caballero Gaudes, C., Petridou, N., Francis, S. T., Dryden, I. L., & Gowland, P. A. (2013). Paradigm free mapping with sparse regression automatically detects single-trial functional magnetic resonance imaging blood oxygenation level dependent responses. Human Brain Mapping. https://doi.org/10.1002/hbm.21452
+- Gaudes, C. C., Ville, D. V. D., Petridou, N., Lazeyras, F., & Gowland, P. (2011). Paradigm-free mapping with morphological component analysis: Getting most out of fMRI data. Wavelets and Sparsity XIV, 8138, 81381K. https://doi.org/10.1117/12.893920
+- Karahanoǧlu, F. I., Caballero-Gaudes, C., Lazeyras, F., & Van De Ville, D. (2013). Total activation: FMRI deconvolution through spatio-temporal regularization. NeuroImage. https://doi.org/10.1016/j.neuroimage.2013.01.067
+- Uruñuela, E., Bolton, T. A. W., Van De Ville, D., & Caballero-Gaudes, C. (2021). Hemodynamic Deconvolution Demystified: Sparsity-Driven Regularization at Work. ArXiv:2107.12026 [q-Bio]. http://arxiv.org/abs/2107.12026
