@@ -8,7 +8,7 @@ newPRWelcomeComment: >
 
   We invite you to list yourself as a *template-package* contributor, so if your name
   is not already mentioned, please modify the
-  [``.zenodo.json``](https://github.com/ME-ICA/template-package/blob/main/.zenodo.json).
+  [``.zenodo.json``](https://github.com/pySPFM/template-package/blob/main/.zenodo.json).
 
   Of course, if you want to opt out this time there is no
   problem at all with adding your name later.

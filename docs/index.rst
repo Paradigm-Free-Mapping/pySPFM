@@ -18,8 +18,8 @@ The ``template-package`` package is a Python package for running template-packag
    :target: https://zenodo.org/badge/latestdoi/110845855
    :alt: DOI
 
-.. image:: https://circleci.com/gh/ME-ICA/template-package.svg?style=shield
-   :target: https://circleci.com/gh/ME-ICA/template-package
+.. image:: https://circleci.com/gh/pySPFM/template-package.svg?style=shield
+   :target: https://circleci.com/gh/pySPFM/template-package
    :alt: CircleCI
 
 .. image:: http://img.shields.io/badge/License-LGPL%202.1-blue.svg
@@ -30,8 +30,8 @@ The ``template-package`` package is a Python package for running template-packag
    :target: http://template-package.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://codecov.io/gh/me-ica/template-package/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/me-ica/template-package
+.. image:: https://codecov.io/gh/pySPFM/template-package/branch/main/graph/badge.svg
+   :target: https://codecov.io/gh/pySPFM/template-package
    :alt: Codecov
 
 

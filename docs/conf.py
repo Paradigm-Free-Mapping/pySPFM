@@ -73,8 +73,8 @@ master_doc = "index"
 # General information about the project.
 
 project = "template-package"
-copyright = "2021-" + datetime.today().strftime("%Y") + ", ME-ICA Developers"
-author = "ME-ICA Developers"
+copyright = "2021-" + datetime.today().strftime("%Y") + ", pySPFM Developers"
+author = "pySPFM Developers"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -164,7 +164,7 @@ htmlhelp_basename = "template-packagedoc"
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
     "template-package",
-    "https://github.com/me-ica/template-package/blob/{revision}/{package}/{path}#L{lineno}",
+    "https://github.com/pySPFM/template-package/blob/{revision}/{package}/{path}#L{lineno}",
 )
 
 # Example configuration for intersphinx: refer to the Python standard library.
