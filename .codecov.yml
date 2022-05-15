@@ -15,7 +15,7 @@ coverage:
         threshold: 0
 
 ignore:
-  - 'template-package/tests/'
-  - 'template-package/due.py'
-  - 'template-package/_version.py'
-  - 'template-package/info.py'
+  - "pySPFM/tests/"
+  - "pySPFM/due.py"
+  - "pySPFM/_version.py"
+  - "pySPFM/info.py"

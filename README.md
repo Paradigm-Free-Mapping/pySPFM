@@ -1,18 +1,18 @@
-# template-package
+# pySPFM
 
 A template repo to use for new repositories.
 
-[![Latest Version](https://img.shields.io/pypi/v/template-package.svg)](https://pypi.python.org/pypi/template-package/)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/template-package.svg)](https://pypi.python.org/pypi/template-package/)
+[![Latest Version](https://img.shields.io/pypi/v/pySPFM.svg)](https://pypi.python.org/pypi/pySPFM/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pySPFM.svg)](https://pypi.python.org/pypi/pySPFM/)
 [![DOI](https://zenodo.org/badge/111111.svg)](https://zenodo.org/badge/latestdoi/111111)
 [![License](https://img.shields.io/badge/License-LGPL%202.1-blue.svg)](https://opensource.org/licenses/LGPL-2.1)
-[![CircleCI](https://circleci.com/gh/pySPFM/template-package.svg?style=shield)](https://circleci.com/gh/pySPFM/template-package)
-[![Documentation Status](https://readthedocs.org/projects/template-package/badge/?version=latest)](http://template-package.readthedocs.io/en/latest/?badge=latest)
-[![Codecov](https://codecov.io/gh/pySPFM/template-package/branch/main/graph/badge.svg)](https://codecov.io/gh/pySPFM/template-package)
+[![CircleCI](https://circleci.com/gh/pySPFM/pySPFM.svg?style=shield)](https://circleci.com/gh/pySPFM/pySPFM)
+[![Documentation Status](https://readthedocs.org/projects/pySPFM/badge/?version=latest)](http://pySPFM.readthedocs.io/en/latest/?badge=latest)
+[![Codecov](https://codecov.io/gh/pySPFM/pySPFM/branch/main/graph/badge.svg)](https://codecov.io/gh/pySPFM/pySPFM)
 
 ## Instructions
 
-1. Replace `template-package` with the new repo name across the whole repository.
+1. Replace `pySPFM` with the new repo name across the whole repository.
 1. Enable the GitHub repository on Zenodo.
 1. Set up the GitHub repository on CircleCI.
 1. Set up the GitHub repository on ReadTheDocs.

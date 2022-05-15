@@ -6,9 +6,8 @@ version: 2.1
 orbs:
   codecov: codecov/codecov@1.0.5
 jobs:
-
   py36_unittest:
-    working_directory: /tmp/src/template-package
+    working_directory: /tmp/src/pySPFM
     docker:
       - image: continuumio/miniconda3
     steps:
@@ -16,10 +15,10 @@ jobs:
       - persist_to_workspace:
           root: /tmp
           paths:
-              - src/template-package
-      - run:  # will overwrite template-package installation each time
+            - src/pySPFM
+      - run: # will overwrite pySPFM installation each time
           name: Generate environment
-          command:  |
+          command: |
             if [[ -e /opt/conda/envs/py36_env ]]; then
                 echo "Restoring environment from cache"
                 source activate py36_env
@@ -31,14 +30,14 @@ jobs:
             python setup.py install --user
       - run:
           name: Run tests
-          command:  |
+          command: |
             apt-get update
             apt-get install -yqq make
             source activate py36_env
             make unittest
 
   py37_unittest:
-    working_directory: /tmp/src/template-package
+    working_directory: /tmp/src/pySPFM
     docker:
       - image: continuumio/miniconda3
     steps:
@@ -46,10 +45,10 @@ jobs:
       - persist_to_workspace:
           root: /tmp
           paths:
-              - src/template-package
-      - run:  # will overwrite template-package installation each time
+            - src/pySPFM
+      - run: # will overwrite pySPFM installation each time
           name: Generate environment
-          command:  |
+          command: |
             if [[ -e /opt/conda/envs/py37_env ]]; then
                 echo "Restoring environment from cache"
                 source activate py37_env
@@ -61,14 +60,14 @@ jobs:
             python setup.py install --user
       - run:
           name: Run tests
-          command:  |
+          command: |
             apt-get update
             apt-get install -yqq make
             source activate py37_env
             make unittest
 
   py38_unittest:
-    working_directory: /tmp/src/template-package
+    working_directory: /tmp/src/pySPFM
     docker:
       - image: continuumio/miniconda3
     steps:
@@ -76,10 +75,10 @@ jobs:
       - persist_to_workspace:
           root: /tmp
           paths:
-              - src/template-package
-      - run:  # will overwrite template-package installation each time
+            - src/pySPFM
+      - run: # will overwrite pySPFM installation each time
           name: Generate environment
-          command:  |
+          command: |
             if [[ -e /opt/conda/envs/py38_env ]]; then
                 echo "Restoring environment from cache"
                 source activate py38_env
@@ -92,14 +91,14 @@ jobs:
             python setup.py install --user
       - run:
           name: Run tests
-          command:  |
+          command: |
             apt-get update
             apt-get install -yqq make
             source activate py38_env
             make unittest
 
   py39_env:
-    working_directory: /tmp/src/template-package
+    working_directory: /tmp/src/pySPFM
     docker:
       - image: continuumio/miniconda3
     steps:
@@ -107,12 +106,12 @@ jobs:
       - persist_to_workspace:
           root: /tmp
           paths:
-              - src/template-package
-      - restore_cache:  # ensure this step occurs *before* installing dependencies
-          key: deps1-{{ checksum "template-package/setup.cfg" }}-{{ checksum "setup.py" }}
-      - run:  # will overwrite template-package installation each time
+            - src/pySPFM
+      - restore_cache: # ensure this step occurs *before* installing dependencies
+          key: deps1-{{ checksum "pySPFM/setup.cfg" }}-{{ checksum "setup.py" }}
+      - run: # will overwrite pySPFM installation each time
           name: Generate environment
-          command:  |
+          command: |
             if [[ -e /opt/conda/envs/py39_env ]]; then
                 echo "Restoring environment from cache"
                 source activate py39_env
@@ -122,40 +121,40 @@ jobs:
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
-      - save_cache:  # environment cache tied to requirements
-          key: deps1-{{ checksum "template-package/setup.cfg" }}-{{ checksum "setup.py" }}
+      - save_cache: # environment cache tied to requirements
+          key: deps1-{{ checksum "pySPFM/setup.cfg" }}-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py39_env"
 
   py39_unittest_and_coverage:
-    working_directory: /tmp/src/template-package
+    working_directory: /tmp/src/pySPFM
     docker:
       - image: continuumio/miniconda3
     steps:
-      - attach_workspace:  # get template-package
+      - attach_workspace: # get pySPFM
           at: /tmp
-      - restore_cache:  # load environment
-          key: deps1-{{ checksum "template-package/setup.cfg" }}-{{ checksum "setup.py" }}
+      - restore_cache: # load environment
+          key: deps1-{{ checksum "pySPFM/setup.cfg" }}-{{ checksum "setup.py" }}
       - run:
           name: Run tests and compile coverage
-          command:  |
+          command: |
             apt-get update
             apt-get install -yqq make
             apt-get install -yqq curl
             source activate py39_env
             make unittest
       - codecov/upload:
-          file: /tmp/src/template-package/coverage.xml
+          file: /tmp/src/pySPFM/coverage.xml
 
   build_docs:
-    working_directory: /tmp/src/template-package
+    working_directory: /tmp/src/pySPFM
     docker:
       - image: continuumio/miniconda3
     steps:
-      - attach_workspace:  # get template-package
+      - attach_workspace: # get pySPFM
           at: /tmp
-      - restore_cache:  # load environment
-          key: deps1-{{ checksum "template-package/setup.cfg" }}-{{ checksum "setup.py" }}
+      - restore_cache: # load environment
+          key: deps1-{{ checksum "pySPFM/setup.cfg" }}-{{ checksum "setup.py" }}
       - run:
           name: Build documentation
           command: |
@@ -165,22 +164,22 @@ jobs:
             make -C docs html
           no_output_timeout: 30m
       - store_artifacts:
-          path: /tmp/src/template-package/docs/_build/html
+          path: /tmp/src/pySPFM/docs/_build/html
 
   style_check:
-    working_directory: /tmp/src/template-package
+    working_directory: /tmp/src/pySPFM
     docker:
       - image: continuumio/miniconda3
     steps:
-      - attach_workspace:  # get template-package
+      - attach_workspace: # get pySPFM
           at: /tmp
-      - restore_cache:  # load environment
-          key: deps1-{{ checksum "template-package/setup.cfg" }}-{{ checksum "setup.py" }}
+      - restore_cache: # load environment
+          key: deps1-{{ checksum "pySPFM/setup.cfg" }}-{{ checksum "setup.py" }}
       - run:
           name: Linting
-          command:  |
+          command: |
             source activate py39_env
-            flake8 /tmp/src/template-package/template-package
+            flake8 /tmp/src/pySPFM/pySPFM
       - store_artifacts:
           path: /tmp/data/lint
 

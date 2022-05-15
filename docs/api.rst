@@ -1,6 +1,6 @@
 .. _api_ref:
 
-.. currentmodule:: template-package
+.. currentmodule:: pySPFM
 
 ###
 API
@@ -10,21 +10,21 @@ API
 .. _api_module_ref:
 
 **************************************************
-:mod:`template-package.module`: Module description
+:mod:`pySPFM.module`: Module description
 **************************************************
 
-.. automodule:: template-package.module
+.. automodule:: pySPFM.module
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: template-package.module
+.. currentmodule:: pySPFM.module
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
-   template-package.module.Class
+   pySPFM.module.Class
 
    :template: function.rst
 
-   template-package.module.function
+   pySPFM.module.function
