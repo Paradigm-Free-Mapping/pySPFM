@@ -1,0 +1,203 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
+version: 2.1
+orbs:
+  codecov: codecov/codecov@1.0.5
+jobs:
+
+  py36_unittest:
+    working_directory: /tmp/src/template-package
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/template-package
+      - run:  # will overwrite template-package installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py36_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py36_env
+            else
+                conda create -n py36_env python=3.6 numpy -yq
+                source activate py36_env
+                pip install -e .[tests]
+            fi
+            python setup.py install --user
+      - run:
+          name: Run tests
+          command:  |
+            apt-get update
+            apt-get install -yqq make
+            source activate py36_env
+            make unittest
+
+  py37_unittest:
+    working_directory: /tmp/src/template-package
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/template-package
+      - run:  # will overwrite template-package installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py37_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py37_env
+            else
+                conda create -n py37_env python=3.7 numpy -yq
+                source activate py37_env
+                pip install -e .[tests]
+            fi
+            python setup.py install --user
+      - run:
+          name: Run tests
+          command:  |
+            apt-get update
+            apt-get install -yqq make
+            source activate py37_env
+            make unittest
+
+  py38_unittest:
+    working_directory: /tmp/src/template-package
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/template-package
+      - run:  # will overwrite template-package installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py38_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py38_env
+            else
+                conda create -n py38_env python=3.8 numpy -yq
+                source activate py38_env
+                pip install pip -U
+                pip install -e .[tests]
+            fi
+            python setup.py install --user
+      - run:
+          name: Run tests
+          command:  |
+            apt-get update
+            apt-get install -yqq make
+            source activate py38_env
+            make unittest
+
+  py39_env:
+    working_directory: /tmp/src/template-package
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+              - src/template-package
+      - restore_cache:  # ensure this step occurs *before* installing dependencies
+          key: deps1-{{ checksum "template-package/setup.cfg" }}-{{ checksum "setup.py" }}
+      - run:  # will overwrite template-package installation each time
+          name: Generate environment
+          command:  |
+            if [[ -e /opt/conda/envs/py39_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py39_env
+            else
+                conda create -n py39_env python=3.9 numpy -yq
+                source activate py39_env
+                pip install -e .[tests,doc]
+            fi
+            python setup.py install --user
+      - save_cache:  # environment cache tied to requirements
+          key: deps1-{{ checksum "template-package/setup.cfg" }}-{{ checksum "setup.py" }}
+          paths:
+            - "/opt/conda/envs/py39_env"
+
+  py39_unittest_and_coverage:
+    working_directory: /tmp/src/template-package
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - attach_workspace:  # get template-package
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps1-{{ checksum "template-package/setup.cfg" }}-{{ checksum "setup.py" }}
+      - run:
+          name: Run tests and compile coverage
+          command:  |
+            apt-get update
+            apt-get install -yqq make
+            apt-get install -yqq curl
+            source activate py39_env
+            make unittest
+      - codecov/upload:
+          file: /tmp/src/template-package/coverage.xml
+
+  build_docs:
+    working_directory: /tmp/src/template-package
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - attach_workspace:  # get template-package
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps1-{{ checksum "template-package/setup.cfg" }}-{{ checksum "setup.py" }}
+      - run:
+          name: Build documentation
+          command: |
+            source activate py39_env
+            apt-get update
+            apt-get install -yqq make pandoc
+            make -C docs html
+          no_output_timeout: 30m
+      - store_artifacts:
+          path: /tmp/src/template-package/docs/_build/html
+
+  style_check:
+    working_directory: /tmp/src/template-package
+    docker:
+      - image: continuumio/miniconda3
+    steps:
+      - attach_workspace:  # get template-package
+          at: /tmp
+      - restore_cache:  # load environment
+          key: deps1-{{ checksum "template-package/setup.cfg" }}-{{ checksum "setup.py" }}
+      - run:
+          name: Linting
+          command:  |
+            source activate py39_env
+            flake8 /tmp/src/template-package/template-package
+      - store_artifacts:
+          path: /tmp/data/lint
+
+workflows:
+  version: 2.1
+  run_tests:
+    jobs:
+      - py36_unittest
+      - py37_unittest
+      - py38_unittest
+      - py39_env
+      - py39_unittest_and_coverage:
+          requires:
+            - py39_env
+      - build_docs:
+          requires:
+            - py39_env
+      - style_check:
+          requires:
+            - py39_env

@@ -1,0 +1,16 @@
+# Configuration for new-pr-welcome - https://github.com/behaviorbot/new-pr-welcome
+
+# Comment to be posted to on PRs from first time contributors in your repository
+newPRWelcomeComment: >
+  Thanks for opening this pull request!
+  We have detected this is the first time you have contributed
+  to *template-package*.
+
+  We invite you to list yourself as a *template-package* contributor, so if your name
+  is not already mentioned, please modify the
+  [``.zenodo.json``](https://github.com/ME-ICA/template-package/blob/main/.zenodo.json).
+
+  Of course, if you want to opt out this time there is no
+  problem at all with adding your name later.
+  You will be always welcome to add it in the future whenever
+  you feel it should be listed.

@@ -1,0 +1,13 @@
+{
+    "creators": [
+        {
+            "name": "The ME-ICA Community"
+        }
+    ],
+    "keywords": [
+        "neuroimaging",
+        "fMRI"
+    ],
+    "license": "LGPL-2.1",
+    "upload_type": "software"
+}
