@@ -59,6 +59,8 @@ def select_lambda(hrf, y, criteria="mad_update", factor=1, pcg=0.7, lambda_echo=
     elif criteria == "factor":
         lambda_selection = noise_estimate * factor
     elif criteria == "pcg":
+        if pcg is None:
+            raise ValueError("You must select a percentage to use the percentage criteria.")
         max_lambda = np.mean(abs(np.dot(hrf.T, y)), axis=0)
         lambda_selection = max_lambda * pcg
     elif criteria == "eigval":

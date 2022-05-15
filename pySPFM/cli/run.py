@@ -80,11 +80,11 @@ def _get_parser():
         default=False,
     )
     optional.add_argument(
-        "-eigthr",
-        dest="eigthr",
-        type=float,
-        help="Threshold to be used on eigen value selection. Default = 0.1",
-        default=0.1,
+        "--debias",
+        dest="do_debias",
+        action="store_true",
+        help="Perform debiasing step. Default = False.",
+        default=False,
     )
     optional.add_argument(
         "-g",
@@ -94,21 +94,6 @@ def _get_parser():
         help="Weight of the grouping in space (we suggest not going "
         "higher than 0.3). Default = 0.",
         default=0,
-    )
-    optional.add_argument(
-        "--debias",
-        dest="do_debias",
-        action="store_true",
-        help="Perform debiasing step. Default = False.",
-        default=False,
-    )
-    optional.add_argument(
-        "-pfm",
-        "--pfm",
-        dest="pfm_only",
-        action="store_true",
-        help="Use original PFM formulation without low-rank. Default = False.",
-        default=False,
     )
     optional.add_argument(
         "-crit",
@@ -121,20 +106,20 @@ def _get_parser():
         default="mad_update",
     )
     optional.add_argument(
+        "-pcg",
+        "--percentage",
+        dest="pcg",
+        type=float,
+        help="Percentage of maximum lambda to use on temporal regularization with FISTA (default = None).",
+        default=None,
+    )
+    optional.add_argument(
         "-factor",
         "--factor",
         dest="factor",
         type=float,
         help="Factor to multiply noise estimate for lambda selection.",
         default=1,
-    )
-    optional.add_argument(
-        "-jobs",
-        "--jobs",
-        dest="jobs",
-        type=int,
-        help="Number of cores to take to parallelize debiasing step (default = 4).",
-        default=4,
     )
     optional.add_argument(
         "-lambda_echo",
@@ -145,28 +130,85 @@ def _get_parser():
         default=-1,
     )
     optional.add_argument(
-        "-stability",
-        "--stability_selection",
-        dest="do_stability_selection",
-        action="store_true",
-        help="Perform stability selection (default = False).",
-        default=False,
+        "--max_iter_factor",
+        dest="max_iter_factor",
+        type=float,
+        help="Factor of number of samples to use as the maximum number of iterations for LARS (default = 1.0).",
+        default=1.0,
     )
     optional.add_argument(
-        "-username",
-        "--username",
-        dest="username",
-        type=str,
-        help="Username for running stability selection in cluster.",
-        default=None,
+        "--max_iter_fista",
+        dest="max_iter_fista",
+        type=int,
+        help="Maximum number of iterations for FISTA (default = 500).",
+        default=500,
     )
     optional.add_argument(
-        "-saved",
-        "--saved",
-        dest="saved_data",
-        action="store_true",
-        help="Use data saved in temp folder to calculate AUC.",
-        default=False,
+        "--min_iter_fista",
+        dest="min_iter_fista",
+        type=int,
+        help="Minimum number of iterations for FISTA (default = 50).",
+        default=50,
+    )
+    optional.add_argument(
+        "--max_iter_spatial",
+        dest="max_iter_spatial",
+        type=int,
+        help="Maximum number of iterations for spatial regularization (default = 100).",
+        default=100,
+    )
+    optional.add_argument(
+        "--max_iter",
+        dest="max_iter",
+        type=int,
+        help="Maximum number of iterations for alternating temporal and spatial regularizations (default = 10).",
+        default=10,
+    )
+    optional.add_argument(
+        "-jobs",
+        "--jobs",
+        dest="jobs",
+        type=int,
+        help="Number of cores to take to parallelize debiasing step (default = 4).",
+        default=4,
+    )
+    optional.add_argument(
+        "-spatial",
+        "--spatial_weight",
+        dest="spatial_weight",
+        type=float,
+        help="Weight for spatial regularization estimates (estimates of temporal regularization are equal to 1 minus this value). A value of 0 means only temporal regularization is applied. Default=0",
+        default=0,
+    )
+    optional.add_argument(
+        "--spatial_lambda",
+        dest="spatial_lambda",
+        type=float,
+        help="Lambda for spatial regularization. Default=1",
+        default=1,
+    )
+    optional.add_argument(
+        "--spatial_dim",
+        dest="spatial_dim",
+        type=int,
+        help="Slice-wise regularization with dim = 2; whole-volume regularization with dim=3. Default = 3.",
+        default=3,
+    )
+    optional.add_argument(
+        "-mu",
+        "--mu",
+        dest="mu",
+        type=float,
+        help="Step size for spatial regularization (default = 0.01).",
+        default=0.01,
+    )
+    optional.add_argument(
+        "-tol",
+        "--tolerance",
+        dest="tolerance",
+        type=float,
+        help="Tolerance for FISTA (default = 1e-6).",
+        default=1e-6,
     )
     optional.add_argument(
         "-debug",
