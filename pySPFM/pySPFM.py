@@ -23,8 +23,8 @@ RefLGR = logging.getLogger("REFERENCES")
 
 
 def pySPFM(
-    data_filename,
-    mask_filename,
+    data_fn,
+    mask_fn,
     output_filename,
     tr,
     out_dir,
@@ -50,9 +50,9 @@ def pySPFM(
     debug=False,
     quiet=False,
 ):
-    data_str = str(data_filename).strip("[]")
+    data_str = str(data_fn).strip("[]")
     te_str = str(te).strip("[]")
-    arguments = f"-i {data_str} -m {mask_filename} -o {output_filename} -tr {tr} "
+    arguments = f"-i {data_str} -m {mask_fn} -o {output_filename} -tr {tr} "
     arguments += f"-d {out_dir} -te {te_str} -group {group} -crit {criteria} "
 
     if block_model:
@@ -92,22 +92,22 @@ def pySPFM(
 
     LGR.info("Reading data...")
     if n_te == 1:
-        data_masked, data_header, mask_img = read_data(data_filename[0], mask_filename)
+        data_masked, data_header, mask_img = read_data(data_fn[0], mask_fn)
         nscans = data_masked.shape[0]
         nvoxels = data_masked.shape[1]
     elif n_te > 1:
-        # If the first element of data_filename has spaces, it is a list of paths
+        # If the first element of data_fn has spaces, it is a list of paths
         # Convert it into a list
-        if " " in data_filename[0]:
-            data_filename = data_filename[0].split(" ")
+        if " " in data_fn[0]:
+            data_fn = data_fn[0].split(" ")
 
         for te_idx in range(n_te):
-            data_temp, data_header, mask_img = read_data(data_filename[te_idx], mask_filename)
+            data_temp, data_header, mask_img = read_data(data_fn[te_idx], mask_fn)
             if te_idx == 0:
                 data_masked = data_temp
                 nscans = data_temp.shape[0]
             else:
-                # data_temp, _, _, _ = read_data(data_filename[te_idx], mask_filename, mask_idxs)
+                # data_temp, _, _, _ = read_data(data_fn[te_idx], mask_fn, mask_idxs)
                 data_masked = np.concatenate((data_masked, data_temp), axis=0)
 
             LGR.info(f"{te_idx + 1}/{n_te} echoes...")

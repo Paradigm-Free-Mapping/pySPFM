@@ -5,14 +5,14 @@ import nibabel as nib
 from nilearn import masking
 
 
-def read_data(data_filename, mask_filename, mask_idxs=None):
+def read_data(data_fn, mask_fn, mask_idxs=None):
     """Read data from filename and apply mask.
 
     Parameters
     ----------
-    data_filename : str or path
+    data_fn : str or path
         Path to data to be read.
-    mask_filename : str or path
+    mask_fn : str or path
         Path to mask to be applied.
 
     Returns
@@ -26,11 +26,11 @@ def read_data(data_filename, mask_filename, mask_idxs=None):
     mask_idxs : (S x) array_like
         Indexes to transform data back to 4D.
     """
-    data_img = nib.load(data_filename)
+    data_img = nib.load(data_fn)
     data_header = data_img.header
     data = data_img.get_fdata()
 
-    mask = nib.load(mask_filename)
+    mask = nib.load(mask_fn)
     data = masking.apply_mask(data_img, mask)
 
     return data, data_header, mask

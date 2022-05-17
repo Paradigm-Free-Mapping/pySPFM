@@ -26,7 +26,7 @@ def _get_parser():
     required.add_argument(
         "-i",
         "--input",
-        dest="data_filename",
+        dest="data",
         type=str,
         nargs="+",
         help="The name of the file containing fMRI data. ",
@@ -35,7 +35,7 @@ def _get_parser():
     required.add_argument(
         "-m",
         "--mask",
-        dest="mask_filename",
+        dest="mask_fn",
         type=str,
         help="The name of the file containing the mask for the fMRI data. ",
         required=True,
