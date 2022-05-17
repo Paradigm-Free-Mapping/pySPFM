@@ -1,4 +1,4 @@
-"""Utils of splora."""
+"""Utils of pySPFM."""
 import logging
 
 LGR = logging.getLogger("GENERAL")

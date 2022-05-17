@@ -14,5 +14,5 @@ lint:
 unittest:
 	@py.test -m "not integration" --cov-append --cov-report xml --cov-report term-missing --cov=pySPFM pySPFM
 
-performancetest:
+integrationtest:
 	@py.test -m "integration" --cov-append --cov-report xml --cov-report term-missing --cov=pySPFM pySPFM

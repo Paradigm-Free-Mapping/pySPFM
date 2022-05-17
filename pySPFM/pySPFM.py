@@ -61,7 +61,7 @@ def pySPFM(
         arguments += "-debug "
     if quiet:
         arguments += "-quiet"
-    command_str = f"splora {arguments}"
+    command_str = f"pySPFM {arguments}"
 
     # Generate output directory if it doesn't exist
     out_dir = op.abspath(out_dir)
@@ -76,7 +76,7 @@ def pySPFM(
     LGR = logging.getLogger("GENERAL")
     # RefLGR = logging.getLogger("REFERENCES")
     # create logfile name
-    basename = "splora_"
+    basename = "pySPFM_"
     extension = "tsv"
     start_time = datetime.datetime.now().strftime("%Y-%m-%dT%H%M%S")
     logname = op.join(out_dir, (basename + start_time + "." + extension))

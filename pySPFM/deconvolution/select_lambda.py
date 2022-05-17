@@ -12,7 +12,7 @@ def select_lambda(hrf, y, criteria="mad_update", factor=1, pcg=0.7, lambda_echo=
         Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
         the number of echo-times.
     y : (T x S) array_like
-        Matrix with fMRI data provided to splora.
+        Matrix with fMRI data provided to pySPFM.
     criteria : str, optional
         Criteria to select regularization parameter lambda, by default "mad_update"
     factor : int, optional

@@ -63,7 +63,7 @@ def update_header(filename, command):
     filename : str or path
         Path to the file that is getting the header updated.
     command : str
-        splora command to add to the header.
+        pySPFM command to add to the header.
     """
     run(f"3dcopy {filename} {filename} -overwrite", shell=True)
     run(f'3dNotes -h "{command}" {filename}', shell=True)
@@ -83,7 +83,7 @@ def write_data(data, filename, mask, header, command):
     header : nib.header
         Header of the input data.
     command : str
-        splora command to add to the header.
+        pySPFM command to add to the header.
     """
     reshaped = reshape_data(data, mask)
     U_nib = nib.Nifti1Image(reshaped.get_fdata(), None, header=header)

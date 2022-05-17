@@ -22,7 +22,7 @@ def innovation_to_block(hrf, y, estimates_matrix, is_ls):
         Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
         the number of echo-times.
     y : (T x S) array_like
-        Matrix with fMRI data provided to splora.
+        Matrix with fMRI data provided to pySPFM.
     estimates_matrix : (T x S) array_like
         Matrix containing the non-zero coefficients selected as neuronal-related.
     is_ls : bool
@@ -88,7 +88,7 @@ def do_debias_block(hrf, y, estimates_matrix, dist=2):
         Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
         the number of echo-times.
     y : (T x 1) array_like
-        Matrix with fMRI data provided to splora in a voxel.
+        Matrix with fMRI data provided to pySPFM in a voxel.
     estimates_matrix : (T x 1) array_like
         Matrix containing the non-zero coefficients selected as neuronal-related in a voxel.
     dist : int, optional
@@ -120,7 +120,7 @@ def debiasing_block(hrf, y, estimates_matrix, dist=2, progress_bar=True, jobs=4)
         Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
         the number of echo-times.
     y : (T x S) array_like
-        Matrix with fMRI data provided to splora.
+        Matrix with fMRI data provided to pySPFM.
     estimates_matrix : (T x S) array_like
         Matrix containing the non-zero coefficients selected as neuronal-related.
     dist : int, optional
@@ -166,7 +166,7 @@ def do_debias_spike(hrf, y, estimates_matrix):
         Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
         the number of echo-times.
     y : (T x 1) array_like
-        Array with fMRI data of a voxel provided to splora.
+        Array with fMRI data of a voxel provided to pySPFM.
     estimates_matrix : (T x 1) array_like
         Array containing the non-zero coefficients selected as neuronal-related.
 
@@ -199,7 +199,7 @@ def debiasing_spike(hrf, y, estimates_matrix, progress_bar=True, jobs=4):
         Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
         the number of echo-times.
     y : (T x S) array_like
-        Matrix with fMRI data provided to splora.
+        Matrix with fMRI data provided to pySPFM.
     estimates_matrix : (T x S) array_like
         Matrix containing the non-zero coefficients selected as neuronal-related.
 
