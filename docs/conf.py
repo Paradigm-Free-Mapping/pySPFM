@@ -159,7 +159,7 @@ def setup(app):
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "template-packagedoc"
+htmlhelp_basename = "pySPFMdoc"
 
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
