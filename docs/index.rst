@@ -1,10 +1,10 @@
 .. include:: <isonum.txt>
 
 ###########################################################
-pySPFM: Distance-Dependence Motion-Related Artifact Analysis
+pySPFM
 ###########################################################
 
-The ``pySPFM`` package is a Python package for running pySPFM quality control analyses.
+The ``pySPFM`` package is a Python version of AFNI's 3dPFM and 3dMEPFM.
 
 .. image:: https://img.shields.io/pypi/v/pySPFM.svg
    :target: https://pypi.python.org/pypi/pySPFM/
@@ -39,10 +39,7 @@ The ``pySPFM`` package is a Python package for running pySPFM quality control an
 About
 *****
 
-``pySPFM`` is a Python implementation of the methods described in `Power et al. (2018)`_.
-The algorithms have been altered somewhat, with any deviations described in the relevant functions' docstrings.
-
-.. _Power et al. (2018): https://doi.org/10.1073/pnas.1720985115
+``pySPFM`` is a Python implementation of AFNI's 3dPFM and 3dMEPFM.
 
 
 *******************
