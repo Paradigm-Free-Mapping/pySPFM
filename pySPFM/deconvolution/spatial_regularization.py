@@ -39,7 +39,7 @@ def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
     data_vol = unmask(data, mask)
 
     if dim == 2:
-        h = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
+        h = generate_delta(dim=dim)
 
         H = np.fft.fft2(h, (estimates_vol.shape[0], estimates_vol.shape[1]))
 
@@ -61,10 +61,7 @@ def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
                     )
 
     elif dim == 3:
-        h = np.zeros((3, 3, 3))
-        h[:, :, 0] = np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
-        h[:, :, 1] = np.array([[0, 1, 0], [1, -6, 1], [0, 1, 0]])
-        h[:, :, 2] = np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
+        h = generate_delta(dim=dim)
 
         H = np.fft.fftn(h, estimates_vol.shape[:2])
 
@@ -85,3 +82,113 @@ def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
     final_estimates = apply_mask(estimates_vol, mask)
 
     return final_estimates
+
+
+def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
+    """Spatial regularization technique based on the structured sparsity as in Total Activation.
+
+    This function computes the structured sparsity regularization and is another variant of fgp
+    algorithm for structured sparsity
+
+    solves 1/2 ||y-x||^2 + lambda*||D^order x||_{s,2,1}
+
+    Delta is the laplacian operator delta[n] = [1 -2 1]; so symmetric, in
+    matrix form Delta^T = Delta.
+
+    Parameters
+    ----------
+    estimates : numpy.array
+        Estimates (output of temporal regularization).
+    data : numpy.array
+        Observations.
+    mask : Nibabel object
+        Mask image to unmask and mask estimates (2D to 4D and back).
+    niter : int
+        Number of iterations to perform spatial regularization.
+    dims : list
+        Dimensions of the data.
+    lambda_ : float
+        Spatial regularization parameter.
+
+    Returns
+    -------
+    final_estimates: np.array
+        Estimates of activity-inducing or innovation signal after spatial regularization.
+    """
+
+    # Transform data from 2D into 4D
+    estimates_vol = unmask(estimates, mask)
+    data_vol = unmask(data, mask)
+
+    z = np.zeros(estimates_vol.shape)
+
+    h = generate_delta(dim=3)
+
+    max_eig = 144
+
+    H = np.fft.fftn(h, estimates_vol.shape[:2])
+
+    # Perform structured sparsity regularization
+    for time_idx in range(estimates_vol.shape[-1]):
+        for iter_idx in range(niter):
+            z[:, :, :, time_idx] = clip(
+                z[:, :, :, time_idx]
+                + 1
+                / (lambda_ * max_eig)
+                * np.fft.ifftn(H * np.fft.fftn(data_vol[:, :, :, time_idx], dims[:2]))
+                - np.fft.ifftn(H * np.conj(H) * np.fft.fftn(z[:, :, :, time_idx], dims[:2]))
+                / max_eig,
+                mask,
+            )
+        estimates_vol[:, :, :, time_idx] = data_vol[:, :, :, time_idx] - lambda_ * np.fft.ifftn(
+            np.conj(H) * np.fft.fttn(z[:, :, :, time_idx], dims[:2])
+        )
+
+    # Transform data from 4D into 2D
+    final_estimates = apply_mask(estimates_vol, mask)
+
+    return final_estimates
+
+
+def clip(input, atlas):
+    """Clip the input to the atlas.
+
+    Parameters
+    ----------
+    input : numpy.array
+        Input to clip.
+    atlas : numpy.array
+        Atlas to clip input to.
+
+    Returns
+    -------
+    clipped_input: numpy.array
+        Clipped input.
+    """
+
+    clipped_input = np.zeros(input.shape)
+    for region_idx in range(np.max(atlas)):
+        # Find the indices of the voxels in the current region
+        indices = np.where(atlas == region_idx + 1)
+
+        if np.linalg.norm(input[indices]) > 1:
+            # Clip the current region
+            clipped_input[indices] = input[indices] / np.linalg.norm(input[indices])
+        else:
+            clipped_input[indices] = input[indices]
+
+    return clipped_input
+
+
+def generate_delta(dim=3):
+    if dim == 2:
+        h = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
+    elif dim == 3:
+        h = np.zeros((3, 3, 3))
+        h[:, :, 0] = np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
+        h[:, :, 1] = np.array([[0, 1, 0], [1, -6, 1], [0, 1, 0]])
+        h[:, :, 2] = np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
+    else:
+        raise ValueError("Dimension must be 2 or 3")
+
+    return h
