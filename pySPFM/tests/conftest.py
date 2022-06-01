@@ -6,6 +6,7 @@ import numpy as np
 import pylops
 import pytest
 
+import pySPFM
 from pySPFM.deconvolution.hrf_matrix import hrf_linear
 
 
@@ -18,6 +19,11 @@ def pytest_addoption(parser):
 @pytest.fixture
 def skip_integration(request):
     return request.config.getoption("--skipintegration")
+
+
+@pytest.fixture
+def base_test_path():
+    return os.path.join(os.path.dirname(pySPFM.__file__), "tests", "data")
 
 
 def fetch_file(osf_id, path, filename):
@@ -63,15 +69,18 @@ def testpath(tmp_path_factory):
 
 
 @pytest.fixture
-def pylops_results(testpath):
-    return fetch_file("bmhtr", testpath, "pylops_fista.npy")
+def pylops_results(base_test_path):
+    # return fetch_file("bmhtr", testpath, "pylops_fista.npy")
+    return os.path.join(base_test_path, "pylops_fista.npy")
 
 
 @pytest.fixture
-def sim_data(testpath):
-    return fetch_file("789z6", testpath, "sim_data.npy")
+def sim_data(base_test_path):
+    # return fetch_file("789z6", testpath, "sim_data.npy")
+    return os.path.join(base_test_path, "sim_data.npy")
 
 
 @pytest.fixture
-def sim_hrf(testpath):
-    return fetch_file("j2u6n", testpath, "sim_hrf.npy")
+def sim_hrf(base_test_path):
+    # return fetch_file("j2u6n", testpath, "sim_hrf.npy")
+    return os.path.join(base_test_path, "sim_hrf.npy")
