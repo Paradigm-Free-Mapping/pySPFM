@@ -1,8 +1,10 @@
 """FISTA solver for PFM."""
 import logging
-from turtle import update
 
 import numpy as np
+import pylops
+from pyproximal.optimization.primal import AcceleratedProximalGradient
+from pyproximal.proximal import L1, L2, L21_plus_L1
 from scipy import linalg
 
 from pySPFM.deconvolution.select_lambda import select_lambda
@@ -110,45 +112,72 @@ def fista(
     if update_lambda:
         precision = noise_estimate / 100000
 
-    # Perform FISTA
-    for num_iter in range(max_iter):
+        # Perform FISTA
+        for num_iter in range(max_iter):
 
-        # Save results from previous iteration
-        S_old = S.copy()
-        y_ista_S = y_fista_S.copy()
+            # Save results from previous iteration
+            S_old = S.copy()
+            y_ista_S = y_fista_S.copy()
 
-        S_fidelity = v - np.dot(hrf_cov, y_ista_S)
+            S_fidelity = v - np.dot(hrf_cov, y_ista_S)
 
-        # Forward-Backward step
-        z_ista_S = y_ista_S + c_ist * S_fidelity
+            # Forward-Backward step
+            z_ista_S = y_ista_S + c_ist * S_fidelity
 
-        # Estimate S
-        if group > 0:
-            S = proximal_operator_mixed_norm(z_ista_S, c_ist * lambda_, rho_val=(1 - group))
+            # Estimate S
+            if group > 0:
+                S = proximal_operator_mixed_norm(z_ista_S, c_ist * lambda_, rho_val=(1 - group))
+            else:
+                S = proximal_operator_lasso(z_ista_S, c_ist * lambda_)
+
+            t_fista_old = t_fista
+            t_fista = 0.5 * (1 + np.sqrt(1 + 4 * (t_fista_old ** 2)))
+
+            y_fista_S = S + (S - S_old) * (t_fista_old - 1) / t_fista
+
+            # Convergence
+            if num_iter >= min_iter:
+                nonzero_idxs_rows, nonzero_idxs_cols = np.where(
+                    np.abs(S) > 10 * np.finfo(float).eps
+                )
+                diff = np.abs(
+                    S[nonzero_idxs_rows, nonzero_idxs_cols]
+                    - S_old[nonzero_idxs_rows, nonzero_idxs_cols]
+                )
+                convergence_criteria = np.abs(diff / S_old[nonzero_idxs_rows, nonzero_idxs_cols])
+
+                if np.all(convergence_criteria <= tol):
+                    break
+
+            # Update lambda
+            if update_lambda:
+                nv = np.sqrt(np.sum((np.dot(hrf, S) - y) ** 2, axis=0) / nscans)
+                if abs(nv - noise_estimate) > precision:
+                    lambda_ = np.nan_to_num(lambda_ * noise_estimate / nv)
+
+    else:
+
+        # Use pylops if lambda does not need to be updated
+        hrf = pylops.MatrixMult(hrf)
+
+        # Data fitting term
+        l2 = L2(Op=hrf, b=y)
+
+        # Lambda and proximal operator
+        if group == 0:
+            prox = L1(sigma=lambda_)
         else:
-            S = proximal_operator_lasso(z_ista_S, c_ist * lambda_)
+            prox = L21_plus_L1(sigma=lambda_, rho=(1 - group))
 
-        t_fista_old = t_fista
-        t_fista = 0.5 * (1 + np.sqrt(1 + 4 * (t_fista_old ** 2)))
-
-        y_fista_S = S + (S - S_old) * (t_fista_old - 1) / t_fista
-
-        # Convergence
-        if num_iter >= min_iter:
-            nonzero_idxs_rows, nonzero_idxs_cols = np.where(np.abs(S) > 10 * np.finfo(float).eps)
-            diff = np.abs(
-                S[nonzero_idxs_rows, nonzero_idxs_cols]
-                - S_old[nonzero_idxs_rows, nonzero_idxs_cols]
-            )
-            convergence_criteria = np.abs(diff / S_old[nonzero_idxs_rows, nonzero_idxs_cols])
-
-            if np.all(convergence_criteria <= tol):
-                break
-
-        # Update lambda
-        if update_lambda:
-            nv = np.sqrt(np.sum((np.dot(hrf, S) - y) ** 2, axis=0) / nscans)
-            if abs(nv - noise_estimate) > precision:
-                lambda_ = np.nan_to_num(lambda_ * noise_estimate / nv)
+        S = AcceleratedProximalGradient(
+            l2,
+            prox,
+            tau=c_ist,
+            x0=np.zeros((nscans, nvoxels)),
+            epsg=np.ones(nv),
+            niter=max_iter,
+            acceleration="fista",
+            show=False,
+        )
 
     return S, lambda_
