@@ -9,6 +9,8 @@ from scipy import linalg
 
 from pySPFM.deconvolution.select_lambda import select_lambda
 
+LGR = logging.getLogger("GENERAL")
+
 
 def proximal_operator_lasso(y, thr):
     """Perform soft-thresholding.
@@ -82,7 +84,7 @@ def fista(
     hrf,
     y,
     criteria="ut",
-    max_iter=100,
+    max_iter=400,
     min_iter=10,
     tol=1e-6,
     group=0.2,
@@ -94,22 +96,24 @@ def fista(
     nvoxels = y.shape[1]
     nscans = hrf.shape[1]
 
-    c_ist = 1 / (linalg.norm(hrf) ** 2)
-    hrf_trans = hrf.T
-    hrf_cov = np.dot(hrf_trans, hrf)
-    v = np.dot(hrf_trans, y)
-
-    y_fista_S = np.zeros((nscans, nvoxels), dtype=np.float32)
-    S = y_fista_S.copy()
-
-    t_fista = 1
-
     # Select lambda
     lambda_, update_lambda, noise_estimate = select_lambda(
         hrf, y, criteria, factor, pcg, lambda_echo
     )
 
+    c_ist = 1 / (linalg.norm(hrf) ** 2)
+
     if update_lambda:
+        # Use FISTA with updating lambda
+        hrf_trans = hrf.T
+        hrf_cov = np.dot(hrf_trans, hrf)
+        v = np.dot(hrf_trans, y)
+
+        y_fista_S = np.zeros((nscans, nvoxels), dtype=np.float32)
+        S = y_fista_S.copy()
+
+        t_fista = 1
+
         precision = noise_estimate / 100000
 
         # Perform FISTA
@@ -156,7 +160,6 @@ def fista(
                     lambda_ = np.nan_to_num(lambda_ * noise_estimate / nv)
 
     else:
-
         # Use pylops if lambda does not need to be updated
         hrf = pylops.MatrixMult(hrf)
 
@@ -169,12 +172,14 @@ def fista(
         else:
             prox = L21_plus_L1(sigma=lambda_, rho=(1 - group))
 
+        LGR.info("Performing FISTA with pylops...")
+
         S = AcceleratedProximalGradient(
             l2,
             prox,
             tau=c_ist,
             x0=np.zeros((nscans, nvoxels)),
-            epsg=np.ones(nv),
+            epsg=np.ones(nvoxels),
             niter=max_iter,
             acceleration="fista",
             show=False,

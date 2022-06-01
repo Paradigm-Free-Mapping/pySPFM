@@ -140,8 +140,8 @@ def _get_parser():
         "--max_iter_fista",
         dest="max_iter_fista",
         type=int,
-        help="Maximum number of iterations for FISTA (default = 500).",
-        default=500,
+        help="Maximum number of iterations for FISTA (default = 400).",
+        default=400,
     )
     optional.add_argument(
         "--min_iter_fista",
