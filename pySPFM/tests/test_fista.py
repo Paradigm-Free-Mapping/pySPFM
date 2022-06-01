@@ -5,8 +5,6 @@ from pySPFM.deconvolution import fista
 
 def test_fista_pylops(sim_data, sim_hrf, pylops_results):
 
-    breakpoint()
-
     y = np.load(sim_data)
     hrf_matrix = np.load(sim_hrf)
 
