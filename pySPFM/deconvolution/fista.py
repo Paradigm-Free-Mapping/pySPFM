@@ -93,7 +93,11 @@ def fista(
     lambda_echo=-1,
 ):
 
-    nvoxels = y.shape[1]
+    if len(y.shape) == 1:
+        nvoxels = 1
+        y = y[:, np.newaxis]
+    else:
+        nvoxels = y.shape[1]
     nscans = hrf.shape[1]
 
     # Select lambda

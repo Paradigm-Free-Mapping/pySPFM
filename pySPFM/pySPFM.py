@@ -106,6 +106,7 @@ def pySPFM(
             if te_idx == 0:
                 data_masked = data_temp
                 nscans = data_temp.shape[0]
+                nvoxels = data_temp.shape[1]
             else:
                 # data_temp, _, _, _ = read_data(data_fn[te_idx], mask_fn, mask_idxs)
                 data_masked = np.concatenate((data_masked, data_temp), axis=0)
@@ -134,11 +135,15 @@ def pySPFM(
         final_estimates = np.empty((nscans, nvoxels))
 
     # Iterate between temporal and spatial regularizations
+    LGR.info("Solving inverse problem...")
     for iter_idx in range(max_iter):
         if spatial_weight > 0:
             data_temp_reg = final_estimates - estimates_temporal + data_masked
         else:
             data_temp_reg = data_masked
+
+        estimates = np.zeros((nscans, nvoxels))
+        lambda_map = np.zeros(nvoxels)
 
         if criteria in lars_criteria:
             nlambdas = max_iter_factor * nscans
@@ -150,11 +155,12 @@ def pySPFM(
                 for vox_idx in tqdm(range(nvoxels))
             )
 
-            estimates = lars_estimates[0]
-            lambda_map = lars_estimates[1]
+            for vox_idx in range(nvoxels):
+                estimates[:, vox_idx] = np.squeeze(fista_estimates[vox_idx][0])
+                lambda_map[vox_idx] = np.squeeze(fista_estimates[vox_idx][1])
 
         elif criteria in fista_criteria:
-            #  Solve fista
+            # Solve fista
             fista_estimates = Parallel(n_jobs=n_jobs, backend="multiprocessing")(
                 delayed(fista)(
                     hrf_norm,
@@ -170,8 +176,9 @@ def pySPFM(
                 )
                 for vox_idx in tqdm(range(nvoxels))
             )
-            estimates = fista_estimates[0]
-            lambda_map = fista_estimates[1]
+            for vox_idx in range(nvoxels):
+                estimates[:, vox_idx] = np.squeeze(fista_estimates[vox_idx][0])
+                lambda_map[vox_idx] = np.squeeze(fista_estimates[vox_idx][1])
 
         else:
             raise ValueError("Wrong criteria option given.")
@@ -213,8 +220,11 @@ def pySPFM(
         else:
             final_estimates = estimates
 
+    LGR.info("Inverse problem solved.")
+
     # Perform debiasing step
     if debias:
+        LGR.info("Debiasing estimates...")
         if block_model:
             hrf_obj = HRFMatrix(TR=tr, nscans=nscans, TE=te, block=False)
             hrf_norm = hrf_obj.generate_hrf().X_hrf_norm
@@ -304,6 +314,7 @@ def pySPFM(
 
 
 def _main(argv=None):
+    """pySPFM entry point"""
     options = _get_parser().parse_args(argv)
     pySPFM(**vars(options))
 
