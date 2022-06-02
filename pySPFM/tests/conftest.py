@@ -84,3 +84,9 @@ def sim_data(base_test_path):
 def sim_hrf(base_test_path):
     # return fetch_file("j2u6n", testpath, "sim_hrf.npy")
     return os.path.join(base_test_path, "sim_hrf.npy")
+
+
+@pytest.fixture
+def mask_five_echo(base_test_path):
+    # return fetch_file("j2u6n", testpath, "sim_hrf.npy")
+    return os.path.join(base_test_path, "mask_five_echo.nii.gz")
