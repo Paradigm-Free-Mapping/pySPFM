@@ -26,7 +26,7 @@ def _get_parser():
     required.add_argument(
         "-i",
         "--input",
-        dest="data",
+        dest="data_fn",
         type=str,
         nargs="+",
         help="The name of the file containing fMRI data. ",
@@ -81,7 +81,7 @@ def _get_parser():
     )
     optional.add_argument(
         "--debias",
-        dest="do_debias",
+        dest="debias",
         action="store_true",
         help="Perform debiasing step. Default = False.",
         default=False,
@@ -98,7 +98,7 @@ def _get_parser():
     optional.add_argument(
         "-crit",
         "--criteria",
-        dest="lambda_crit",
+        dest="criteria",
         type=str,
         choices=["mad", "mad_update", "ut", "lut", "factor", "pcg", "eigval"],
         help="Criteria with which lambda is selected to estimate activity-inducing "
@@ -167,7 +167,7 @@ def _get_parser():
     optional.add_argument(
         "-jobs",
         "--jobs",
-        dest="jobs",
+        dest="n_jobs",
         type=int,
         help="Number of cores to take to parallelize debiasing step (default = 4).",
         default=4,
