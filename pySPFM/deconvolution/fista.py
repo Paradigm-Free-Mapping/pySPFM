@@ -91,7 +91,7 @@ def fista(
     pcg=0.8,
     factor=10,
     lambda_echo=-1,
-    use_pylops=False
+    use_pylops=False,
 ):
 
     if len(y.shape) == 1:

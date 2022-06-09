@@ -156,8 +156,8 @@ def pySPFM(
             )
 
             for vox_idx in range(nvoxels):
-                estimates[:, vox_idx] = np.squeeze(fista_estimates[vox_idx][0])
-                lambda_map[vox_idx] = np.squeeze(fista_estimates[vox_idx][1])
+                estimates[:, vox_idx] = np.squeeze(lars_estimates[vox_idx][0])
+                lambda_map[vox_idx] = np.squeeze(lars_estimates[vox_idx][1])
 
         elif criteria in fista_criteria:
             # Solve fista

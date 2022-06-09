@@ -12,7 +12,8 @@ LGR = logging.getLogger("GENERAL")
 RefLGR = logging.getLogger("REFERENCES")
 
 
-# Performs the debiasing step on an estimates_matrix timeseries obtained considering the integrator model
+# Performs the debiasing step on an estimates_matrix timeseries obtained considering the
+# integrator model
 def innovation_to_block(hrf, y, estimates_matrix, is_ls):
     """Perform debiasing with the block model.
 
