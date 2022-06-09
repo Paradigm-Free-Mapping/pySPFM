@@ -108,7 +108,7 @@ jobs:
           paths:
             - src/pySPFM
       - restore_cache: # ensure this step occurs *before* installing dependencies
-          key: deps1-{{ checksum "pySPFM/setup.cfg" }}-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}
       - run: # will overwrite pySPFM installation each time
           name: Generate environment
           command: |
@@ -122,7 +122,7 @@ jobs:
             fi
             python setup.py install --user
       - save_cache: # environment cache tied to requirements
-          key: deps1-{{ checksum "pySPFM/setup.cfg" }}-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}
           paths:
             - "/opt/conda/envs/py39_env"
 
@@ -134,7 +134,7 @@ jobs:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: deps1-{{ checksum "pySPFM/setup.cfg" }}-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}
       - run:
           name: Run tests and compile coverage
           command: |
@@ -154,7 +154,7 @@ jobs:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: deps1-{{ checksum "pySPFM/setup.cfg" }}-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}
       - run:
           name: Build documentation
           command: |
@@ -174,7 +174,7 @@ jobs:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: deps1-{{ checksum "pySPFM/setup.cfg" }}-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}
       - run:
           name: Linting
           command: |
