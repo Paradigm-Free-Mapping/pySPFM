@@ -23,7 +23,8 @@ def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
     niter : int
         Number of iterations to perform spatial regularization.
     dim : int
-        Slice-wise regularization with dim = 2; whole-volume regularization with dim=3. Default = 3.
+        Slice-wise regularization with dim = 2; whole-volume regularization with dim=3.
+        Default = 3.
     lambda_ : float
         Spatial regularization parameter. Default = 1.
     mu : float

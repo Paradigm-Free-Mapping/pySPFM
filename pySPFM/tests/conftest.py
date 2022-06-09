@@ -2,12 +2,9 @@ import os
 import ssl
 from urllib.request import urlretrieve
 
-import numpy as np
-import pylops
 import pytest
 
 import pySPFM
-from pySPFM.deconvolution.hrf_matrix import hrf_linear
 
 
 def pytest_addoption(parser):
