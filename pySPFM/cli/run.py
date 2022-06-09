@@ -110,7 +110,10 @@ def _get_parser():
         "--percentage",
         dest="pcg",
         type=float,
-        help="Percentage of maximum lambda to use on temporal regularization with FISTA (default = None).",
+        help=(
+            "Percentage of maximum lambda to use on temporal regularization with FISTA "
+            "(default = None)."
+        ),
         default=None,
     )
     optional.add_argument(
@@ -133,7 +136,10 @@ def _get_parser():
         "--max_iter_factor",
         dest="max_iter_factor",
         type=float,
-        help="Factor of number of samples to use as the maximum number of iterations for LARS (default = 1.0).",
+        help=(
+            "Factor of number of samples to use as the maximum number of iterations for LARS "
+            "(default = 1.0)."
+        ),
         default=1.0,
     )
     optional.add_argument(
@@ -161,7 +167,10 @@ def _get_parser():
         "--max_iter",
         dest="max_iter",
         type=int,
-        help="Maximum number of iterations for alternating temporal and spatial regularizations (default = 10).",
+        help=(
+            "Maximum number of iterations for alternating temporal and spatial regularizations "
+            "(default = 10)."
+        ),
         default=10,
     )
     optional.add_argument(
@@ -177,7 +186,11 @@ def _get_parser():
         "--spatial_weight",
         dest="spatial_weight",
         type=float,
-        help="Weight for spatial regularization estimates (estimates of temporal regularization are equal to 1 minus this value). A value of 0 means only temporal regularization is applied. Default=0",
+        help=(
+            "Weight for spatial regularization estimates (estimates of temporal regularization "
+            "are equal to 1 minus this value). A value of 0 means only temporal regularization "
+            "is applied. Default=0"
+        ),
         default=0,
     )
     optional.add_argument(
@@ -191,7 +204,10 @@ def _get_parser():
         "--spatial_dim",
         dest="spatial_dim",
         type=int,
-        help="Slice-wise regularization with dim = 2; whole-volume regularization with dim=3. Default = 3.",
+        help=(
+            "Slice-wise regularization with dim = 2; whole-volume regularization with dim=3. "
+            "Default = 3."
+        ),
         default=3,
     )
     optional.add_argument(
