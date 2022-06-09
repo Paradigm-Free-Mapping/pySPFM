@@ -53,7 +53,7 @@ pySPFM is licensed under GNU Lesser General Public License version 2.1.
    :caption: Contents:
 
    api
-   example_analysis.ipynb
+   cli
 
 
 ******************

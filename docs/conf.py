@@ -54,6 +54,8 @@ extensions = [
     "sphinx.ext.linkcode",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
+    "sphinxarg.ext",  # argparse
+    "sphinxcontrib.bibtex",  # for foot-citations
 ]
 
 if LooseVersion(sphinx.__version__) < LooseVersion("1.4"):
@@ -143,6 +145,14 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+# -----------------------------------------------------------------------------
+# sphinxcontrib-bibtex
+# -----------------------------------------------------------------------------
+bibtex_bibfiles = ["./references.bib"]
+bibtex_style = "unsrt"
+bibtex_reference_style = "author_year"
+bibtex_footbibliography_header = ""
 
 
 def setup(app):
