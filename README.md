@@ -7,7 +7,7 @@ The Python version of AFNI's [3dPFM]() and [3dMEPFM]() with some extra features 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6600163.svg)](https://doi.org/10.5281/zenodo.6600163)
 [![License](https://img.shields.io/badge/License-LGPL%202.1-blue.svg)](https://opensource.org/licenses/LGPL-2.1)
 [![CircleCI](https://circleci.com/gh/pySPFM/pySPFM.svg?style=shield)](https://circleci.com/gh/pySPFM/pySPFM)
-[![Documentation Status](https://readthedocs.org/projects/pySPFM/badge/?version=latest)](http://pySPFM.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/pyspfm/badge/?version=latest)](http://pyspfm.readthedocs.io/en/latest/?badge=latest)
 [![Codecov](https://codecov.io/gh/pySPFM/pySPFM/branch/main/graph/badge.svg)](https://codecov.io/gh/pySPFM/pySPFM)
 
 ## References
