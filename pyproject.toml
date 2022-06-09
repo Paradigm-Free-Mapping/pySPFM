@@ -22,7 +22,6 @@ exclude = '''
   | pySPFM/_version.py
   | pySPFM/due.py
 )
-ignore = BLK100
 '''
 
 [tool.isort]
