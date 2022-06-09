@@ -91,6 +91,7 @@ def fista(
     pcg=0.8,
     factor=10,
     lambda_echo=-1,
+    use_pylops=False
 ):
 
     if len(y.shape) == 1:
@@ -107,7 +108,32 @@ def fista(
 
     c_ist = 1 / (linalg.norm(hrf) ** 2)
 
-    if update_lambda:
+    if use_pylops:
+        # Use pylops if lambda does not need to be updated
+        hrf = pylops.MatrixMult(hrf)
+
+        # Data fitting term
+        l2 = L2(Op=hrf, b=y)
+
+        # Lambda and proximal operator
+        if group == 0:
+            prox = L1(sigma=lambda_)
+        else:
+            prox = L21_plus_L1(sigma=lambda_, rho=(1 - group))
+
+        LGR.info("Performing FISTA with pylops...")
+
+        S = AcceleratedProximalGradient(
+            l2,
+            prox,
+            tau=c_ist,
+            x0=np.zeros((nscans, nvoxels)),
+            epsg=np.ones(nvoxels),
+            niter=max_iter,
+            acceleration="fista",
+            show=False,
+        )
+    else:
         # Use FISTA with updating lambda
         hrf_trans = hrf.T
         hrf_cov = np.dot(hrf_trans, hrf)
@@ -162,31 +188,5 @@ def fista(
                 nv = np.sqrt(np.sum((np.dot(hrf, S) - y) ** 2, axis=0) / nscans)
                 if abs(nv - noise_estimate) > precision:
                     lambda_ = np.nan_to_num(lambda_ * noise_estimate / nv)
-
-    else:
-        # Use pylops if lambda does not need to be updated
-        hrf = pylops.MatrixMult(hrf)
-
-        # Data fitting term
-        l2 = L2(Op=hrf, b=y)
-
-        # Lambda and proximal operator
-        if group == 0:
-            prox = L1(sigma=lambda_)
-        else:
-            prox = L21_plus_L1(sigma=lambda_, rho=(1 - group))
-
-        LGR.info("Performing FISTA with pylops...")
-
-        S = AcceleratedProximalGradient(
-            l2,
-            prox,
-            tau=c_ist,
-            x0=np.zeros((nscans, nvoxels)),
-            epsg=np.ones(nvoxels),
-            niter=max_iter,
-            acceleration="fista",
-            show=False,
-        )
 
     return S, lambda_
