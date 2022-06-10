@@ -113,7 +113,7 @@ def fista(
         hrf = pylops.MatrixMult(hrf)
 
         # Data fitting term
-        l2 = L2(Op=hrf, b=y, densesolver=True)
+        l2 = L2(Op=hrf, b=y, densesolver="numpy")
 
         # Lambda and proximal operator
         if group == 0:
