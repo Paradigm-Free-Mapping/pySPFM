@@ -8,48 +8,20 @@ orbs:
 executors:
   docker-slim_trial:
     environment:
-      IMAGE_NAME: connpfm/connpfm_slim_trial
+      IMAGE_NAME: connPFM/connPFM_slim_trial
     docker:
       - image: circleci/buildpack-deps:stretch
 
   docker-slim_latest:
     environment:
-      IMAGE_NAME: connpfm/connpfm_slim_latest
+      IMAGE_NAME: connPFM/connPFM_slim_latest
     docker:
       - image: circleci/buildpack-deps:stretch
 jobs:
-  py38_unittest:
-    working_directory: /tmp/src/pySPFM
-    docker:
-      - image: connpfm/afni_miniconda
-    steps:
-      - checkout
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - src/pySPFM
-      - run: # will overwrite pySPFM installation each time
-          name: Generate environment
-          command: |
-            if [[ -e /opt/conda/envs/py38_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py38_env
-            else
-                conda create -n py38_env python=3.8 numpy -yq
-                source activate py38_env
-                pip install pip -U
-                pip install -e .[tests]
-            fi
-            python setup.py install --user
-      - run:
-          name: Run tests
-          command: |
-            apt-get update
-            apt-get install -yqq make
-            source activate py38_env
-            make unittest
-
-  py39_env:
+  py_env:
+    parameters:
+      PYTHON:
+        type: string
     working_directory: /tmp/src/pySPFM
     docker:
       - image: continuumio/miniconda3
@@ -60,74 +32,73 @@ jobs:
           paths:
             - src/pySPFM
       - restore_cache: # ensure this step occurs *before* installing dependencies
-          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "pySPFM/info.py" }}-{{ checksum "setup.py" }}-{{ "<< parameters.PYTHON >>" }}
       - run: # will overwrite pySPFM installation each time
           name: Generate environment
           command: |
-            if [[ -e /opt/conda/envs/py39_env ]]; then
+            if [[ -e /opt/conda/envs/py<< parameters.PYTHON >>_env ]]; then
                 echo "Restoring environment from cache"
-                source activate py39_env
+                source activate py<< parameters.PYTHON >>_env
             else
-                conda create -n py39_env python=3.9 numpy -yq
-                source activate py39_env
+                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> numpy -yq
+                source activate py<< parameters.PYTHON >>_env
                 pip install -e .[tests,doc]
             fi
             python setup.py install --user
       - save_cache: # environment cache tied to requirements
-          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "pySPFM/info.py" }}-{{ checksum "setup.py" }}-{{ "<< parameters.PYTHON >>" }}
           paths:
-            - "/opt/conda/envs/py39_env"
+            - "/opt/conda/envs/py<< parameters.PYTHON >>_env"
 
-  py39_unittest_and_coverage:
+  py_unittest:
+    parameters:
+      PYTHON:
+        type: string
     working_directory: /tmp/src/pySPFM
     docker:
-      - image: connpfm/afni_miniconda
+      - image: connPFM/afni_miniconda
     steps:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "pySPFM/info.py" }}-{{ checksum "setup.py" }}-{{ "<< parameters.PYTHON >>" }}
       - run:
           name: Run tests and compile coverage
           command: |
             apt-get update
             apt-get install -yqq make
             apt-get install -yqq curl
-            source activate py39_env
+            cp -r /opt/conda/envs/py<< parameters.PYTHON >>_env /opt/miniconda-latest/envs/py<< parameters.PYTHON >>_env
+            source activate py<< parameters.PYTHON >>_env
             make unittest
       - codecov/upload:
           file: /tmp/src/pySPFM/coverage.xml
 
-  py310_unittest:
+  py_integration:
+    parameters:
+      PYTHON:
+        type: string
     working_directory: /tmp/src/pySPFM
     docker:
-      - image: connpfm/afni_miniconda
+      - image: connPFM/afni_miniconda
+    resource_class: large
     steps:
-      - checkout
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - src/pySPFM
-      - run: # will overwrite pySPFM installation each time
-          name: Generate environment
-          command: |
-            if [[ -e /opt/conda/envs/py310_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py310_env
-            else
-                conda create -n py310_env python=3.10 numpy -yq
-                source activate py310_env
-                pip install pip -U
-                pip install -e .[tests]
-            fi
-            python setup.py install --user
+      - attach_workspace: # get pySPFM
+          at: /tmp
+      - restore_cache: # load environment
+          key: deps1-{{ checksum "pySPFM/info.py" }}-{{ checksum "setup.py" }}-{{ "<< parameters.PYTHON >>" }}
       - run:
-          name: Run tests
+          name: Run tests and compile coverage
           command: |
             apt-get update
             apt-get install -yqq make
-            source activate py310_env
-            make unittest
+            apt-get install -yqq curl
+            cp -r /opt/conda/envs/py<< parameters.PYTHON >>_env /opt/miniconda-latest/envs/py<< parameters.PYTHON >>_env
+            source activate py<< parameters.PYTHON >>_env
+            make integration
+          no_output_timeout: 30m
+      - codecov/upload:
+          file: /tmp/src/pySPFM/coverage.xml
 
   build_docs:
     working_directory: /tmp/src/pySPFM
@@ -137,7 +108,7 @@ jobs:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "pySPFM/info.py" }}-{{ checksum "setup.py" }}
       - run:
           name: Build documentation
           command: |
@@ -157,11 +128,11 @@ jobs:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "pySPFM/info.py" }}-{{ checksum "setup.py" }}-{{ "3.9" }}
       - run:
           name: Linting
           command: |
-            source activate py39_env
+            source activate py3.9_env
             flake8 /tmp/src/pySPFM/pySPFM
       - store_artifacts:
           path: /tmp/data/lint
@@ -170,15 +141,25 @@ workflows:
   version: 2.1
   run_tests:
     jobs:
-      - py38_unittest
-      - py39_env
-      - py310_unittest
-      - py39_unittest_and_coverage:
-          requires:
-            - py39_env
-      - build_docs:
-          requires:
-            - py39_env
+      - py_env:
+          name: py_env-<< matrix.PYTHON >>
+          matrix:
+            parameters:
+              PYTHON: ["3.10", "3.9", "3.8"]
       - style_check:
           requires:
-            - py39_env
+            - py_env-3.9
+      - py_unittest:
+          name: py_unittest-<< matrix.PYTHON >>
+          matrix:
+            parameters:
+              PYTHON: ["3.10", "3.9", "3.8"]
+          requires:
+            - py_env-<< matrix.PYTHON >>
+      - py_integration:
+          name: py_integration-<< matrix.PYTHON >>
+          matrix:
+            parameters:
+              PYTHON: ["3.10", "3.9", "3.8"]
+          requires:
+            - py_env-<< matrix.PYTHON >>
