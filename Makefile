@@ -12,7 +12,7 @@ lint:
 	@flake8 pySPFM
 
 unittest:
-	@py.test -m "not integration" --cov-append --cov-report xml --cov-report term-missing --cov=pySPFM pySPFM
+	@py.test --skipintegration --cov-append --cov-report xml --cov-report term-missing --cov=pySPFM pySPFM
 
 integrationtest:
-	@py.test -m "integration" --cov-append --cov-report xml --cov-report term-missing --cov=pySPFM pySPFM
+	@py.test --cov-append --cov-report xml --cov-report term-missing --cov=pySPFM pySPFM/tests/test_integration.py

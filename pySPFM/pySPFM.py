@@ -12,7 +12,7 @@ from pySPFM import utils
 from pySPFM.cli.run import _get_parser
 from pySPFM.deconvolution.debiasing import debiasing_block, debiasing_spike
 from pySPFM.deconvolution.fista import fista
-from pySPFM.deconvolution.hrf_matrix import HRFMatrix
+from pySPFM.deconvolution.hrf_generator import HRFMatrix
 from pySPFM.deconvolution.lars import solve_regularization_path
 from pySPFM.deconvolution.select_lambda import select_lambda
 from pySPFM.deconvolution.spatial_regularization import spatial_tikhonov
