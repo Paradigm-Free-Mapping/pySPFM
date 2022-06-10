@@ -66,24 +66,24 @@ def testpath(tmp_path_factory):
 
 
 @pytest.fixture
-def pylops_results(base_test_path):
-    # return fetch_file("bmhtr", testpath, "pylops_fista.npy")
-    return os.path.join(base_test_path, "pylops_fista.npy")
+def pylops_results(testpath):
+    return fetch_file("bmhtr", testpath, "pylops_fista.npy")
+    # return os.path.join(base_test_path, "pylops_fista.npy")
 
 
 @pytest.fixture
-def sim_data(base_test_path):
-    # return fetch_file("789z6", testpath, "sim_data.npy")
-    return os.path.join(base_test_path, "sim_data.npy")
+def sim_data(testpath):
+    return fetch_file("789z6", testpath, "sim_data.npy")
+    # return os.path.join(base_test_path, "sim_data.npy")
 
 
 @pytest.fixture
-def sim_hrf(base_test_path):
-    # return fetch_file("j2u6n", testpath, "sim_hrf.npy")
-    return os.path.join(base_test_path, "sim_hrf.npy")
+def sim_hrf(testpath):
+    return fetch_file("j2u6n", testpath, "sim_hrf.npy")
+    # return os.path.join(base_test_path, "sim_hrf.npy")
 
 
 @pytest.fixture
-def mask_five_echo(base_test_path):
-    # return fetch_file("j2u6n", testpath, "sim_hrf.npy")
+def mask_five_echo(testpath):
+    return fetch_file("jv5fn", testpath, "mask_five_echo.nii.gz")
     return os.path.join(base_test_path, "mask_five_echo.nii.gz")
