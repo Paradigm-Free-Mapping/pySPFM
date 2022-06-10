@@ -18,66 +18,6 @@ executors:
     docker:
       - image: circleci/buildpack-deps:stretch
 jobs:
-  py36_unittest:
-    working_directory: /tmp/src/pySPFM
-    docker:
-      - image: connpfm/afni_miniconda
-    steps:
-      - checkout
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - src/pySPFM
-      - run: # will overwrite pySPFM installation each time
-          name: Generate environment
-          command: |
-            if [[ -e /opt/conda/envs/py36_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py36_env
-            else
-                conda create -n py36_env python=3.6 numpy -yq
-                source activate py36_env
-                pip install -e .[tests]
-            fi
-            python setup.py install --user
-      - run:
-          name: Run tests
-          command: |
-            apt-get update
-            apt-get install -yqq make
-            source activate py36_env
-            make unittest
-
-  py37_unittest:
-    working_directory: /tmp/src/pySPFM
-    docker:
-      - image: connpfm/afni_miniconda
-    steps:
-      - checkout
-      - persist_to_workspace:
-          root: /tmp
-          paths:
-            - src/pySPFM
-      - run: # will overwrite pySPFM installation each time
-          name: Generate environment
-          command: |
-            if [[ -e /opt/conda/envs/py37_env ]]; then
-                echo "Restoring environment from cache"
-                source activate py37_env
-            else
-                conda create -n py37_env python=3.7 numpy -yq
-                source activate py37_env
-                pip install -e .[tests]
-            fi
-            python setup.py install --user
-      - run:
-          name: Run tests
-          command: |
-            apt-get update
-            apt-get install -yqq make
-            source activate py37_env
-            make unittest
-
   py38_unittest:
     working_directory: /tmp/src/pySPFM
     docker:
@@ -157,6 +97,37 @@ jobs:
             make unittest
       - codecov/upload:
           file: /tmp/src/pySPFM/coverage.xml
+
+  py310_unittest:
+    working_directory: /tmp/src/pySPFM
+    docker:
+      - image: connpfm/afni_miniconda
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - src/pySPFM
+      - run: # will overwrite pySPFM installation each time
+          name: Generate environment
+          command: |
+            if [[ -e /opt/conda/envs/py310_env ]]; then
+                echo "Restoring environment from cache"
+                source activate py310_env
+            else
+                conda create -n py310_env python=3.10 numpy -yq
+                source activate py310_env
+                pip install pip -U
+                pip install -e .[tests]
+            fi
+            python setup.py install --user
+      - run:
+          name: Run tests
+          command: |
+            apt-get update
+            apt-get install -yqq make
+            source activate py310_env
+            make unittest
 
   build_docs:
     working_directory: /tmp/src/pySPFM
