@@ -170,10 +170,9 @@ workflows:
   version: 2.1
   run_tests:
     jobs:
-      - py36_unittest
-      - py37_unittest
       - py38_unittest
       - py39_env
+      - py310_unittest
       - py39_unittest_and_coverage:
           requires:
             - py39_env
