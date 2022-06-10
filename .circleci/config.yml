@@ -32,7 +32,7 @@ jobs:
           paths:
             - src/pySPFM
       - restore_cache: # ensure this step occurs *before* installing dependencies
-          key: deps1-{{ checksum "pySPFM/info.py" }}-{{ checksum "setup.py" }}-{{ "<< parameters.PYTHON >>" }}
+          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}-{{ "<< parameters.PYTHON >>" }}
       - run: # will overwrite pySPFM installation each time
           name: Generate environment
           command: |
@@ -46,7 +46,7 @@ jobs:
             fi
             python setup.py install --user
       - save_cache: # environment cache tied to requirements
-          key: deps1-{{ checksum "pySPFM/info.py" }}-{{ checksum "setup.py" }}-{{ "<< parameters.PYTHON >>" }}
+          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}-{{ "<< parameters.PYTHON >>" }}
           paths:
             - "/opt/conda/envs/py<< parameters.PYTHON >>_env"
 
@@ -61,7 +61,7 @@ jobs:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: deps1-{{ checksum "pySPFM/info.py" }}-{{ checksum "setup.py" }}-{{ "<< parameters.PYTHON >>" }}
+          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}-{{ "<< parameters.PYTHON >>" }}
       - run:
           name: Run tests and compile coverage
           command: |
@@ -86,7 +86,7 @@ jobs:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: deps1-{{ checksum "pySPFM/info.py" }}-{{ checksum "setup.py" }}-{{ "<< parameters.PYTHON >>" }}
+          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}-{{ "<< parameters.PYTHON >>" }}
       - run:
           name: Run tests and compile coverage
           command: |
@@ -108,7 +108,7 @@ jobs:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: deps1-{{ checksum "pySPFM/info.py" }}-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}
       - run:
           name: Build documentation
           command: |
@@ -128,7 +128,7 @@ jobs:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: deps1-{{ checksum "pySPFM/info.py" }}-{{ checksum "setup.py" }}-{{ "3.9" }}
+          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}-{{ "3.9" }}
       - run:
           name: Linting
           command: |
