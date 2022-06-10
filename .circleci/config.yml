@@ -163,3 +163,6 @@ workflows:
               PYTHON: ["3.10", "3.9", "3.8"]
           requires:
             - py_env-<< matrix.PYTHON >>
+      - build_docs:
+          requires:
+            - py_env-3.9
