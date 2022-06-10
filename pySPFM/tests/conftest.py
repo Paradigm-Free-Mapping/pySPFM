@@ -18,9 +18,9 @@ def skip_integration(request):
     return request.config.getoption("--skipintegration")
 
 
-@pytest.fixture
-def base_test_path():
-    return os.path.join(os.path.dirname(pySPFM.__file__), "tests", "data")
+# @pytest.fixture
+# def base_test_path():
+#     return os.path.join(os.path.dirname(pySPFM.__file__), "tests", "data")
 
 
 def fetch_file(osf_id, path, filename):
@@ -86,4 +86,14 @@ def sim_hrf(testpath):
 @pytest.fixture
 def mask_five_echo(testpath):
     return fetch_file("jv5fn", testpath, "mask_five_echo.nii.gz")
-    return os.path.join(base_test_path, "mask_five_echo.nii.gz")
+    # return os.path.join(base_test_path, "mask_five_echo.nii.gz")
+
+
+@pytest.fixture
+def hrf_file(testpath):
+    return fetch_file("gefu4", testpath, "hrf.txt")
+
+
+@pytest.fixture
+def hrf_linear_file(testpath):
+    return fetch_file("mkeu2", testpath, "hrf_linear.txt")
