@@ -227,6 +227,14 @@ def _get_parser():
         default=1e-6,
     )
     optional.add_argument(
+        "-atlas",
+        "--atlas",
+        dest="is_atlas",
+        action="store_true",
+        help="Use provided mask as an atlas (default = False).",
+        default=False,
+    )
+    optional.add_argument(
         "-debug",
         "--debug",
         dest="debug",

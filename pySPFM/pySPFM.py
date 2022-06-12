@@ -47,6 +47,7 @@ def pySPFM(
     spatial_dim=3,
     mu=0.01,
     tolerance=1e-6,
+    is_atlas=False,
     debug=False,
     quiet=False,
 ):
@@ -92,7 +93,7 @@ def pySPFM(
 
     LGR.info("Reading data...")
     if n_te == 1:
-        data_masked, data_header, mask_img = read_data(data_fn[0], mask_fn)
+        data_masked, data_header, mask = read_data(data_fn[0], mask_fn, is_atlas=is_atlas)
         nscans = data_masked.shape[0]
         nvoxels = data_masked.shape[1]
     elif n_te > 1:
@@ -102,7 +103,7 @@ def pySPFM(
             data_fn = data_fn[0].split(" ")
 
         for te_idx in range(n_te):
-            data_temp, data_header, mask_img = read_data(data_fn[te_idx], mask_fn)
+            data_temp, data_header, mask = read_data(data_fn[te_idx], mask_fn, is_atlas=is_atlas)
             if te_idx == 0:
                 data_masked = data_temp
                 nscans = data_temp.shape[0]
@@ -203,7 +204,7 @@ def pySPFM(
             estimates_tikhonov = spatial_tikhonov(
                 final_estimates,
                 final_estimates - estimates_spatial + data_masked,
-                mask_img,
+                mask,
                 max_iter_spatial,
                 spatial_dim,
                 spatial_lambda,
@@ -241,7 +242,12 @@ def pySPFM(
         estimates_block = final_estimates
         output_name = f"{output_filename}_innovation.nii.gz"
         write_data(
-            estimates_block, os.path.join(out_dir, output_name), mask_img, data_header, command_str
+            estimates_block,
+            os.path.join(out_dir, output_name),
+            mask,
+            data_header,
+            command_str,
+            is_atlas=is_atlas,
         )
 
         if not debias:
@@ -256,7 +262,12 @@ def pySPFM(
     elif n_te > 1:
         output_name = f"{output_filename}_DR2.nii.gz"
     write_data(
-        estimates_spike, os.path.join(out_dir, output_name), mask_img, data_header, command_str
+        estimates_spike,
+        os.path.join(out_dir, output_name),
+        mask,
+        data_header,
+        command_str,
+        is_atlas=is_atlas,
     )
 
     # Save fitts
@@ -265,9 +276,10 @@ def pySPFM(
         write_data(
             fitts,
             os.path.join(out_dir, output_name),
-            mask_img,
+            mask,
             data_header,
             command_str,
+            is_atlas=is_atlas,
         )
     elif n_te > 1:
         for te_idx in range(n_te):
@@ -276,9 +288,10 @@ def pySPFM(
             write_data(
                 te_data,
                 os.path.join(out_dir, output_name),
-                mask_img,
+                mask,
                 data_header,
                 command_str,
+                is_atlas=is_atlas,
             )
 
     # Save noise estimate
@@ -292,9 +305,10 @@ def pySPFM(
         write_data(
             np.expand_dims(noise_estimate, axis=0),
             os.path.join(out_dir, output_name),
-            mask_img,
+            mask,
             data_header,
             command_str,
+            is_atlas=is_atlas,
         )
 
     # Save lambda
@@ -302,9 +316,10 @@ def pySPFM(
     write_data(
         np.expand_dims(lambda_map, axis=0),
         os.path.join(out_dir, output_name),
-        mask_img,
+        mask,
         data_header,
         command_str,
+        is_atlas=is_atlas,
     )
 
     LGR.info("Results saved.")

@@ -165,7 +165,7 @@ def fista(
                 S = proximal_operator_lasso(z_ista_S, c_ist * lambda_)
 
             t_fista_old = t_fista
-            t_fista = 0.5 * (1 + np.sqrt(1 + 4 * (t_fista_old ** 2)))
+            t_fista = 0.5 * (1 + np.sqrt(1 + 4 * (t_fista_old**2)))
 
             y_fista_S = S + (S - S_old) * (t_fista_old - 1) / t_fista
 
