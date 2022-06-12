@@ -32,7 +32,7 @@ def read_data(data_fn, mask_fn, is_atlas=False):
     data = data_img.get_fdata()
 
     if is_atlas:
-        mask = NiftiLabelsMasker(mask_img=mask_fn, standardize=False, strategy="mean")
+        mask = NiftiLabelsMasker(labels_img=mask_fn, standardize=False, strategy="mean")
         data = mask.fit_transform(data_img)
     else:
         mask = nib.load(mask_fn)
