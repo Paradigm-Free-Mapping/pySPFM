@@ -3,9 +3,10 @@ from subprocess import run
 
 import nibabel as nib
 from nilearn import masking
+from nilearn.input_data import NiftiLabelsMasker
 
 
-def read_data(data_fn, mask_fn, mask_idxs=None):
+def read_data(data_fn, mask_fn, is_atlas=False):
     """Read data from filename and apply mask.
 
     Parameters
@@ -30,8 +31,12 @@ def read_data(data_fn, mask_fn, mask_idxs=None):
     data_header = data_img.header
     data = data_img.get_fdata()
 
-    mask = nib.load(mask_fn)
-    data = masking.apply_mask(data_img, mask)
+    if is_atlas:
+        mask = NiftiLabelsMasker(mask_img=mask_fn, standardize=False, strategy="mean")
+        data = mask.fit_transform(data_img)
+    else:
+        mask = nib.load(mask_fn)
+        data = masking.apply_mask(data_img, mask)
 
     return data, data_header, mask
 
@@ -69,7 +74,7 @@ def update_header(filename, command):
     run(f'3dNotes -h "{command}" {filename}', shell=True)
 
 
-def write_data(data, filename, mask, header, command):
+def write_data(data, filename, mask, header, command, is_atlas=False):
     """Write data into NIFTI file.
 
     Parameters
@@ -85,7 +90,10 @@ def write_data(data, filename, mask, header, command):
     command : str
         pySPFM command to add to the header.
     """
-    reshaped = reshape_data(data, mask)
-    U_nib = nib.Nifti1Image(reshaped.get_fdata(), None, header=header)
-    U_nib.to_filename(filename)
+    if is_atlas:
+        out_img = mask.inverse_transform(data)
+    else:
+        reshaped = reshape_data(data, mask)
+        out_img = nib.Nifti1Image(reshaped.get_fdata(), None, header=header)
+    out_img.to_filename(filename)
     update_header(filename, command)
