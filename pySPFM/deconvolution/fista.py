@@ -66,7 +66,7 @@ def proximal_operator_mixed_norm(y, thr, rho_val=0.8, groups="space"):
     else:
         foo = np.sum(np.maximum(np.zeros(y.shape), np.abs(y) - thr * rho_val) ** 2, axis=0)
         foo = foo.reshape(1, len(foo))
-        foo = np.dot(np.ones((y.shape[0], 1), foo))
+        foo = np.dot(np.ones((y.shape[0], 1)), foo)
 
     p_two = np.maximum(
         np.zeros(y.shape),
