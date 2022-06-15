@@ -169,7 +169,7 @@ class HRFMatrix:
             hrf_SPM = hrf_linear(self.TR, p)
 
         self.L_hrf = len(hrf_SPM)  # Length
-        max_hrf = max(abs(hrf_SPM))  # Max value
+        mahrf = max(abs(hrf_SPM))  # Max value
         filler = np.zeros(self.nscans - hrf_SPM.shape[0], dtype=int)
         hrf_SPM = np.append(hrf_SPM, filler)  # Fill up array with zeros until nscans
 
@@ -187,27 +187,25 @@ class HRFMatrix:
             tempTE = temp
 
         if self.r2only:
-            self.X_hrf = tempTE
+            self.hrf = tempTE
 
-        self.X_hrf_norm = self.X_hrf / max_hrf
+        self.hrf_norm = self.hrf / mahrf
 
         if self.block:
             if len(self.TE) > 1:
                 for teidx in range(len(self.TE)):
-                    temp = self.X_hrf[
-                        teidx * self.nscans : (teidx + 1) * self.nscans - 1, :
-                    ].copy()
-                    self.X_hrf[teidx * self.nscans : (teidx + 1) * self.nscans - 1, :] = np.dot(
+                    temp = self.hrf[teidx * self.nscans : (teidx + 1) * self.nscans - 1, :].copy()
+                    self.hrf[teidx * self.nscans : (teidx + 1) * self.nscans - 1, :] = np.dot(
                         temp, np.tril(np.ones(self.nscans))
                     )
-                    temp = self.X_hrf_norm[
+                    temp = self.hrf_norm[
                         teidx * self.nscans : (teidx + 1) * self.nscans - 1, :
                     ].copy()
-                    self.X_hrf_norm[
-                        teidx * self.nscans : (teidx + 1) * self.nscans - 1, :
-                    ] = np.dot(temp, np.tril(np.ones(self.nscans)))
+                    self.hrf_norm[teidx * self.nscans : (teidx + 1) * self.nscans - 1, :] = np.dot(
+                        temp, np.tril(np.ones(self.nscans))
+                    )
             else:
-                self.X_hrf = np.dot(self.X_hrf, np.tril(np.ones(self.nscans)))
-                self.X_hrf_norm = np.dot(self.X_hrf_norm, np.tril(np.ones(self.nscans)))
+                self.hrf = np.dot(self.hrf, np.tril(np.ones(self.nscans)))
+                self.hrf_norm = np.dot(self.hrf_norm, np.tril(np.ones(self.nscans)))
 
         return self
