@@ -8,13 +8,13 @@ orbs:
 executors:
   docker-slim_trial:
     environment:
-      IMAGE_NAME: connPFM/connPFM_slim_trial
+      IMAGE_NAME: connpfm/connpfm_slim_trial
     docker:
       - image: circleci/buildpack-deps:stretch
 
   docker-slim_latest:
     environment:
-      IMAGE_NAME: connPFM/connPFM_slim_latest
+      IMAGE_NAME: connpfm/connpfm_slim_latest
     docker:
       - image: circleci/buildpack-deps:stretch
 jobs:
@@ -40,7 +40,7 @@ jobs:
                 echo "Restoring environment from cache"
                 source activate py<< parameters.PYTHON >>_env
             else
-                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> numpy -yq
+                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> numpy=1.21 -yq
                 source activate py<< parameters.PYTHON >>_env
                 pip install -e .[tests,doc]
             fi
@@ -56,7 +56,7 @@ jobs:
         type: string
     working_directory: /tmp/src/pySPFM
     docker:
-      - image: connPFM/afni_miniconda
+      - image: connpfm/afni_miniconda
     steps:
       - attach_workspace: # get pySPFM
           at: /tmp
@@ -80,7 +80,7 @@ jobs:
         type: string
     working_directory: /tmp/src/pySPFM
     docker:
-      - image: connPFM/afni_miniconda
+      - image: connpfm/afni_miniconda
     resource_class: large
     steps:
       - attach_workspace: # get pySPFM
@@ -95,7 +95,7 @@ jobs:
             apt-get install -yqq curl
             cp -r /opt/conda/envs/py<< parameters.PYTHON >>_env /opt/miniconda-latest/envs/py<< parameters.PYTHON >>_env
             source activate py<< parameters.PYTHON >>_env
-            make integration
+            make integrationtest
           no_output_timeout: 30m
       - codecov/upload:
           file: /tmp/src/pySPFM/coverage.xml
@@ -108,11 +108,11 @@ jobs:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}-{{ "3.9" }}
       - run:
           name: Build documentation
           command: |
-            source activate py39_env
+            source activate py3.9_env
             apt-get update
             apt-get install -yqq make pandoc
             make -C docs html
