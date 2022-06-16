@@ -108,11 +108,11 @@ jobs:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}
+          key: deps1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}-{{ "3.9" }}
       - run:
           name: Build documentation
           command: |
-            source activate py39_env
+            source activate py3.9_env
             apt-get update
             apt-get install -yqq make pandoc
             make -C docs html
