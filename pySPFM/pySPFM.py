@@ -119,7 +119,7 @@ def pySPFM(
 
     # Generate design matrix with shifted versions of HRF
     LGR.info("Generating design matrix with shifted versions of HRF...")
-    hrf_obj = HRFMatrix(te=te, block=block_model, hrf_model=hrf_model)
+    hrf_obj = HRFMatrix(te=te, block=block_model, model=hrf_model)
     hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
     # Run LARS if bic or aic criteria given.
@@ -189,7 +189,7 @@ def pySPFM(
         if block_model:
             estimates_block = estimates
             hrf_obj = HRFMatrix(te=te, block=False)
-            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans, hrf_model=hrf_model).hrf_
+            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans, model=hrf_model).hrf_
             estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
             fitts = np.dot(hrf, estimates_spike)
         else:
@@ -253,7 +253,7 @@ def pySPFM(
 
         if not debias:
             hrf_obj = HRFMatrix(te=te, block=False)
-            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans, hrf_model=hrf_model).hrf_
+            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans, model=hrf_model).hrf_
             estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
             fitts = np.dot(hrf, estimates_spike)
 
