@@ -83,7 +83,7 @@ def test_integration_five_echo(skip_integration, mask_five_echo):
     prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
     suffix = ".sm.nii.gz"
     datalist = [prepend + str(i + 1) + suffix for i in range(5)]
-    echo_times = [15.4, 29.7, 44.0]  # , 58.3, 72.6]
+    echo_times = [15.4, 29.7, 44.0, 58.3, 72.6]
 
     # CLI args
     args = (
@@ -102,7 +102,7 @@ def test_integration_five_echo(skip_integration, mask_five_echo):
         + ["-crit"]
         + ["ut"]
         + ["--max_iter_fista"]
-        + ["50"]
+        + ["10"]
         + [
             "--debug",
             "--debias",
