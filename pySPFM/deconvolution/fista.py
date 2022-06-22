@@ -99,7 +99,7 @@ def fista(
         y = y[:, np.newaxis]
     else:
         nvoxels = y.shape[1]
-    nscans = hrf.shape[1]
+    n_scans = hrf.shape[1]
 
     # Select lambda
     lambda_, update_lambda, noise_estimate = select_lambda(
@@ -127,7 +127,7 @@ def fista(
             l2,
             prox,
             tau=c_ist,
-            x0=np.zeros((nscans, nvoxels)),
+            x0=np.zeros((n_scans, nvoxels)),
             epsg=np.ones(nvoxels),
             niter=max_iter,
             acceleration="fista",
@@ -139,7 +139,7 @@ def fista(
         hrf_cov = np.dot(hrf_trans, hrf)
         v = np.dot(hrf_trans, y)
 
-        y_fista_S = np.zeros((nscans, nvoxels), dtype=np.float32)
+        y_fista_S = np.zeros((n_scans, nvoxels), dtype=np.float32)
         S = y_fista_S.copy()
 
         t_fista = 1
@@ -185,7 +185,7 @@ def fista(
 
             # Update lambda
             if update_lambda:
-                nv = np.sqrt(np.sum((np.dot(hrf, S) - y) ** 2, axis=0) / nscans)
+                nv = np.sqrt(np.sum((np.dot(hrf, S) - y) ** 2, axis=0) / n_scans)
                 if abs(nv - noise_estimate) > precision:
                     lambda_ = np.nan_to_num(lambda_ * noise_estimate / nv)
 

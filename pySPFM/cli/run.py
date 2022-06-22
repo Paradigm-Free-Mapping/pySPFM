@@ -80,6 +80,15 @@ def _get_parser():
         default=False,
     )
     optional.add_argument(
+        "-hrf",
+        "--hrf",
+        dest="hrf_model",
+        type=str,
+        help="HRF model to use. Default = 'spm'.",
+        default="spm",
+        choices=["spm", "glover"],
+    )
+    optional.add_argument(
         "--debias",
         dest="debias",
         action="store_true",
