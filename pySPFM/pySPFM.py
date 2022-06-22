@@ -41,7 +41,7 @@ def pySPFM(
     max_iter_spatial=100,
     max_iter=10,
     min_iter_fista=50,
-    n_jobs=-1,
+    n_jobs=1,
     spatial_weight=0,
     spatial_lambda=1,
     spatial_dim=3,
@@ -230,11 +230,13 @@ def pySPFM(
             hrf_obj = HRFMatrix(TR=tr, nscans=nscans, TE=te, block=False)
             hrf_norm = hrf_obj.generate_hrf().hrf_norm
             estimates_spike = debiasing_block(
-                hrf=hrf_norm, y=data_masked, estimates_matrix=final_estimates
+                hrf=hrf_norm, y=data_masked, estimates_matrix=final_estimates, jobs=n_jobs
             )
             fitts = np.dot(hrf_norm, estimates_spike)
         else:
-            estimates_spike, fitts = debiasing_spike(hrf_norm, data_masked, final_estimates)
+            estimates_spike, fitts = debiasing_spike(
+                hrf_norm, data_masked, final_estimates, jobs=n_jobs
+            )
 
     LGR.info("Saving results...")
     # Save innovation signal
