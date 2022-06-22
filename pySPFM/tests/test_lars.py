@@ -16,7 +16,7 @@ def test_solve_regularization_path(sim_data, sim_hrf, coef_path_results):
     )
 
     true_path = np.load(coef_path_results, allow_pickle=True)
-    assert lambda_ == 0.003012460125648784
+    assert np.allclose(lambda_, 0.003012460125648784)
     assert np.allclose(coef_path, true_path[:, 0])
 
     # AIC
@@ -24,5 +24,5 @@ def test_solve_regularization_path(sim_data, sim_hrf, coef_path_results):
         sim_hrf, sim_data, nlambdas=50, criterion="aic"
     )
 
-    assert lambda_ == 0.0017909675614952592
+    assert np.allclose(lambda_, 0.0017909675614952592)
     assert np.allclose(coef_path, true_path[:, 1])
