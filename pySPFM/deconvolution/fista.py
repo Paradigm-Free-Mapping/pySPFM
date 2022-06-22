@@ -83,7 +83,7 @@ def proximal_operator_mixed_norm(y, thr, rho_val=0.8, groups="space"):
 def fista(
     hrf,
     y,
-    criteria="ut",
+    criterion="ut",
     max_iter=400,
     min_iter=10,
     tol=1e-6,
@@ -103,7 +103,7 @@ def fista(
 
     # Select lambda
     lambda_, update_lambda, noise_estimate = select_lambda(
-        hrf, y, criteria, factor, pcg, lambda_echo
+        hrf, y, criterion, factor, pcg, lambda_echo
     )
 
     c_ist = 1 / (linalg.norm(hrf) ** 2)
