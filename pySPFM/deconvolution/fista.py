@@ -183,6 +183,8 @@ def fista(
                 if np.all(convergence_criteria <= tol):
                     break
 
+            LGR.debug(f"Iteration: {str(num_iter)} / {str(max_iter)}")
+
             # Update lambda
             if update_lambda:
                 nv = np.sqrt(np.sum((np.dot(hrf, S) - y) ** 2, axis=0) / nscans)
