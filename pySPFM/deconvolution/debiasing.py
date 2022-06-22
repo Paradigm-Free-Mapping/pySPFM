@@ -3,10 +3,8 @@ import logging
 
 import numpy as np
 import scipy as sci
-from joblib import Parallel, delayed
 from scipy.signal import find_peaks
 from sklearn.linear_model import RidgeCV
-from tqdm import tqdm
 
 LGR = logging.getLogger("GENERAL")
 RefLGR = logging.getLogger("REFERENCES")
@@ -140,19 +138,10 @@ def debiasing_block(hrf, y, estimates_matrix, dist=2, progress_bar=True, jobs=4)
 
     LGR.info("Starting debiasing step...")
     # Performs debiasing
-    if progress_bar:
-        debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
-            delayed(do_debias_block)(hrf, y[:, voxidx], estimates_matrix[:, voxidx])
-            for voxidx in tqdm(range(nvoxels))
+    for voxidx in range(nvoxels):
+        beta_out[:, voxidx] = np.squeeze(
+            do_debias_block(hrf, y[:, voxidx], estimates_matrix[:, voxidx])
         )
-    else:
-        debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
-            delayed(do_debias_block)(hrf, y[:, voxidx], estimates_matrix[:, voxidx])
-            for voxidx in range(nvoxels)
-        )
-
-    for vox_idx in range(nvoxels):
-        beta_out[:, vox_idx] = debiased[vox_idx]
 
     LGR.info("Debiasing step finished")
     return beta_out
@@ -217,24 +206,14 @@ def debiasing_spike(hrf, y, estimates_matrix, progress_bar=True, jobs=4):
     index_voxels = np.unique(np.where(abs(estimates_matrix) > 10 * np.finfo(float).eps)[1])
 
     LGR.info("Performing debiasing step...")
-    if progress_bar:
-        debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
-            delayed(do_debias_spike)(
-                hrf, y[:, index_voxels[voxidx]], estimates_matrix[:, index_voxels[voxidx]]
-            )
-            for voxidx in tqdm(range(len(index_voxels)))
-        )
-    else:
-        debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
-            delayed(do_debias_spike)(
-                hrf, y[:, index_voxels[voxidx]], estimates_matrix[:, index_voxels[voxidx]]
-            )
-            for voxidx in range(len(index_voxels))
+    for voxidx in range(len(index_voxels)):
+
+        beta_temp, fitts_temp = do_debias_spike(
+            hrf, y[:, index_voxels[voxidx]], estimates_matrix[:, index_voxels[voxidx]]
         )
 
-    for voxidx in range(len(index_voxels)):
-        beta_out[:, index_voxels[voxidx]] = debiased[voxidx][0]
-        fitts_out[:, index_voxels[voxidx]] = debiased[voxidx][1]
+        beta_out[:, index_voxels[voxidx]] = np.squeeze(beta_temp)
+        fitts_out[:, index_voxels[voxidx]] = np.squeeze(fitts_temp)
 
     LGR.info("Debiasing step finished")
     return beta_out, fitts_out
