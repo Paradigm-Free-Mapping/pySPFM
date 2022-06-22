@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.linear_model import lars_path
 
 
-def select_optimal_lambda(residuals, non_zero_count, nscans, criteria="bic"):
+def select_optimal_lambda(residuals, non_zero_count, n_scans, criteria="bic"):
     """_summary_
 
     Parameters
@@ -11,7 +11,7 @@ def select_optimal_lambda(residuals, non_zero_count, nscans, criteria="bic"):
         _description_
     non_zero_count : _type_
         _description_
-    nscans : _type_
+    n_scans : _type_
         _description_
     criteria : str, optional
         _description_, by default "bic"
@@ -23,10 +23,10 @@ def select_optimal_lambda(residuals, non_zero_count, nscans, criteria="bic"):
     """
     if criteria == "bic":
         # BIC regularization curve
-        optimization_curve = nscans * np.log(residuals) + np.log(nscans) * non_zero_count
+        optimization_curve = n_scans * np.log(residuals) + np.log(n_scans) * non_zero_count
     elif criteria == "aic":
         # AIC regularization curve
-        optimization_curve = nscans * np.log(residuals) + 2 * non_zero_count
+        optimization_curve = n_scans * np.log(residuals) + 2 * non_zero_count
 
     # Optimal lambda is given by the minimum of the optimization curve
     idx_optimal_lambda = np.argmin(optimization_curve)
@@ -53,7 +53,7 @@ def solve_regularization_path(X, y, nlambdas, criteria="bic"):
     _type_
         _description_
     """
-    nscans = y.shape[0]
+    n_scans = y.shape[0]
 
     # LARS path
     lambdas, _, coef_path = lars_path(
@@ -70,7 +70,7 @@ def solve_regularization_path(X, y, nlambdas, criteria="bic"):
     residuals = np.sum((np.repeat(y, nlambdas, axis=-1) - np.dot(X, coef_path)) ** 2, axis=0)
 
     optimal_lambda_idx = select_optimal_lambda(
-        residuals, np.count_nonzero(coef_path, axis=0), nscans, criteria
+        residuals, np.count_nonzero(coef_path, axis=0), n_scans, criteria
     )
 
     return coef_path[:, optimal_lambda_idx], lambdas[optimal_lambda_idx]

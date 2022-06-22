@@ -132,11 +132,11 @@ def debiasing_block(hrf, y, estimates_matrix, dist=2, progress_bar=True, jobs=4)
     beta_out : array_like
         Debiased activity-inducing signal obtained from estimated innovation signal.
     """
-    nscans = estimates_matrix.shape[0]
+    n_scans = estimates_matrix.shape[0]
     nvoxels = estimates_matrix.shape[1]
 
     # Initiates beta matrix
-    beta_out = np.zeros((nscans, nvoxels))
+    beta_out = np.zeros((n_scans, nvoxels))
 
     LGR.info("Starting debiasing step...")
     # Performs debiasing
