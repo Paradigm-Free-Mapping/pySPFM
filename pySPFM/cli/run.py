@@ -178,8 +178,8 @@ def _get_parser():
         "--jobs",
         dest="n_jobs",
         type=int,
-        help="Number of cores to take to parallelize debiasing step (default = 4).",
-        default=4,
+        help="Number of cores to take to parallelize debiasing step (default = 1).",
+        default=1,
     )
     optional.add_argument(
         "-spatial",

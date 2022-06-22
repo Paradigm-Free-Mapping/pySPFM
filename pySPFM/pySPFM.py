@@ -6,7 +6,6 @@ from os import path as op
 
 import numpy as np
 from joblib import Parallel, delayed
-from tqdm import tqdm
 
 from pySPFM import utils
 from pySPFM.cli.run import _get_parser
@@ -41,7 +40,7 @@ def pySPFM(
     max_iter_spatial=100,
     max_iter=10,
     min_iter_fista=50,
-    n_jobs=-1,
+    n_jobs=1,
     spatial_weight=0,
     spatial_lambda=1,
     spatial_dim=3,
@@ -153,7 +152,7 @@ def pySPFM(
                 delayed(solve_regularization_path)(
                     hrf_norm, data_temp_reg[:, vox_idx], nlambdas, criteria
                 )
-                for vox_idx in tqdm(range(nvoxels))
+                for vox_idx in range(nvoxels)
             )
 
             for vox_idx in range(nvoxels):
@@ -162,8 +161,8 @@ def pySPFM(
 
         elif criteria in fista_criteria:
             # Solve fista
-            fista_estimates = Parallel(n_jobs=n_jobs, backend="multiprocessing")(
-                delayed(fista)(
+            for vox_idx in range(nvoxels):
+                temp_estimates, temp_lambdas = fista(
                     hrf_norm,
                     data_temp_reg[:, vox_idx],
                     criteria,
@@ -175,11 +174,8 @@ def pySPFM(
                     factor,
                     lambda_echo,
                 )
-                for vox_idx in tqdm(range(nvoxels))
-            )
-            for vox_idx in range(nvoxels):
-                estimates[:, vox_idx] = np.squeeze(fista_estimates[vox_idx][0])
-                lambda_map[vox_idx] = np.squeeze(fista_estimates[vox_idx][1])
+                estimates[:, vox_idx] = np.squeeze(temp_estimates)
+                lambda_map[vox_idx] = np.squeeze(temp_lambdas)
 
         else:
             raise ValueError("Wrong criteria option given.")
