@@ -183,7 +183,7 @@ def fista(
                 if np.all(convergence_criteria <= tol):
                     break
 
-            LGR.debug("Iteration: %i / %i" % num_iter, max_iter)
+            LGR.debug(f"Iteration: {str(num_iter)} / {str(max_iter)}")
 
             # Update lambda
             if update_lambda:
