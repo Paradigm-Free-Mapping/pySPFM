@@ -120,7 +120,7 @@ def pySPFM(
     # Generate design matrix with shifted versions of HRF
     LGR.info("Generating design matrix with shifted versions of HRF...")
     hrf_obj = HRFMatrix(te=te, block=block_model, hrf_model=hrf_model)
-    hrf_norm = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
+    hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
     # Run LARS if bic or aic criteria given.
     # If another criteria is given, then solve with FISTA.
@@ -152,7 +152,7 @@ def pySPFM(
             # Solve LARS for each voxel with parallelization
             lars_estimates = Parallel(n_jobs=n_jobs, backend="multiprocessing")(
                 delayed(solve_regularization_path)(
-                    hrf_norm, data_temp_reg[:, vox_idx], nlambdas, criteria
+                    hrf, data_temp_reg[:, vox_idx], nlambdas, criteria
                 )
                 for vox_idx in tqdm(range(nvoxels))
             )
@@ -165,7 +165,7 @@ def pySPFM(
             # Solve fista
             fista_estimates = Parallel(n_jobs=n_jobs, backend="multiprocessing")(
                 delayed(fista)(
-                    hrf_norm,
+                    hrf,
                     data_temp_reg[:, vox_idx],
                     criteria,
                     max_iter_fista,
@@ -189,12 +189,12 @@ def pySPFM(
         if block_model:
             estimates_block = estimates
             hrf_obj = HRFMatrix(te=te, block=False)
-            hrf_norm = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans, hrf_model=hrf_model).hrf_
+            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans, hrf_model=hrf_model).hrf_
             estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
-            fitts = np.dot(hrf_norm_fitting, estimates_spike)
+            fitts = np.dot(hrf, estimates_spike)
         else:
             estimates_spike = estimates
-            fitts = np.dot(hrf_norm, estimates_spike)
+            fitts = np.dot(hrf, estimates_spike)
 
         # Perform spatial regularization if a weight is given
         if spatial_weight > 0:
@@ -229,13 +229,13 @@ def pySPFM(
         LGR.info("Debiasing estimates...")
         if block_model:
             hrf_obj = HRFMatrix(te=te, block=False)
-            hrf_norm = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans, hrf_model=hrf_model).hrf_
+            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans, hrf_model=hrf_model).hrf_
             estimates_spike = debiasing_block(
-                hrf=hrf_norm, y=data_masked, estimates_matrix=final_estimates
+                hrf=hrf, y=data_masked, estimates_matrix=final_estimates
             )
-            fitts = np.dot(hrf_norm, estimates_spike)
+            fitts = np.dot(hrf, estimates_spike)
         else:
-            estimates_spike, fitts = debiasing_spike(hrf_norm, data_masked, final_estimates)
+            estimates_spike, fitts = debiasing_spike(hrf, data_masked, final_estimates)
 
     LGR.info("Saving results...")
     # Save innovation signal
@@ -253,9 +253,9 @@ def pySPFM(
 
         if not debias:
             hrf_obj = HRFMatrix(te=te, block=False)
-            hrf_norm = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans, hrf_model=hrf_model).hrf_
+            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans, hrf_model=hrf_model).hrf_
             estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
-            fitts = np.dot(hrf_norm, estimates_spike)
+            fitts = np.dot(hrf, estimates_spike)
 
     # Save activity-inducing signal
     if n_te == 1:
@@ -302,7 +302,7 @@ def pySPFM(
             y_echo = data_masked[:n_scans, :]
         else:
             y_echo = data_masked[te_idx * n_scans : (te_idx + 1) * n_scans, :]
-        _, _, noise_estimate = select_lambda(hrf=hrf_norm, y=y_echo)
+        _, _, noise_estimate = select_lambda(hrf=hrf, y=y_echo)
         write_data(
             np.expand_dims(noise_estimate, axis=0),
             os.path.join(out_dir, output_name),
