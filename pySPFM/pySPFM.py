@@ -32,7 +32,7 @@ def pySPFM(
     block_model=False,
     debias=True,
     group=0.2,
-    criteria="bic",
+    criterion="bic",
     pcg=0.8,
     factor=10,
     lambda_echo=-1,
@@ -146,12 +146,12 @@ def pySPFM(
         estimates = np.zeros((nscans, nvoxels))
         lambda_map = np.zeros(nvoxels)
 
-        if criteria in lars_criteria:
+        if criterion in lars_criteria:
             nlambdas = max_iter_factor * nscans
             # Solve LARS for each voxel with parallelization
             lars_estimates = Parallel(n_jobs=n_jobs, backend="multiprocessing")(
                 delayed(solve_regularization_path)(
-                    hrf_norm, data_temp_reg[:, vox_idx], nlambdas, criteria
+                    hrf_norm, data_temp_reg[:, vox_idx], nlambdas, criterion
                 )
                 for vox_idx in tqdm(range(nvoxels))
             )
@@ -160,13 +160,13 @@ def pySPFM(
                 estimates[:, vox_idx] = np.squeeze(lars_estimates[vox_idx][0])
                 lambda_map[vox_idx] = np.squeeze(lars_estimates[vox_idx][1])
 
-        elif criteria in fista_criteria:
+        elif criterion in fista_criteria:
             # Solve fista
             fista_estimates = Parallel(n_jobs=n_jobs, backend="multiprocessing")(
                 delayed(fista)(
                     hrf_norm,
                     data_temp_reg[:, vox_idx],
-                    criteria,
+                    criterion,
                     max_iter_fista,
                     min_iter_fista,
                     tolerance,

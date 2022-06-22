@@ -2,29 +2,29 @@ import numpy as np
 from sklearn.linear_model import lars_path
 
 
-def select_optimal_lambda(residuals, non_zero_count, nscans, criteria="bic"):
-    """_summary_
+def select_optimal_lambda(residuals, non_zero_count, nscans, criterion="bic"):
+    """Select optimal lambda based on the model selection criterion (BIC and AIC)
 
     Parameters
     ----------
-    residuals : _type_
-        _description_
-    non_zero_count : _type_
-        _description_
-    nscans : _type_
-        _description_
-    criteria : str, optional
-        _description_, by default "bic"
+    residuals : ndarray
+        Residuals of the model
+    non_zero_count : ndarray
+        Number of non-zero coefficients for each lambda
+    nscans : int
+        Number of scans
+    criterion : str, optional
+        Criterion to find the optimal solution, by default "bic"
 
     Returns
     -------
-    _type_
-        _description_
+    index_optimal_lambda : int
+        Index of the optimal lambda
     """
-    if criteria == "bic":
+    if criterion == "bic":
         # BIC regularization curve
         optimization_curve = nscans * np.log(residuals) + np.log(nscans) * non_zero_count
-    elif criteria == "aic":
+    elif criterion == "aic":
         # AIC regularization curve
         optimization_curve = nscans * np.log(residuals) + 2 * non_zero_count
 
@@ -34,24 +34,26 @@ def select_optimal_lambda(residuals, non_zero_count, nscans, criteria="bic"):
     return idx_optimal_lambda
 
 
-def solve_regularization_path(X, y, nlambdas, criteria="bic"):
-    """_summary_
+def solve_regularization_path(X, y, nlambdas, criterion="bic"):
+    """Solve the regularization path with the LARS algorithm.
 
     Parameters
     ----------
-    X : _type_
-        _description_
-    y : _type_
-        _description_
-    nlambdas : _type_
-        _description_
-    criteria : str, optional
-        _description_, by default "bic"
+    X : ndarray
+        Design matrix
+    y : ndarray
+        Voxel time-series
+    nlambdas : int
+        Number of lambdas to be tested
+    criterion : str, optional
+        Criterion to find the optimal solution, by default "bic"
 
     Returns
     -------
-    _type_
-        _description_
+    coef_path : ndarray
+        Estimates of the coefficients for the optimal lambda
+    lambdas : ndarray
+        Lambda of the optimal solution
     """
     nscans = y.shape[0]
 
@@ -66,11 +68,11 @@ def solve_regularization_path(X, y, nlambdas, criteria="bic"):
         eps=1e-9,
     )
 
-    # Compute residuals for model selection criteria (BIC and AIC)
+    # Compute residuals for model selection criterion (BIC and AIC)
     residuals = np.sum((np.repeat(y, nlambdas, axis=-1) - np.dot(X, coef_path)) ** 2, axis=0)
 
     optimal_lambda_idx = select_optimal_lambda(
-        residuals, np.count_nonzero(coef_path, axis=0), nscans, criteria
+        residuals, np.count_nonzero(coef_path, axis=0), nscans, criterion
     )
 
     return coef_path[:, optimal_lambda_idx], lambdas[optimal_lambda_idx]
