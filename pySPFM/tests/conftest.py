@@ -86,3 +86,18 @@ def hrf_file(testpath):
 @pytest.fixture
 def hrf_linear_file(testpath):
     return fetch_file("mkeu2", testpath, "hrf_linear.txt")
+
+
+@pytest.fixture
+def nih_five_echo_1(testpath):
+    return fetch_file("em9r8", testpath, "p06.SBJ01_S09_Task11_e1.sm.nii.gz")
+
+
+@pytest.fixture
+def fista_results(testpath):
+    return fetch_file("3a925", testpath, "fista_results.npy")
+
+
+@pytest.fixture
+def coef_path_results(testpath):
+    return fetch_file("nxgeq", testpath, "coef_path.npy")
