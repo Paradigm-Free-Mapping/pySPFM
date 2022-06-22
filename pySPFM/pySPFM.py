@@ -54,7 +54,7 @@ def pySPFM(
     data_str = str(data_fn).strip("[]")
     te_str = str(te).strip("[]")
     arguments = f"-i {data_str} -m {mask_fn} -o {output_filename} -tr {tr} "
-    arguments += f"-d {out_dir} -te {te_str} -group {group} -crit {criteria} "
+    arguments += f"-d {out_dir} -te {te_str} -group {group} -crit {criterion} "
 
     if block_model:
         arguments += "-block "
@@ -121,8 +121,8 @@ def pySPFM(
     hrf_obj = HRFMatrix(TR=tr, nscans=nscans, TE=te, block=block_model)
     hrf_norm = hrf_obj.generate_hrf().hrf_norm
 
-    # Run LARS if bic or aic criteria given.
-    # If another criteria is given, then solve with FISTA.
+    # Run LARS if bic or aic on given.
+    # If another criterion is given, then solve with FISTA.
     lars_criteria = ["bic", "aic"]
     fista_criteria = ["mad", "mad_update", "ut", "lut", "factor", "pcg", "eigval"]
 
@@ -182,7 +182,7 @@ def pySPFM(
                 lambda_map[vox_idx] = np.squeeze(fista_estimates[vox_idx][1])
 
         else:
-            raise ValueError("Wrong criteria option given.")
+            raise ValueError("Wrong criterion option given.")
 
         # Convolve with HRF
         if block_model:

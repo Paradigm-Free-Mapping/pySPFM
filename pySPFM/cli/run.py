@@ -97,8 +97,8 @@ def _get_parser():
     )
     optional.add_argument(
         "-crit",
-        "--criteria",
-        dest="criteria",
+        "--criterion",
+        dest="criterion",
         type=str,
         choices=["mad", "mad_update", "ut", "lut", "factor", "pcg", "eigval"],
         help="Criteria with which lambda is selected to estimate activity-inducing "
