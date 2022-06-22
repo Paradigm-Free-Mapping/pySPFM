@@ -107,3 +107,4 @@ venv.bak/
 # mypy
 .mypy_cache/
 .vscode/
+3dDeconvolve.err
