@@ -112,7 +112,7 @@ def do_debias_block(hrf, y, estimates_matrix, dist=2):
     return beta_out
 
 
-def debiasing_block(hrf, y, estimates_matrix, dist=2, progress_bar=True, jobs=4):
+def debiasing_block(hrf, y, estimates_matrix, dist=2, progress_bar=True, jobs=1):
     """Voxelwise block model debiasing workflow.
 
     Parameters
@@ -191,7 +191,7 @@ def do_debias_spike(hrf, y, estimates_matrix):
     return beta_out, fitts_out
 
 
-def debiasing_spike(hrf, y, estimates_matrix, progress_bar=True, jobs=4):
+def debiasing_spike(hrf, y, estimates_matrix, progress_bar=True, jobs=1):
     """Perform voxelwise debiasing with spike model.
 
     Parameters
