@@ -188,8 +188,8 @@ def pySPFM(
         # Convolve with HRF
         if block_model:
             estimates_block = estimates
-            hrf_obj = HRFMatrix(te=te, block=False)
-            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans, model=hrf_model).hrf_
+            hrf_obj = HRFMatrix(te=te, block=False, model=hrf_model)
+            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
             estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
             fitts = np.dot(hrf, estimates_spike)
         else:
@@ -228,8 +228,8 @@ def pySPFM(
     if debias:
         LGR.info("Debiasing estimates...")
         if block_model:
-            hrf_obj = HRFMatrix(te=te, block=False)
-            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans, hrf_model=hrf_model).hrf_
+            hrf_obj = HRFMatrix(te=te, block=False, model=hrf_model)
+            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
             estimates_spike = debiasing_block(
                 hrf=hrf, y=data_masked, estimates_matrix=final_estimates
             )
@@ -252,8 +252,8 @@ def pySPFM(
         )
 
         if not debias:
-            hrf_obj = HRFMatrix(te=te, block=False)
-            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans, model=hrf_model).hrf_
+            hrf_obj = HRFMatrix(te=te, block=False, model=hrf_model)
+            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
             estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
             fitts = np.dot(hrf, estimates_spike)
 
