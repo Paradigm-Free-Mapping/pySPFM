@@ -100,9 +100,13 @@ def test_integration_five_echo(skip_integration, mask_five_echo):
         + ["-d"]
         + [out_dir]
         + ["-crit"]
-        + ["ut"]
+        + ["factor"]
+        + ["-factor"]
+        + ["10"]
         + ["--max_iter_fista"]
         + ["50"]
+        + ["-jobs"]
+        + ["1"]
         + [
             "--debug",
             "--debias",

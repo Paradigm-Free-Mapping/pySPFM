@@ -18,4 +18,3 @@ ignore:
   - "pySPFM/tests/"
   - "pySPFM/due.py"
   - "pySPFM/_version.py"
-  - "pySPFM/info.py"
