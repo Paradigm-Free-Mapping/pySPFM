@@ -72,7 +72,7 @@ def solve_regularization_path(X, y, nlambdas, criterion="bic"):
     residuals = np.sum((np.repeat(y, nlambdas, axis=-1) - np.dot(X, coef_path)) ** 2, axis=0)
 
     optimal_lambda_idx = select_optimal_lambda(
-        residuals, np.count_nonzero(coef_path, axis=0), n_scans, criteria
+        residuals, np.count_nonzero(coef_path, axis=0), n_scans, criterion
     )
 
     return coef_path[:, optimal_lambda_idx], lambdas[optimal_lambda_idx]
