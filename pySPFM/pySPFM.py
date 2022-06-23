@@ -33,7 +33,7 @@ def pySPFM(
     hrf_model="spm",
     debias=True,
     group=0.2,
-    criteria="bic",
+    criterion="bic",
     pcg=0.8,
     factor=10,
     lambda_echo=-1,
@@ -42,7 +42,7 @@ def pySPFM(
     max_iter_spatial=100,
     max_iter=10,
     min_iter_fista=50,
-    n_jobs=-1,
+    n_jobs=1,
     spatial_weight=0,
     spatial_lambda=1,
     spatial_dim=3,
@@ -55,7 +55,7 @@ def pySPFM(
     data_str = str(data_fn).strip("[]")
     te_str = str(te).strip("[]")
     arguments = f"-i {data_str} -m {mask_fn} -o {output_filename} -tr {tr} "
-    arguments += f"-d {out_dir} -te {te_str} -group {group} -crit {criteria} "
+    arguments += f"-d {out_dir} -te {te_str} -group {group} -crit {criterion} "
 
     if block_model:
         arguments += "-block "
@@ -122,8 +122,8 @@ def pySPFM(
     hrf_obj = HRFMatrix(te=te, block=block_model, model=hrf_model)
     hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
-    # Run LARS if bic or aic criteria given.
-    # If another criteria is given, then solve with FISTA.
+    # Run LARS if bic or aic on given.
+    # If another criterion is given, then solve with FISTA.
     lars_criteria = ["bic", "aic"]
     fista_criteria = ["mad", "mad_update", "ut", "lut", "factor", "pcg", "eigval"]
 
@@ -147,12 +147,12 @@ def pySPFM(
         estimates = np.zeros((n_scans, nvoxels))
         lambda_map = np.zeros(nvoxels)
 
-        if criteria in lars_criteria:
+        if criterion in lars_criteria:
             nlambdas = max_iter_factor * n_scans
             # Solve LARS for each voxel with parallelization
             lars_estimates = Parallel(n_jobs=n_jobs, backend="multiprocessing")(
                 delayed(solve_regularization_path)(
-                    hrf, data_temp_reg[:, vox_idx], nlambdas, criteria
+                    hrf, data_temp_reg[:, vox_idx], nlambdas, criterion
                 )
                 for vox_idx in tqdm(range(nvoxels))
             )
@@ -161,13 +161,13 @@ def pySPFM(
                 estimates[:, vox_idx] = np.squeeze(lars_estimates[vox_idx][0])
                 lambda_map[vox_idx] = np.squeeze(lars_estimates[vox_idx][1])
 
-        elif criteria in fista_criteria:
+        elif criterion in fista_criteria:
             # Solve fista
             fista_estimates = Parallel(n_jobs=n_jobs, backend="multiprocessing")(
                 delayed(fista)(
                     hrf,
                     data_temp_reg[:, vox_idx],
-                    criteria,
+                    criterion,
                     max_iter_fista,
                     min_iter_fista,
                     tolerance,
@@ -183,7 +183,7 @@ def pySPFM(
                 lambda_map[vox_idx] = np.squeeze(fista_estimates[vox_idx][1])
 
         else:
-            raise ValueError("Wrong criteria option given.")
+            raise ValueError("Wrong criterion option given.")
 
         # Convolve with HRF
         if block_model:
@@ -231,11 +231,13 @@ def pySPFM(
             hrf_obj = HRFMatrix(te=te, block=False, model=hrf_model)
             hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
             estimates_spike = debiasing_block(
-                hrf=hrf, y=data_masked, estimates_matrix=final_estimates
+                hrf=hrf, y=data_masked, estimates_matrix=final_estimates, jobs=n_jobs
             )
             fitts = np.dot(hrf, estimates_spike)
         else:
-            estimates_spike, fitts = debiasing_spike(hrf, data_masked, final_estimates)
+            estimates_spike, fitts = debiasing_spike(
+                hrf, data_masked, final_estimates, jobs=n_jobs
+            )
 
     LGR.info("Saving results...")
     # Save innovation signal
