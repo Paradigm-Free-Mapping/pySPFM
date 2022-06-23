@@ -31,6 +31,7 @@ def pySPFM(
     te=[0],
     block_model=False,
     hrf_model="spm",
+    hrf_custom=None,
     debias=True,
     group=0.2,
     criterion="bic",
@@ -119,7 +120,7 @@ def pySPFM(
 
     # Generate design matrix with shifted versions of HRF
     LGR.info("Generating design matrix with shifted versions of HRF...")
-    hrf_obj = HRFMatrix(te=te, block=block_model, model=hrf_model)
+    hrf_obj = HRFMatrix(te=te, block=block_model, model=hrf_model, custom=hrf_custom)
     hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
     # Run LARS if bic or aic on given.
