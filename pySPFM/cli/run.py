@@ -93,7 +93,7 @@ def _get_parser():
         dest="hrf_custom",
         type=str,
         help="Custom HRF model to use. Default = 'None'.",
-        default="None",
+        default=None,
     )
     optional.add_argument(
         "--debias",
