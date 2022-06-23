@@ -89,6 +89,13 @@ def _get_parser():
         choices=["spm", "glover"],
     )
     optional.add_argument(
+        "--hrf_custom",
+        dest="hrf_custom",
+        type=str,
+        help="Custom HRF model to use. Default = 'None'.",
+        default="None",
+    )
+    optional.add_argument(
         "--debias",
         dest="debias",
         action="store_true",

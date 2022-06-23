@@ -35,10 +35,12 @@ class HRFMatrix:
         te=None,
         model="spm",
         block=True,
+        custom=None,
     ):
         self.te = te
         self.model = model
         self.block = block
+        self.custom = custom
 
     def generate_hrf(self, tr, n_scans):
         """Generate HRF matrix.
@@ -48,11 +50,15 @@ class HRFMatrix:
         self
         """
 
-        # Get HRF from nilearn
-        if self.model == "spm":
-            hrf = spm_hrf(tr, oversampling=1, time_length=n_scans * tr)
-        elif self.model == "glover":
-            hrf = glover_hrf(tr, oversampling=1, time_length=n_scans * tr)
+        # Read custom HRF from file
+        if self.custom is not None:
+            hrf = np.loadtxt(self.custom)
+        else:
+            # Get HRF from nilearn
+            if self.model == "spm":
+                hrf = spm_hrf(tr, oversampling=1, time_length=n_scans * tr)
+            elif self.model == "glover":
+                hrf = glover_hrf(tr, oversampling=1, time_length=n_scans * tr)
 
         # Calculate maximum HRF value
         max_val = max(abs(hrf))
