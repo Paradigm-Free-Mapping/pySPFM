@@ -14,7 +14,7 @@ import pytest
 import requests
 from pkg_resources import resource_filename
 
-from pySPFM import pySPFM as pySPFM_cli
+from pySPFM.workflows import pySPFM as pySPFM_cli
 
 
 def download_test_data(osf, outpath):
