@@ -182,6 +182,23 @@ def clip(input, atlas):
 
 
 def generate_delta(dim=3):
+    """Generate the delta operator.
+
+    Parameters
+    ----------
+    dim : int, optional
+        Number of dimensions of the operator, by default 3
+
+    Returns
+    -------
+    h : array_like
+        The delta operator.
+
+    Raises
+    ------
+    ValueError
+        If dim is not 2 or 3.
+    """
     if dim == 2:
         h = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
     elif dim == 3:

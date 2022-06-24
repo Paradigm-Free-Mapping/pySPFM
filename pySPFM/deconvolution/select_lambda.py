@@ -3,7 +3,7 @@ from pywt import wavedec
 from scipy.stats import median_absolute_deviation
 
 
-def select_lambda(hrf, y, criterion="mad_update", factor=1, pcg=0.7, lambda_echo=-1):
+def select_lambda(hrf, y, criterion="ut", factor=1, pcg=0.7, lambda_echo=-1):
     """Criteria to select regularization parameter lambda.
 
     Parameters
@@ -14,7 +14,24 @@ def select_lambda(hrf, y, criterion="mad_update", factor=1, pcg=0.7, lambda_echo
     y : (T x S) array_like
         Matrix with fMRI data provided to pySPFM.
     criterion : str, optional
-        Criteria to select regularization parameter lambda, by default "mad_update"
+        Criteria to select regularization parameter lambda, by default "ut"
+        Options:
+            "ut" : universal threshold
+                $\lambda = \sigma * \sqrt{2 * \log(T)}$, where $\sigma$ is the median absolute
+                deviation of the estimated level of noise and $T$ is the number of TRs.
+            "lut" : lower universal threshold
+                $\lambda = \sigma * \sqrt{2 * \log(T) - \log(1 + 4 * \log(T))}$, where $\sigma$ is
+                the median absolute deviation of the estimated level of noise and $T$ is the number
+                of TRs.
+            "mad" : median absolute deviation of the estimated level of the noise
+
+            "mad_update" : median absolute deviation of the estimated level of the noise that gets
+                updated on each iteration
+            "pcg" : percentage of the maximum lambda possible to use as lambda
+                $\lambda = \text{pcg} * \lambda_{max}$, where
+                $\lambda_{max}= \|\mathbf{H}^T \mathbf{y}$ and $0 \leq \text{pcg} \leq 1$
+            "factor" : factor of the estimate of the level of noise to use as lambda
+                $\lambda = \text{factor} * \sigma$, with $0 \leq \text{factor} \leq 1$
     factor : int, optional
         Factor by which to multiply the value of lambda, by default 1
         Only used when "factor" criterion is selected.
