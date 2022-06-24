@@ -116,7 +116,7 @@ def test_integration_five_echo(skip_integration, mask_five_echo):
     pySPFM_cli._main(args)
 
     # compare the generated output files
-    fn = resource_filename("pySPFM", "../tests/data/nih_five_echo_outputs_verbose.txt")
+    fn = resource_filename("pySPFM", "tests/data/nih_five_echo_outputs_verbose.txt")
     check_integration_outputs(fn, out_dir)
 
 
@@ -163,5 +163,5 @@ def test_integration_lars(skip_integration, mask_five_echo):
     pySPFM_cli._main(args)
 
     # compare the generated output files
-    fn = resource_filename("pySPFM", "../tests/data/lars_integration_outputs.txt")
+    fn = resource_filename("pySPFM", "tests/data/lars_integration_outputs.txt")
     check_integration_outputs(fn, out_dir)
