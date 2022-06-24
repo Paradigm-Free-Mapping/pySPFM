@@ -1,7 +1,6 @@
 _references.txt
 call.sh
-test_data.pySPFM_fitts.nii.gz
-test_data.pySPFM_beta.nii.gz
-test_data.pySPFM_innovation.nii.gz
-test_data.pySPFM_lambda.nii.gz
-test_data.pySPFM_MAD_E01.nii.gz
+test_lars.pySPFM_fitts.nii.gz
+test_lars.pySPFM_beta.nii.gz
+test_lars.pySPFM_lambda.nii.gz
+test_lars.pySPFM_MAD_E01.nii.gz
