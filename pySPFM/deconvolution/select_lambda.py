@@ -17,21 +17,28 @@ def select_lambda(hrf, y, criterion="ut", factor=1, pcg=0.7, lambda_echo=-1):
         Criteria to select regularization parameter lambda, by default "ut"
         Options:
             "ut" : universal threshold
-                $\lambda = \sigma * \sqrt{2 * \log(T)}$, where $\sigma$ is the median absolute
-                deviation of the estimated level of noise and $T$ is the number of TRs.
+                .. math::
+                    \lambda = \sigma * \sqrt{2 * \log(T)}, where \sigma is the median absolute
+                    deviation of the estimated level of noise and T is the number of TRs.
             "lut" : lower universal threshold
-                $\lambda = \sigma * \sqrt{2 * \log(T) - \log(1 + 4 * \log(T))}$, where $\sigma$ is
-                the median absolute deviation of the estimated level of noise and $T$ is the number
-                of TRs.
-            "mad" : median absolute deviation of the estimated level of the noise
-
+                .. math::
+                    \lambda = \sigma * \sqrt{2 * \log(T) - \log(1 + 4 * \log(T))}, where \sigma is
+                    the median absolute deviation of the estimated level of noise and T is the
+                    number of TRs.
+            "mad" : calculate lambda as the median absolute deviation of fine-scale wavelet
+            coefficients (Daubechies, order 3). For more information, see Karahanoglu et al.
+            (2013).
             "mad_update" : median absolute deviation of the estimated level of the noise that gets
-                updated on each iteration
+                updated on each iteration (see Karahanoglu et al. 2013)
+                .. math::
+                    \lambda_{n+1}=\frac{N \sigma}{1/2 \| \mathbf{y} - \mathbf{x} \|_2^2 \lambda_n}
             "pcg" : percentage of the maximum lambda possible to use as lambda
-                $\lambda = \text{pcg} * \lambda_{max}$, where
-                $\lambda_{max}= \|\mathbf{H}^T \mathbf{y}$ and $0 \leq \text{pcg} \leq 1$
+                .. math::
+                    \lambda = \text{pcg} * \lambda_{max}, where
+                    \lambda_{max}= \|\mathbf{H}^T \mathbf{y} and 0 \leq \text{pcg} \leq 1
             "factor" : factor of the estimate of the level of noise to use as lambda
-                $\lambda = \text{factor} * \sigma$, with $0 \leq \text{factor} \leq 1$
+                .. math::
+                    \lambda = \text{factor} * \sigma, with 0 \leq \text{factor} \leq 1
     factor : int, optional
         Factor by which to multiply the value of lambda, by default 1
         Only used when "factor" criterion is selected.
