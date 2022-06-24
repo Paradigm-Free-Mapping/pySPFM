@@ -100,10 +100,11 @@ def _get_parser():
         "--criterion",
         dest="criterion",
         type=str,
-        choices=["mad", "mad_update", "ut", "lut", "factor", "pcg", "eigval"],
+        choices=["mad", "mad_update", "ut", "lut", "factor", "pcg", "eigval", "bic", "aic"],
         help="Criteria with which lambda is selected to estimate activity-inducing "
-        "and innovation signals.",
-        default="mad_update",
+        "and innovation signals. 'aic' and 'bic' are used with the LARS algorithm, "
+        " while the other criteria are used with FISTA. Default = 'ut'.",
+        default="ut",
     )
     optional.add_argument(
         "-pcg",

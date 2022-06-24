@@ -147,7 +147,7 @@ def pySPFM(
         lambda_map = np.zeros(nvoxels)
 
         if criterion in lars_criteria:
-            nlambdas = max_iter_factor * nscans
+            nlambdas = int(np.ceil(max_iter_factor * nscans))
             # Solve LARS for each voxel with parallelization
             lars_estimates = Parallel(n_jobs=n_jobs, backend="multiprocessing")(
                 delayed(solve_regularization_path)(
@@ -297,13 +297,10 @@ def pySPFM(
             )
 
     # Save noise estimate
-    for te_idx in range(n_te):
-        output_name = f"{output_filename}_MAD_E0{te_idx + 1}.nii.gz"
-        if te_idx == 0:
-            y_echo = data_masked[:nscans, :]
-        else:
-            y_echo = data_masked[te_idx * nscans : (te_idx + 1) * nscans, :]
-        _, _, noise_estimate = select_lambda(hrf=hrf_norm, y=y_echo)
+    if n_te == 1:
+        output_name = f"{output_filename}_MAD.nii.gz"
+        y = data_masked[:nscans, :]
+        _, _, noise_estimate = select_lambda(hrf=hrf_norm, y=y)
         write_data(
             np.expand_dims(noise_estimate, axis=0),
             os.path.join(out_dir, output_name),
@@ -312,6 +309,22 @@ def pySPFM(
             command_str,
             is_atlas=is_atlas,
         )
+    else:
+        for te_idx in range(n_te):
+            output_name = f"{output_filename}_MAD_E0{te_idx + 1}.nii.gz"
+            if te_idx == 0:
+                y_echo = data_masked[:nscans, :]
+            else:
+                y_echo = data_masked[te_idx * nscans : (te_idx + 1) * nscans, :]
+            _, _, noise_estimate = select_lambda(hrf=hrf_norm, y=y_echo)
+            write_data(
+                np.expand_dims(noise_estimate, axis=0),
+                os.path.join(out_dir, output_name),
+                mask,
+                data_header,
+                command_str,
+                is_atlas=is_atlas,
+            )
 
     # Save lambda
     output_name = f"{output_filename}_lambda.nii.gz"
