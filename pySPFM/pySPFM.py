@@ -147,7 +147,7 @@ def pySPFM(
         lambda_map = np.zeros(nvoxels)
 
         if criterion in lars_criteria:
-            nlambdas = max_iter_factor * nscans
+            nlambdas = int(np.ceil(max_iter_factor * nscans))
             # Solve LARS for each voxel with parallelization
             lars_estimates = Parallel(n_jobs=n_jobs, backend="multiprocessing")(
                 delayed(solve_regularization_path)(
