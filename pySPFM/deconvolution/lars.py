@@ -57,6 +57,10 @@ def solve_regularization_path(X, y, nlambdas, criterion="bic"):
     """
     nscans = y.shape[0]
 
+    # If y is a vector, add a dimension to make it a matrix
+    if y.ndim == 1:
+        y = y[:, np.newaxis]
+
     # LARS path
     lambdas, _, coef_path = lars_path(
         X,
