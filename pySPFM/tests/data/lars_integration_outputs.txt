@@ -3,4 +3,4 @@ call.sh
 test_lars.pySPFM_fitts.nii.gz
 test_lars.pySPFM_beta.nii.gz
 test_lars.pySPFM_lambda.nii.gz
-test_lars.pySPFM_MAD_E01.nii.gz
+test_lars.pySPFM_MAD.nii.gz
