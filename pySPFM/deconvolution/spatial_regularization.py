@@ -1,3 +1,4 @@
+"""Spatial regularization functions as developed in Total Activation."""
 import numpy as np
 from nilearn.masking import apply_mask, unmask
 
