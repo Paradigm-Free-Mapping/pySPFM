@@ -19,21 +19,21 @@ def innovation_to_block(hrf, y, estimates_matrix, is_ls):
 
     Parameters
     ----------
-    hrf : (E x T) array_like
+    hrf : (E x T) ndarray
         Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
         the number of echo-times.
-    y : (T x S) array_like
+    y : (T x S) ndarray
         Matrix with fMRI data provided to pySPFM.
-    estimates_matrix : (T x S) array_like
+    estimates_matrix : (T x S) ndarray
         Matrix containing the non-zero coefficients selected as neuronal-related.
     is_ls : bool
         Whether least squares is solved in favor of ridge regression.
 
     Returns
     -------
-    beta : (T x S) array_like
+    beta : (T x S) ndarray
         Debiased activity-inducing signal obtained from estimated innovation signal.
-    S : (T x L) array_like
+    S : (T x L) ndarray
         Transformation matrix used to integrate the innovation signal into activity-inducing
         signal. L stands for the number of steps to integrate.
     """
@@ -85,19 +85,19 @@ def do_debias_block(hrf, y, estimates_matrix, dist=2):
 
     Parameters
     ----------
-    hrf : (E x T) array_like
+    hrf : (E x T) ndarray
         Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
         the number of echo-times.
-    y : (T x 1) array_like
+    y : (T x 1) ndarray
         Matrix with fMRI data provided to pySPFM in a voxel.
-    estimates_matrix : (T x 1) array_like
+    estimates_matrix : (T x 1) ndarray
         Matrix containing the non-zero coefficients selected as neuronal-related in a voxel.
     dist : int, optional
         Minimum number of TRs in between of the peaks found, by default 2
 
     Returns
     -------
-    beta_out : array_like
+    beta_out : ndarray
         Debiased activity-inducing signal obtained from estimated innovation signal in a voxel.
     """
     # Keep only maximum values in estimates_matrix peaks
@@ -117,19 +117,19 @@ def debiasing_block(hrf, y, estimates_matrix, dist=2, progress_bar=True, jobs=1)
 
     Parameters
     ----------
-    hrf : (E x T) array_like
+    hrf : (E x T) ndarray
         Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
         the number of echo-times.
-    y : (T x S) array_like
+    y : (T x S) ndarray
         Matrix with fMRI data provided to pySPFM.
-    estimates_matrix : (T x S) array_like
+    estimates_matrix : (T x S) ndarray
         Matrix containing the non-zero coefficients selected as neuronal-related.
     dist : int, optional
         Minimum number of TRs in between of the peaks found, by default 2
 
     Returns
     -------
-    beta_out : array_like
+    beta_out : ndarray
         Debiased activity-inducing signal obtained from estimated innovation signal.
     """
     nscans = estimates_matrix.shape[0]
@@ -163,19 +163,19 @@ def do_debias_spike(hrf, y, estimates_matrix):
 
     Parameters
     ----------
-    hrf : (E x T) array_like
+    hrf : (E x T) ndarray
         Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
         the number of echo-times.
-    y : (T x 1) array_like
+    y : (T x 1) ndarray
         Array with fMRI data of a voxel provided to pySPFM.
-    estimates_matrix : (T x 1) array_like
+    estimates_matrix : (T x 1) ndarray
         Array containing the non-zero coefficients selected as neuronal-related.
 
     Returns
     -------
-    beta_out : array_like
+    beta_out : ndarray
         Debiased activity-inducing signal in a voxel.
-    fitts_out : array_like
+    fitts_out : ndarray
         Debiased activity-inducing signal convolved with the HRF in a voxel.
     """
     index_events_opt = np.where(abs(estimates_matrix) > 10 * np.finfo(float).eps)[0]
@@ -196,19 +196,19 @@ def debiasing_spike(hrf, y, estimates_matrix, progress_bar=True, jobs=1):
 
     Parameters
     ----------
-    hrf : (E x T) array_like
+    hrf : (E x T) ndarray
         Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
         the number of echo-times.
-    y : (T x S) array_like
+    y : (T x S) ndarray
         Matrix with fMRI data provided to pySPFM.
-    estimates_matrix : (T x S) array_like
+    estimates_matrix : (T x S) ndarray
         Matrix containing the non-zero coefficients selected as neuronal-related.
 
     Returns
     -------
-    beta_out : array_like
+    beta_out : ndarray
         Debiased activity-inducing signal.
-    fitts_out : array_like
+    fitts_out : ndarray
         Debiased activity-inducing signal convolved with the HRF.
     """
     beta_out = np.zeros(estimates_matrix.shape)

@@ -16,9 +16,9 @@ def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
 
     Parameters
     ----------
-    estimates : numpy.array
+    estimates : ndarray
         Estimates (output of temporal regularization).
-    data : numpy.array
+    data : ndarray
         Observations.
     mask : Nibabel object
         Mask image to unmask and mask estimates (2D to 4D and back).
@@ -34,7 +34,7 @@ def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
 
     Returns
     -------
-    final_estimates: np.array
+    final_estimates: ndarray
         Estimates of activity-inducing or innovation signal after spatial regularization.
     """
     # Transform data from 2D into 4D
@@ -101,9 +101,9 @@ def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
 
     Parameters
     ----------
-    estimates : numpy.array
+    estimates : ndarray
         Estimates (output of temporal regularization).
-    data : numpy.array
+    data : ndarray
         Observations.
     mask : Nibabel object
         Mask image to unmask and mask estimates (2D to 4D and back).
@@ -116,7 +116,7 @@ def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
 
     Returns
     -------
-    final_estimates: np.array
+    final_estimates: ndarray
         Estimates of activity-inducing or innovation signal after spatial regularization.
     """
 
@@ -159,14 +159,14 @@ def clip(input, atlas):
 
     Parameters
     ----------
-    input : numpy.array
+    input : ndarray
         Input to clip.
-    atlas : numpy.array
+    atlas : ndarray
         Atlas to clip input to.
 
     Returns
     -------
-    clipped_input: numpy.array
+    clipped_input: ndarray
         Clipped input.
     """
 
@@ -194,7 +194,7 @@ def generate_delta(dim=3):
 
     Returns
     -------
-    h : array_like
+    h : ndarray
         The delta operator.
 
     Raises
