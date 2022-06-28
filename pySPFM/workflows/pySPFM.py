@@ -303,6 +303,7 @@ def pySPFM(
     is_atlas=False,
     debug=False,
     quiet=False,
+    command_str=None,
 ):
     """pySPFM is a Python programm for the Sparse Paradigm Free Mapping algorithm.
 
@@ -365,34 +366,24 @@ def pySPFM(
         Logger option for debugging, by default False
     quiet : bool, optional
         Quiet logger option (no messages shown), by default False
+    command_str : str, optional
+        Command string to be used in the log file, by default None.
 
     Raises
     ------
     ValueError
         If wrong criterion is provided.
     """
-    data_str = str(data_fn).strip("[]")
-    te_str = str(te).strip("[]")
-    arguments = f"-i {data_str} -m {mask_fn} -o {output_filename} -tr {tr} "
-    arguments += f"-d {out_dir} -te {te_str} -group {group} -crit {criterion} "
-
-    if block_model:
-        arguments += "-block "
-    if debug:
-        arguments += "-debug "
-    if quiet:
-        arguments += "-quiet"
-    command_str = f"pySPFM {arguments}"
-
     # Generate output directory if it doesn't exist
     out_dir = op.abspath(out_dir)
     if not op.isdir(out_dir):
         os.mkdir(out_dir)
 
-    # Save command into sh file
-    command_file = open(os.path.join(out_dir, "call.sh"), "w")
-    command_file.write(command_str)
-    command_file.close()
+    # Save command into sh file, if the command-line interface was used
+    if command_str is not None:
+        command_file = open(os.path.join(out_dir, "call.sh"), "w")
+        command_file.write(command_str)
+        command_file.close()
 
     LGR = logging.getLogger("GENERAL")
     # RefLGR = logging.getLogger("REFERENCES")
@@ -663,11 +654,12 @@ def pySPFM(
     utils.teardown_loggers()
 
 
-def _main(argv=None):
+def _main():
     """pySPFM entry point"""
-    options = _get_parser().parse_args(argv)
-    pySPFM(**vars(options))
+    command_str = "pySPFM " + " ".join(sys.argv[1:])
+    options = _get_parser().parse_args()
+    pySPFM(**vars(options), command_str=command_str)
 
 
 if __name__ == "__main__":
-    _main(sys.argv[1:])
+    _main()
