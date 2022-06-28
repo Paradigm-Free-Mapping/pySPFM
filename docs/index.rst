@@ -30,10 +30,9 @@ The ``pySPFM`` package is a Python version of AFNI's 3dPFM and 3dMEPFM.
    :target: http://pyspfm.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://codecov.io/gh/pySPFM/pySPFM/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/pySPFM/pySPFM
+.. image:: https://codecov.io/gh/eurunuela/pySPFM/branch/main/graph/badge.svg
+   :target: https://codecov.io/gh/eurunuela/pySPFM
    :alt: Codecov
-
 
 *****
 About
