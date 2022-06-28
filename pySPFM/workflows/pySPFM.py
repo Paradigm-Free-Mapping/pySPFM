@@ -304,6 +304,73 @@ def pySPFM(
     debug=False,
     quiet=False,
 ):
+    """pySPFM is a Python programm for the Sparse Paradigm Free Mapping algorithm.
+
+    Parameters
+    ----------
+    data_fn : str
+        Input data file(s). List of files for multi-echo data
+    mask_fn : str
+        Input mask file
+    output_filename : str
+        Prefix of output files.
+    tr : float
+        Repetition time
+    out_dir : str
+        Output directory
+    te : list, optional
+        TE values in ms, by default [0], i.e. single-echo
+    block_model : bool, optional
+        Use the block model instead of using the spike model, by default False
+    debias : bool, optional
+        Perform debiasing step to recover true amplitude of estimates, by default True
+    group : float, optional
+        Grouping (l2,1-norm) regularization parameter, by default 0.2
+    criterion : str, optional
+        Criterion to select regularization parameter lambda, by default "bic"
+    pcg : float, optional
+        Percentage of the maximum lambda possible to use as lambda, by default 0.8
+    factor : int, optional
+        Factor of the estimate of the level of noise to use as lambda, by default 10
+    lambda_echo : int, optional
+        When using multi-echo data, the number of TE to use to estimate the level of the noise,
+        by default -1
+    max_iter_factor : float, optional
+        Percentage of TRs to limit the LARS search to (less is faster), by default 1.0
+    max_iter_fista : int, optional
+        Maximum number of iterations for FISTA, by default 500
+    max_iter_spatial : int, optional
+        Maximum number of iterations for spatial regularization, by default 100
+    max_iter : int, optional
+        Maximum number of iterations to solve both temporal and spatial regularization,
+        by default 10
+    min_iter_fista : int, optional
+        Minimum number of iterations for FISTA, by default 50
+    n_jobs : int, optional
+        Number of parallel jobs to perform FISTA and debiasing, by default 1
+    spatial_weight : int, optional
+        Weighting between the temporal and spatial regularization, by default 0 (only temporal)
+    spatial_lambda : int, optional
+        Regularization parameter for spatial regularization, by default 1
+    spatial_dim : int, optional
+        Dimensions of the spatial regularization filter (can be 2 for slices or 3 for volume),
+        by default 3
+    mu : float, optional
+        Step size for spatial regularization, by default 0.01
+    tolerance : _type_, optional
+        Tolerance for residuals to find convergence of inverse problem, by default 1e-6
+    is_atlas : bool, optional
+        Read mask as atlas with different labels, by default False
+    debug : bool, optional
+        Logger option for debugging, by default False
+    quiet : bool, optional
+        Quiet logger option (no messages shown), by default False
+
+    Raises
+    ------
+    ValueError
+        If wrong criterion is provided.
+    """
     data_str = str(data_fn).strip("[]")
     te_str = str(te).strip("[]")
     arguments = f"-i {data_str} -m {mask_fn} -o {output_filename} -tr {tr} "
