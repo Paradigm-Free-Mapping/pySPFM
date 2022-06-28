@@ -52,11 +52,11 @@ def select_lambda(hrf, y, criterion="ut", factor=1, pcg=0.7, lambda_echo=-1):
     - 'mad_update' : updating median absolute deviation.
         Median absolute deviation of the estimated level of the noise that gets
         updated on each iteration (see Karahanoglu et al. 2013):
-        :math:`\\lambda_{n+1} = {\\frac{N \\sigma}{1/2 \|
-        \\mathbf{y} - \\mathbf{x} \|_2^2 \\lambda_n}}`.
+        :math:`\\lambda_{n+1} = {\\frac{N \\sigma}{\\frac{1}{2} \\|
+        \\mathbf{y} - \\mathbf{Hs} \\|_2^2 \\lambda_n}}`.
     - 'pcg' : percentage of the maximum lambda possible to use as lambda.
         :math:`\\lambda = \\textrm{pcg} * \\lambda_{max}`,
-        where :math:`\\lambda_{max}= \| \\mathbf{H}^T \\mathbf{y} \|` and
+        where :math:`\\lambda_{max}= \\| \\mathbf{H}^T \\mathbf{y} \\|` and
         :math:`0 \\leq \\textrm{pcg} \\leq 1`
     - 'factor' : factor of the estimate of the level of noise to use as lambda.
         :math:`\\lambda = \\textrm{factor} * \\sigma, with 0 \\leq \\textrm{factor} \\leq 1`
