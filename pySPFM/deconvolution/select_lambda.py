@@ -10,10 +10,10 @@ def select_lambda(hrf, y, criterion="ut", factor=1, pcg=0.7, lambda_echo=-1):
 
     Parameters
     ----------
-    hrf : (E x T) array_like
+    hrf : (E x T) ndarray
         Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
         the number of echo-times.
-    y : (T x S) array_like
+    y : (T x S) ndarray
         Matrix with fMRI data provided to pySPFM.
     criterion : str, optional
         Criteria to select regularization parameter lambda, by default "ut".
@@ -26,12 +26,12 @@ def select_lambda(hrf, y, criterion="ut", factor=1, pcg=0.7, lambda_echo=-1):
 
     Returns
     -------
-    lambda_selection : array_like
+    lambda_selection : ndarray
         Value of the regularization parameter lambda for each voxel.
     update_lambda : bool
         Whether to update lambda after each iteration until it converges to the MAD estimate
         of the noise.
-    noise_estimate : array_like
+    noise_estimate : ndarray
         MAD estimate of the noise.
 
     Notes

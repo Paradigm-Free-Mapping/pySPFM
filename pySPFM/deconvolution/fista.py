@@ -17,14 +17,14 @@ def proximal_operator_lasso(y, thr):
 
     Parameters
     ----------
-    y : array_like
+    y : ndarray
         Input data to be soft-thresholded.
     thr : float
         Thresholding value.
 
     Returns
     -------
-    x : array_like
+    x : ndarray
         Soft-thresholded data.
     """
     x = y * np.maximum(np.zeros(y.shape), 1 - (thr / abs(y)))
@@ -38,7 +38,7 @@ def proximal_operator_mixed_norm(y, thr, rho_val=0.8, groups="space"):
 
     Parameters
     ----------
-    y : array_like
+    y : ndarray
         Input data to be soft-thresholded.
     thr : float
         Thresholding value.
@@ -49,7 +49,7 @@ def proximal_operator_mixed_norm(y, thr, rho_val=0.8, groups="space"):
 
     Returns
     -------
-    x : array_like
+    x : ndarray
         Data thresholded with L2,1 + L1 mixed-norm proximal operator.
     """
     # Division parameter of proximal operator
