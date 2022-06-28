@@ -39,24 +39,27 @@ def select_lambda(hrf, y, criterion="ut", factor=1, pcg=0.7, lambda_echo=-1):
     The criteria to select the regularization parameter lambda are:
 
     - 'ut': universal threshold.
-        :math:`{\lambda} = {\sigma} * \sqrt{2 * \log(T)}`, where :math:`{\sigma}` is the median
-        absolute deviation of the estimated level of noise and T is the number of TRs.
+        :math:`{\\lambda} = {\\sigma} * \\sqrt{2 * \\log(T)}`, where :math:`{\\sigma}` is the
+        median absolute deviation of the estimated level of noise and T is the number of TRs.
     - 'lut' : lower universal threshold.
-        :math:`\lambda = \sigma * \sqrt{2 * \log(T) - \log(1 + 4 * \log(T))}`, where
-        :math:`\sigma` is the median absolute deviation of the estimated level of noise and T is
+        :math:`\\lambda = \\sigma * \\sqrt{2 * \\log(T) - \\log(1 + 4 * \\log(T))}`, where
+        :math:`\\sigma` is the median absolute deviation of the estimated level of noise and T is
         the number of TRs.
     - 'mad' : mediam absolute deviation.
         Calculate lambda as the median absolute deviation of fine-scale wavelet
-        coefficients (Daubechies, order 3). For more information, see Karahanoglu et al. (2013).
+        coefficients (Daubechies, order 3). For more information,
+        see Karahanoglu et al. (2013).
     - 'mad_update' : updating median absolute deviation.
         Median absolute deviation of the estimated level of the noise that gets
         updated on each iteration (see Karahanoglu et al. 2013):
-        :math:`\lambda_{n+1} = {\\frac{N \sigma}{1/2 \| \mathbf{y} - \mathbf{x} \|_2^2 \lambda_n}}`.
+        :math:`\\lambda_{n+1} = {\\frac{N \\sigma}{1/2 \|
+        \\mathbf{y} - \\mathbf{x} \|_2^2 \\lambda_n}}`.
     - 'pcg' : percentage of the maximum lambda possible to use as lambda.
-        :math:`\lambda = \\textrm{pcg} * \lambda_{max}`,
-        where :math:`\lambda_{max}= \| \mathbf{H}^T \mathbf{y} \|` and :math:`0 \leq \\textrm{pcg} \leq 1`
+        :math:`\\lambda = \\textrm{pcg} * \\lambda_{max}`,
+        where :math:`\\lambda_{max}= \| \\mathbf{H}^T \\mathbf{y} \|` and
+        :math:`0 \\leq \\textrm{pcg} \\leq 1`
     - 'factor' : factor of the estimate of the level of noise to use as lambda.
-        :math:`\lambda = \\textrm{factor} * \sigma, with 0 \leq \\textrm{factor} \leq 1`
+        :math:`\\lambda = \\textrm{factor} * \\sigma, with 0 \\leq \\textrm{factor} \\leq 1`
     """
     update_lambda = False
     nt = hrf.shape[1]
