@@ -8,10 +8,11 @@ def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
 
     This function computes the tikhonov regularization
 
-    F(x) = min ||y - x ||^2 + lambda * ||Delta{x}||^2
+    :math:`\\mathbf{F(x)} = \\min \\| \mathbf{y} - \mathbf{x} \\|^2 + \\lambda \cdot
+    \\| \\Delta \mathbf{x}\\|^2`.
 
     Delta is the laplacian operator delta[n] = [1 -2 1]; so symmetric, in
-    matrix form Delta^T = Delta.
+    matrix form :math:`\\Delta^T = \\Delta`.
 
     Parameters
     ----------
@@ -92,10 +93,11 @@ def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
     This function computes the structured sparsity regularization and is another variant of fgp
     algorithm for structured sparsity
 
-    solves 1/2 ||y-x||^2 + lambda*||D^order x||_{s,2,1}
+    solves :math:`\\frac{1}{2} \\| \\mathbf{y} -\\mathbf{x} \\|^2 + \\lambda
+    \\| \\mathbf{D}^\\textrm{order} \cdot \\mathbf{x} \\|_{s,2,1}`.
 
     Delta is the laplacian operator delta[n] = [1 -2 1]; so symmetric, in
-    matrix form Delta^T = Delta.
+    matrix form :math:`\\Delta^T = \\Delta`.
 
     Parameters
     ----------
