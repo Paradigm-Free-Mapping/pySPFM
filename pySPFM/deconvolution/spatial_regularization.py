@@ -1,3 +1,4 @@
+"""Spatial regularization functions as developed in Total Activation."""
 import numpy as np
 from nilearn.masking import apply_mask, unmask
 
@@ -7,16 +8,17 @@ def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
 
     This function computes the tikhonov regularization
 
-    F(x) = min ||y - x ||^2 + lambda * ||Delta{x}||^2
+    :math:`\\mathbf{F(x)} = \\min \\| \\mathbf{y} - \\mathbf{x} \\|^2 + \\lambda \\cdot
+    \\| \\Delta \\mathbf{x}\\|^2`.
 
     Delta is the laplacian operator delta[n] = [1 -2 1]; so symmetric, in
-    matrix form Delta^T = Delta.
+    matrix form :math:`\\Delta^T = \\Delta`.
 
     Parameters
     ----------
-    estimates : numpy.array
+    estimates : ndarray
         Estimates (output of temporal regularization).
-    data : numpy.array
+    data : ndarray
         Observations.
     mask : Nibabel object
         Mask image to unmask and mask estimates (2D to 4D and back).
@@ -32,7 +34,7 @@ def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
 
     Returns
     -------
-    final_estimates: np.array
+    final_estimates: ndarray
         Estimates of activity-inducing or innovation signal after spatial regularization.
     """
     # Transform data from 2D into 4D
@@ -91,16 +93,17 @@ def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
     This function computes the structured sparsity regularization and is another variant of fgp
     algorithm for structured sparsity
 
-    solves 1/2 ||y-x||^2 + lambda*||D^order x||_{s,2,1}
+    solves :math:`\\frac{1}{2} \\| \\mathbf{y} - \\mathbf{x} \\|^2 + \\lambda
+    \\| \\mathbf{D}^\\textrm{order} \\cdot \\mathbf{x} \\|_{s,2,1}`.
 
     Delta is the laplacian operator delta[n] = [1 -2 1]; so symmetric, in
-    matrix form Delta^T = Delta.
+    matrix form :math:`\\Delta^T = \\Delta`.
 
     Parameters
     ----------
-    estimates : numpy.array
+    estimates : ndarray
         Estimates (output of temporal regularization).
-    data : numpy.array
+    data : ndarray
         Observations.
     mask : Nibabel object
         Mask image to unmask and mask estimates (2D to 4D and back).
@@ -113,7 +116,7 @@ def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
 
     Returns
     -------
-    final_estimates: np.array
+    final_estimates: ndarray
         Estimates of activity-inducing or innovation signal after spatial regularization.
     """
 
@@ -156,14 +159,14 @@ def clip(input, atlas):
 
     Parameters
     ----------
-    input : numpy.array
+    input : ndarray
         Input to clip.
-    atlas : numpy.array
+    atlas : ndarray
         Atlas to clip input to.
 
     Returns
     -------
-    clipped_input: numpy.array
+    clipped_input: ndarray
         Clipped input.
     """
 
@@ -182,6 +185,23 @@ def clip(input, atlas):
 
 
 def generate_delta(dim=3):
+    """Generate the delta operator.
+
+    Parameters
+    ----------
+    dim : int, optional
+        Number of dimensions of the operator, by default 3
+
+    Returns
+    -------
+    h : ndarray
+        The delta operator.
+
+    Raises
+    ------
+    ValueError
+        If dim is not 2 or 3.
+    """
     if dim == 2:
         h = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
     elif dim == 3:

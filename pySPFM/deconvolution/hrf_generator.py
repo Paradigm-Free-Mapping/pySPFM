@@ -31,7 +31,7 @@ def hrf_linear(TR, p):
 
     Returns
     -------
-    hrf : array_like
+    hrf : ndarray
         A hemodynamic response function (HRF).
 
     Notes
@@ -81,7 +81,7 @@ def hrf_afni(TR, lop_hrf="SPMG1"):
 
     Returns
     -------
-    hrf : array_like
+    hrf : ndarray
         A hemodynamic response function (HRF).
 
     Notes

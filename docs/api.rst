@@ -43,7 +43,7 @@ API
 
    pySPFM.deconvolution.debiasing
    pySPFM.deconvolution.fista
-   pySPFM.deconvolution.hrf_matrix
+   pySPFM.deconvolution.hrf_generator
    pySPFM.deconvolution.lars
    pySPFM.deconvolution.select_lambda
    pySPFM.deconvolution.spatial_regularization
