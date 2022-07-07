@@ -44,7 +44,7 @@ jobs:
                 source activate py<< parameters.PYTHON >>_env
                 pip install -e .[tests,doc]
             fi
-            python setup.py install --user
+            python setup.py develop
       - save_cache: # environment cache tied to requirements
           key: v1-{{ checksum "setup.cfg" }}-{{ checksum "setup.py" }}-{{ "<< parameters.PYTHON >>" }}
           paths:
