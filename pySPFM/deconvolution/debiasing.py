@@ -6,7 +6,6 @@ import scipy as sci
 from joblib import Parallel, delayed
 from scipy.signal import find_peaks
 from sklearn.linear_model import RidgeCV
-from tqdm import tqdm
 
 LGR = logging.getLogger("GENERAL")
 RefLGR = logging.getLogger("REFERENCES")
@@ -143,7 +142,7 @@ def debiasing_block(hrf, y, estimates_matrix, dist=2, progress_bar=True, jobs=1)
     if progress_bar:
         debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
             delayed(do_debias_block)(hrf, y[:, voxidx], estimates_matrix[:, voxidx])
-            for voxidx in tqdm(range(n_voxels))
+            for voxidx in range(n_voxels)
         )
     else:
         debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
@@ -191,7 +190,7 @@ def do_debias_spike(hrf, y, estimates_matrix):
     return beta_out, fitts_out
 
 
-def debiasing_spike(hrf, y, estimates_matrix, progress_bar=True, jobs=1):
+def debiasing_spike(hrf, y, estimates_matrix, jobs=1):
     """Perform voxelwise debiasing with spike model.
 
     Parameters
@@ -217,20 +216,12 @@ def debiasing_spike(hrf, y, estimates_matrix, progress_bar=True, jobs=1):
     index_voxels = np.unique(np.where(abs(estimates_matrix) > 10 * np.finfo(float).eps)[1])
 
     LGR.info("Performing debiasing step...")
-    if progress_bar:
-        debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
-            delayed(do_debias_spike)(
-                hrf, y[:, index_voxels[voxidx]], estimates_matrix[:, index_voxels[voxidx]]
-            )
-            for voxidx in tqdm(range(len(index_voxels)))
+    debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
+        delayed(do_debias_spike)(
+            hrf, y[:, index_voxels[voxidx]], estimates_matrix[:, index_voxels[voxidx]]
         )
-    else:
-        debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
-            delayed(do_debias_spike)(
-                hrf, y[:, index_voxels[voxidx]], estimates_matrix[:, index_voxels[voxidx]]
-            )
-            for voxidx in range(len(index_voxels))
-        )
+        for voxidx in range(len(index_voxels))
+    )
 
     for voxidx in range(len(index_voxels)):
         beta_out[:, index_voxels[voxidx]] = debiased[voxidx][0]
