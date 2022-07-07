@@ -165,3 +165,50 @@ def test_integration_lars(skip_integration, mask_five_echo):
     # compare the generated output files
     fn = resource_filename("pySPFM", "tests/data/lars_integration_outputs.txt")
     check_integration_outputs(fn, out_dir)
+
+
+def test_integration_stability_selection(skip_integration, mask_five_echo):
+    """Integration test of the pySPFM stability selection workflow using five-echo test data."""
+
+    if skip_integration:
+        pytest.skip("Skipping five-echo integration test")
+
+    out_dir = "/tmp/data/five-echo/pySPFM.five-echo"
+
+    if os.path.exists(out_dir):
+        shutil.rmtree(out_dir)
+
+    # download data and run the test using the second echo time
+    download_test_data("https://osf.io/9c42e/download", os.path.dirname(out_dir))
+    prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
+    suffix = ".sm.nii.gz"
+    data = f"{prepend}2{suffix}"
+
+    # CLI args
+    args = (
+        ["-i"]
+        + [data]
+        + ["-m"]
+        + [mask_five_echo]
+        + ["-o"]
+        + ["test_lars.pySPFM"]
+        + ["-tr"]
+        + ["2"]
+        + ["-d"]
+        + [out_dir]
+        + ["-crit"]
+        + ["stability"]
+        + ["--max_iter_factor"]
+        + ["0.3"]
+        + ["-jobs"]
+        + ["1"]
+        + [
+            "--debug",
+            "--debias",
+        ]
+    )
+    pySPFM_cli._main(args)
+
+    # compare the generated output files
+    fn = resource_filename("pySPFM", "tests/data/lars_integration_outputs.txt")
+    check_integration_outputs(fn, out_dir)

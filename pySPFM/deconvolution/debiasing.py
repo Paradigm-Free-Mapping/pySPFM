@@ -132,26 +132,26 @@ def debiasing_block(hrf, y, estimates_matrix, dist=2, progress_bar=True, jobs=1)
     beta_out : ndarray
         Debiased activity-inducing signal obtained from estimated innovation signal.
     """
-    nscans = estimates_matrix.shape[0]
-    nvoxels = estimates_matrix.shape[1]
+    n_scans = estimates_matrix.shape[0]
+    n_voxels = estimates_matrix.shape[1]
 
     # Initiates beta matrix
-    beta_out = np.zeros((nscans, nvoxels))
+    beta_out = np.zeros((n_scans, n_voxels))
 
     LGR.info("Starting debiasing step...")
     # Performs debiasing
     if progress_bar:
         debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
             delayed(do_debias_block)(hrf, y[:, voxidx], estimates_matrix[:, voxidx])
-            for voxidx in tqdm(range(nvoxels))
+            for voxidx in tqdm(range(n_voxels))
         )
     else:
         debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
             delayed(do_debias_block)(hrf, y[:, voxidx], estimates_matrix[:, voxidx])
-            for voxidx in range(nvoxels)
+            for voxidx in range(n_voxels)
         )
 
-    for vox_idx in range(nvoxels):
+    for vox_idx in range(n_voxels):
         beta_out[:, vox_idx] = debiased[vox_idx]
 
     LGR.info("Debiasing step finished")

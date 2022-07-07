@@ -125,7 +125,7 @@ class HRFMatrix:
         TR of the acquisition, by default 2
     TE : list
         Values of TE in ms, by default None
-    nscans : int
+    n_scans : int
         Number of volumes in acquisition, by default 200
     r2only : bool
         Whether to only consider R2* in the signal model, by default True
@@ -141,7 +141,7 @@ class HRFMatrix:
         self,
         TR=2,
         TE=None,
-        nscans=200,
+        n_scans=200,
         r2only=True,
         is_afni=True,
         lop_hrf="SPMG1",
@@ -149,7 +149,7 @@ class HRFMatrix:
     ):
         self.TR = TR
         self.TE = TE
-        self.nscans = nscans
+        self.n_scans = n_scans
         self.r2only = r2only
         self.lop_hrf = lop_hrf
         self.is_afni = is_afni
@@ -170,12 +170,12 @@ class HRFMatrix:
 
         self.L_hrf = len(hrf_SPM)  # Length
         mahrf = max(abs(hrf_SPM))  # Max value
-        filler = np.zeros(self.nscans - hrf_SPM.shape[0], dtype=int)
-        hrf_SPM = np.append(hrf_SPM, filler)  # Fill up array with zeros until nscans
+        filler = np.zeros(self.n_scans - hrf_SPM.shape[0], dtype=int)
+        hrf_SPM = np.append(hrf_SPM, filler)  # Fill up array with zeros until n_scans
 
         temp = hrf_SPM
 
-        for i in range(self.nscans - 1):
+        for i in range(self.n_scans - 1):
             foo = np.append(np.zeros(i + 1), hrf_SPM[0 : (len(hrf_SPM) - i - 1)])
             temp = np.column_stack((temp, foo))
 
@@ -194,18 +194,20 @@ class HRFMatrix:
         if self.block:
             if len(self.TE) > 1:
                 for teidx in range(len(self.TE)):
-                    temp = self.hrf[teidx * self.nscans : (teidx + 1) * self.nscans - 1, :].copy()
-                    self.hrf[teidx * self.nscans : (teidx + 1) * self.nscans - 1, :] = np.dot(
-                        temp, np.tril(np.ones(self.nscans))
+                    temp = self.hrf[
+                        teidx * self.n_scans : (teidx + 1) * self.n_scans - 1, :
+                    ].copy()
+                    self.hrf[teidx * self.n_scans : (teidx + 1) * self.n_scans - 1, :] = np.dot(
+                        temp, np.tril(np.ones(self.n_scans))
                     )
                     temp = self.hrf_norm[
-                        teidx * self.nscans : (teidx + 1) * self.nscans - 1, :
+                        teidx * self.n_scans : (teidx + 1) * self.n_scans - 1, :
                     ].copy()
-                    self.hrf_norm[teidx * self.nscans : (teidx + 1) * self.nscans - 1, :] = np.dot(
-                        temp, np.tril(np.ones(self.nscans))
-                    )
+                    self.hrf_norm[
+                        teidx * self.n_scans : (teidx + 1) * self.n_scans - 1, :
+                    ] = np.dot(temp, np.tril(np.ones(self.n_scans)))
             else:
-                self.hrf = np.dot(self.hrf, np.tril(np.ones(self.nscans)))
-                self.hrf_norm = np.dot(self.hrf_norm, np.tril(np.ones(self.nscans)))
+                self.hrf = np.dot(self.hrf, np.tril(np.ones(self.n_scans)))
+                self.hrf_norm = np.dot(self.hrf_norm, np.tril(np.ones(self.n_scans)))
 
         return self
