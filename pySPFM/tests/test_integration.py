@@ -182,16 +182,19 @@ def test_integration_stability_selection(skip_integration, mask_five_echo):
     download_test_data("https://osf.io/vg4wy/download", os.path.dirname(out_dir))
     prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
     suffix = ".psc.nii.gz"
-    data = f"{prepend}2{suffix}"
+    datalist = [prepend + str(i + 1) + suffix for i in range(5)]
+    echo_times = [15.4, 29.7, 44.0, 58.3, 72.6]
 
     # CLI args
     args = (
         ["-i"]
-        + [data]
+        + datalist
+        + ["-te"]
+        + [str(te) for te in echo_times]
         + ["-m"]
         + [mask_five_echo]
         + ["-o"]
-        + ["test_lars.pySPFM"]
+        + ["test_stability.pySPFM"]
         + ["-tr"]
         + ["2"]
         + ["-d"]
@@ -207,7 +210,12 @@ def test_integration_stability_selection(skip_integration, mask_five_echo):
             "--debias",
         ]
     )
-    pySPFM_cli._main(args)
+
+    # Run the workflow expecting a SystemExit code 1
+    with pytest.raises(SystemExit) as e:
+        pySPFM_cli._main(args)
+    assert e.type == SystemExit
+    assert e.value.code == 1
 
     # compare the generated output files
     fn = resource_filename("pySPFM", "tests/data/stability_integration_outputs.txt")
