@@ -532,7 +532,11 @@ def pySPFM(
             futures = []
             for vox_idx in range(n_voxels):
                 fut = delayed_dask(stability_selection)(
-                    hrf_norm, data_temp_reg[:, vox_idx], n_lambdas, n_surrogates, n_jobs
+                    hrf_norm,
+                    data_temp_reg[:, vox_idx],
+                    n_lambdas,
+                    n_surrogates,
+                    n_jobs,
                 )
                 futures.append(fut)
 
@@ -554,7 +558,7 @@ def pySPFM(
             )
 
             LGR.info("pySPFM with stability selection finished.")
-            sys.exit(0)
+            sys.exit(1)
 
         else:
             raise ValueError("Wrong criterion option given.")
