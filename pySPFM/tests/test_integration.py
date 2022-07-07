@@ -179,9 +179,9 @@ def test_integration_stability_selection(skip_integration, mask_five_echo):
         shutil.rmtree(out_dir)
 
     # download data and run the test using the second echo time
-    download_test_data("https://osf.io/9c42e/download", os.path.dirname(out_dir))
+    download_test_data("https://osf.io/vg4wy/download", os.path.dirname(out_dir))
     prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
-    suffix = ".sm.nii.gz"
+    suffix = ".psc.nii.gz"
     data = f"{prepend}2{suffix}"
 
     # CLI args
@@ -210,5 +210,5 @@ def test_integration_stability_selection(skip_integration, mask_five_echo):
     pySPFM_cli._main(args)
 
     # compare the generated output files
-    fn = resource_filename("pySPFM", "tests/data/lars_integration_outputs.txt")
+    fn = resource_filename("pySPFM", "tests/data/stability_integration_outputs.txt")
     check_integration_outputs(fn, out_dir)

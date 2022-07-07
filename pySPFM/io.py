@@ -4,7 +4,6 @@ from subprocess import run
 import nibabel as nib
 from nilearn import masking
 from nilearn.input_data import NiftiLabelsMasker
-from nilearn.maskers import NiftiMasker
 
 
 def read_data(data_fn, mask_fn, is_atlas=False):
@@ -35,7 +34,7 @@ def read_data(data_fn, mask_fn, is_atlas=False):
         mask = NiftiLabelsMasker(labels_img=mask_fn, standardize=False, strategy="mean")
         data = mask.fit_transform(data_img)
     else:
-        mask = NiftiMasker(mask_img=mask_fn, standardize="psc")
+        mask = nib.load(mask_fn)
         data = masking.apply_mask(data_img, mask)
 
     return data, data_header, mask
