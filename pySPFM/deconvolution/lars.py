@@ -60,14 +60,18 @@ def solve_regularization_path(X, y, n_lambdas, criterion="bic"):
     lambdas : ndarray
         Lambda of the optimal solution
     """
-    n_scans = y.shape[0]
+    n_scans = X.shape[1]
 
     # If y is a vector, add a dimension to make it a matrix
     if y.ndim == 1:
         y = y[:, np.newaxis]
 
+    # Initialize variables to store the results
+    coef_path = np.zeros((n_scans, n_lambdas))
+    lambdas = np.zeros((n_lambdas,))
+
     # LARS path
-    lambdas, _, coef_path = lars_path(
+    lambdas_temp, _, coef_path_temp = lars_path(
         X,
         np.squeeze(y),
         method="lasso",
@@ -76,6 +80,10 @@ def solve_regularization_path(X, y, n_lambdas, criterion="bic"):
         max_iter=n_lambdas - 1,
         eps=1e-9,
     )
+
+    # Store the results
+    coef_path[:, : len(lambdas_temp)] = coef_path_temp
+    lambdas[: len(lambdas_temp)] = lambdas_temp
 
     # Compute residuals for model selection criterion (BIC and AIC)
     residuals = np.sum((np.repeat(y, n_lambdas, axis=-1) - np.dot(X, coef_path)) ** 2, axis=0)
