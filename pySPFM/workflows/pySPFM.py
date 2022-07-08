@@ -208,7 +208,7 @@ def _get_parser():
         "--jobs",
         dest="n_jobs",
         type=int,
-        help="Number of cores to take to parallelize debiasing step (default = 4).",
+        help="Number of jobs to parallelize for loops (default = 4).",
         default=4,
     )
     optional.add_argument(
@@ -308,7 +308,7 @@ def pySPFM(
     max_iter_spatial=100,
     max_iter=10,
     min_iter_fista=50,
-    n_jobs=1,
+    n_jobs=4,
     spatial_weight=0,
     spatial_lambda=1,
     spatial_dim=3,
@@ -362,7 +362,7 @@ def pySPFM(
     min_iter_fista : int, optional
         Minimum number of iterations for FISTA, by default 50
     n_jobs : int, optional
-        Number of parallel jobs to perform FISTA and debiasing, by default 1
+        Number of parallel jobs to use on for loops, by default 4
     spatial_weight : int, optional
         Weighting between the temporal and spatial regularization, by default 0 (only temporal)
     spatial_lambda : int, optional
@@ -608,13 +608,11 @@ def pySPFM(
         if block_model:
             hrf_obj = HRFMatrix(TR=tr, n_scans=n_scans, TE=te, block=False)
             hrf_norm = hrf_obj.generate_hrf().hrf_norm
-            estimates_spike = debiasing_block(
-                hrf=hrf_norm, y=data_masked, estimates_matrix=final_estimates, jobs=n_jobs
-            )
+            estimates_spike = debiasing_block(hrf_norm, data_masked, final_estimates, n_jobs)
             fitts = np.dot(hrf_norm, estimates_spike)
         else:
             estimates_spike, fitts = debiasing_spike(
-                hrf_norm, data_masked, final_estimates, jobs=n_jobs
+                hrf_norm, data_masked, final_estimates, n_jobs
             )
 
     LGR.info("Saving results...")
