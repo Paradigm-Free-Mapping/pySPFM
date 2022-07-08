@@ -8,6 +8,8 @@ from dask import delayed as delayed_dask
 from scipy.signal import find_peaks
 from sklearn.linear_model import RidgeCV
 
+from pySPFM.utils import dask_scheduler
+
 LGR = logging.getLogger("GENERAL")
 RefLGR = logging.getLogger("REFERENCES")
 
@@ -112,7 +114,7 @@ def do_debias_block(hrf, y, estimates_matrix, dist=2):
     return beta_out
 
 
-def debiasing_block(hrf, y, estimates_matrix, dist=2, progress_bar=True, jobs=1):
+def debiasing_block(hrf, y, estimates_matrix, dist=2, n_jobs=4):
     """Voxelwise block model debiasing workflow.
 
     Parameters
@@ -140,6 +142,7 @@ def debiasing_block(hrf, y, estimates_matrix, dist=2, progress_bar=True, jobs=1)
 
     LGR.info("Starting debiasing step...")
     # Performs debiasing
+    _, cluster = dask_scheduler(n_jobs)
     futures = []
     for voxidx in range(n_voxels):
         fut = delayed_dask(do_debias_block, pure=False)(
@@ -188,7 +191,7 @@ def do_debias_spike(hrf, y, estimates_matrix):
     return beta_out, fitts_out
 
 
-def debiasing_spike(hrf, y, estimates_matrix, jobs=1):
+def debiasing_spike(hrf, y, estimates_matrix, n_jobs=4):
     """Perform voxelwise debiasing with spike model.
 
     Parameters
@@ -214,6 +217,7 @@ def debiasing_spike(hrf, y, estimates_matrix, jobs=1):
     index_voxels = np.unique(np.where(abs(estimates_matrix) > 10 * np.finfo(float).eps)[1])
 
     LGR.info("Performing debiasing step...")
+    _, cluster = dask_scheduler(n_jobs)
     futures = []
     for voxidx in range(len(index_voxels)):
         fut = delayed_dask(do_debias_spike, pure=False)(
