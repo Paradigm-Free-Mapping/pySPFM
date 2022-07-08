@@ -146,7 +146,7 @@ def debiasing_block(hrf, y, estimates_matrix, dist=2, progress_bar=True, jobs=1)
             hrf, y[:, voxidx], estimates_matrix[:, voxidx]
         )
         futures.append(fut)
-    debiased = compute(futures)
+    debiased = compute(futures)[0]
 
     for vox_idx in range(n_voxels):
         beta_out[:, vox_idx] = debiased[vox_idx]
@@ -220,7 +220,7 @@ def debiasing_spike(hrf, y, estimates_matrix, jobs=1):
             hrf, y[:, index_voxels[voxidx]], estimates_matrix[:, index_voxels[voxidx]]
         )
         futures.append(fut)
-    debiased = compute(futures)
+    debiased = compute(futures)[0]
 
     for voxidx in range(len(index_voxels)):
         beta_out[:, index_voxels[voxidx]] = debiased[voxidx][0]
