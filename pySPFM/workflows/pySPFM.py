@@ -374,7 +374,7 @@ def pySPFM(
     data_str = str(data_fn).strip("[]")
     te_str = str(te).strip("[]")
     arguments = f"-i {data_str} -m {mask_fn} -o {output_filename} -tr {tr} "
-    arguments += f"-d {out_dir} -te {te_str} -group {group} -crit {criterion} "
+    arguments += f"-d {out_dir} -te {te_str} -g {group} -crit {criterion} "
 
     if block_model:
         arguments += "-block "
