@@ -1,36 +1,65 @@
+"""Selection of the regularization parameter lambda for the deconvolution."""
 import numpy as np
 from pywt import wavedec
 from scipy.stats import median_absolute_deviation
 
 
-def select_lambda(hrf, y, criterion="mad_update", factor=1, pcg=0.7, lambda_echo=-1):
-    """Criteria to select regularization parameter lambda.
+def select_lambda(hrf, y, criterion="ut", factor=1, pcg=0.7, lambda_echo=-1):
+    """
+    Criteria to select regularization parameter lambda.
 
     Parameters
     ----------
-    hrf : (E x T) array_like
+    hrf : (E x T) ndarray
         Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
         the number of echo-times.
-    y : (T x S) array_like
+    y : (T x S) ndarray
         Matrix with fMRI data provided to pySPFM.
     criterion : str, optional
-        Criteria to select regularization parameter lambda, by default "mad_update"
+        Criteria to select regularization parameter lambda, by default "ut".
     factor : int, optional
         Factor by which to multiply the value of lambda, by default 1
-        Only used when "factor" criterion is selected.
+        Only used when 'factor' criterion is selected.
     pcg : str, optional
-        Percentage of maximum lambda possible to use, by default "0.7"
-        Only used when "pcg" criterion is selected.
+        Percentage of maximum lambda possible to use, by default '0.7'
+        Only used when 'pcg' criterion is selected.
 
     Returns
     -------
-    lambda_selection : array_like
+    lambda_selection : ndarray
         Value of the regularization parameter lambda for each voxel.
     update_lambda : bool
         Whether to update lambda after each iteration until it converges to the MAD estimate
         of the noise.
-    noise_estimate : array_like
+    noise_estimate : ndarray
         MAD estimate of the noise.
+
+    Notes
+    -----
+    The criteria to select the regularization parameter lambda are:
+
+    - 'ut': universal threshold.
+        :math:`{\\lambda} = {\\sigma} * \\sqrt{2 * \\log(T)}`, where :math:`{\\sigma}` is the
+        median absolute deviation of the estimated level of noise and T is the number of TRs.
+    - 'lut' : lower universal threshold.
+        :math:`\\lambda = \\sigma * \\sqrt{2 * \\log(T) - \\log(1 + 4 * \\log(T))}`, where
+        :math:`\\sigma` is the median absolute deviation of the estimated level of noise and T is
+        the number of TRs.
+    - 'mad' : mediam absolute deviation.
+        Calculate lambda as the median absolute deviation of fine-scale wavelet
+        coefficients (Daubechies, order 3). For more information,
+        see Karahanoglu et al. (2013).
+    - 'mad_update' : updating median absolute deviation.
+        Median absolute deviation of the estimated level of the noise that gets
+        updated on each iteration (see Karahanoglu et al. 2013):
+        :math:`\\lambda_{n+1} = {\\frac{N \\sigma}{\\frac{1}{2} \\|
+        \\mathbf{y} - \\mathbf{Hs} \\|_2^2 \\lambda_n}}`.
+    - 'pcg' : percentage of the maximum lambda possible to use as lambda.
+        :math:`\\lambda = \\textrm{pcg} * \\lambda_{max}`,
+        where :math:`\\lambda_{max}= \\| \\mathbf{H}^T \\mathbf{y} \\|` and
+        :math:`0 \\leq \\textrm{pcg} \\leq 1`
+    - 'factor' : factor of the estimate of the level of noise to use as lambda.
+        :math:`\\lambda = \\textrm{factor} * \\sigma, with 0 \\leq \\textrm{factor} \\leq 1`
     """
     update_lambda = False
     nt = hrf.shape[1]

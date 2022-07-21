@@ -11,6 +11,6 @@ This will print the instructions for using the command line interface in your
 command line.
 
 .. argparse::
-   :ref: pySPFM.cli.run._get_parser
+   :ref: pySPFM.workflows.pySPFM._get_parser
    :prog: pySPFM
    :func: _get_parser

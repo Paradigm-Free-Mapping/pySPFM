@@ -18,13 +18,13 @@ def read_data(data_fn, mask_fn, is_atlas=False):
 
     Returns
     -------
-    data_restruct : (T x S) array_like
+    data_restruct : (T x S) ndarray
         [description]
     data_header : nib.header
         Header of the input data.
     dims : list
         List with dimensions of data.
-    mask_idxs : (S x) array_like
+    mask_idxs : (S x) ndarray
         Indexes to transform data back to 4D.
     """
     data_img = nib.load(data_fn)
@@ -45,14 +45,14 @@ def reshape_data(signal2d, mask):
 
     Parameters
     ----------
-    signal2d : (T x S) array_like
+    signal2d : (T x S) ndarray
         Data in 2D.
     mask : Nifti1Image
         Mask.
 
     Returns
     -------
-    signal4d : (S x S x S x T) array_like
+    signal4d : (S x S x S x T) ndarray
         Data in 4D.
     """
     signal4d = masking.unmask(signal2d, mask)

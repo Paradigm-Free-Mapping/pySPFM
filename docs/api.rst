@@ -10,20 +10,20 @@ API
 .. _api_pySPFM_ref:
 
 **************************************************
-:mod:`pySPFM.pySPFM`: The pySPFM workflow
+:mod:`pySPFM.workflows`: The pySPFM workflows
 **************************************************
 
-.. automodule:: pySPFM.pySPFM
+.. automodule:: pySPFM.workflows
    :no-members:
    :no-inherited-members:
 
-.. currentmodule:: pySPFM.pySPFM
+.. currentmodule:: pySPFM.workflows
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
-   pySPFM.pySPFM.pySPFM
+   pySPFM.workflows.pySPFM
 
 .. _api_deconvolution_ref:
 
@@ -43,7 +43,7 @@ API
 
    pySPFM.deconvolution.debiasing
    pySPFM.deconvolution.fista
-   pySPFM.deconvolution.hrf_matrix
+   pySPFM.deconvolution.hrf_generator
    pySPFM.deconvolution.lars
    pySPFM.deconvolution.select_lambda
    pySPFM.deconvolution.spatial_regularization

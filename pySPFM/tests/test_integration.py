@@ -14,7 +14,7 @@ import pytest
 import requests
 from pkg_resources import resource_filename
 
-from pySPFM import pySPFM as pySPFM_cli
+from pySPFM.workflows import pySPFM as pySPFM_cli
 
 
 def download_test_data(osf, outpath):
@@ -79,9 +79,9 @@ def test_integration_five_echo(skip_integration, mask_five_echo):
         shutil.rmtree(out_dir)
 
     # download data and run the test
-    download_test_data("https://osf.io/9c42e/download", os.path.dirname(out_dir))
+    download_test_data("https://osf.io/vg4wy/download", os.path.dirname(out_dir))
     prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
-    suffix = ".sm.nii.gz"
+    suffix = ".psc.nii.gz"
     datalist = [prepend + str(i + 1) + suffix for i in range(5)]
     echo_times = [15.4, 29.7, 44.0, 58.3, 72.6]
 
@@ -94,7 +94,7 @@ def test_integration_five_echo(skip_integration, mask_five_echo):
         + ["-m"]
         + [mask_five_echo]
         + ["-o"]
-        + ["test_data.pySPFM"]
+        + ["test_me.pySPFM"]
         + ["-tr"]
         + ["2"]
         + ["-d"]
@@ -117,4 +117,51 @@ def test_integration_five_echo(skip_integration, mask_five_echo):
 
     # compare the generated output files
     fn = resource_filename("pySPFM", "tests/data/nih_five_echo_outputs_verbose.txt")
+    check_integration_outputs(fn, out_dir)
+
+
+def test_integration_lars(skip_integration, mask_five_echo):
+    """Integration test of the full pySPFM workflow using five-echo test data."""
+
+    if skip_integration:
+        pytest.skip("Skipping five-echo integration test")
+
+    out_dir = "/tmp/data/five-echo/pySPFM.five-echo"
+
+    if os.path.exists(out_dir):
+        shutil.rmtree(out_dir)
+
+    # download data and run the test using the second echo time
+    download_test_data("https://osf.io/vg4wy/download", os.path.dirname(out_dir))
+    prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
+    suffix = ".psc.nii.gz"
+    data = f"{prepend}2{suffix}"
+
+    # CLI args
+    args = (
+        ["-i"]
+        + [data]
+        + ["-m"]
+        + [mask_five_echo]
+        + ["-o"]
+        + ["test_lars.pySPFM"]
+        + ["-tr"]
+        + ["2"]
+        + ["-d"]
+        + [out_dir]
+        + ["-crit"]
+        + ["bic"]
+        + ["--max_iter_factor"]
+        + ["0.3"]
+        + ["-jobs"]
+        + ["1"]
+        + [
+            "--debug",
+            "--debias",
+        ]
+    )
+    pySPFM_cli._main(args)
+
+    # compare the generated output files
+    fn = resource_filename("pySPFM", "tests/data/lars_integration_outputs.txt")
     check_integration_outputs(fn, out_dir)
