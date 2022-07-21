@@ -18,22 +18,21 @@ The ``pySPFM`` package is a Python version of AFNI's 3dPFM and 3dMEPFM.
    :target: https://zenodo.org/badge/latestdoi/110845855
    :alt: DOI
 
-.. image:: https://circleci.com/gh/pySPFM/pySPFM.svg?style=shield
-   :target: https://circleci.com/gh/pySPFM/pySPFM
+.. image:: https://circleci.com/gh/eurunuela/pySPFM/tree/main.svg?style=shield
+   :target: https://circleci.com/gh/eurunuela/pySPFM/tree/main
    :alt: CircleCI
 
 .. image:: http://img.shields.io/badge/License-LGPL%202.1-blue.svg
    :target: https://opensource.org/licenses/LGPL-2.1
    :alt: License
 
-.. image:: https://readthedocs.org/projects/pySPFM/badge/?version=latest
-   :target: http://pySPFM.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/pyspfm/badge/?version=latest
+   :target: http://pyspfm.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. image:: https://codecov.io/gh/pySPFM/pySPFM/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/pySPFM/pySPFM
+.. image:: https://codecov.io/gh/eurunuela/pySPFM/branch/main/graph/badge.svg
+   :target: https://codecov.io/gh/eurunuela/pySPFM
    :alt: Codecov
-
 
 *****
 About

@@ -1,3 +1,4 @@
+"""Least Angle Regression (LARS) method for deconvolution."""
 import numpy as np
 from sklearn.linear_model import lars_path
 
@@ -56,6 +57,10 @@ def solve_regularization_path(X, y, nlambdas, criterion="bic"):
         Lambda of the optimal solution
     """
     n_scans = y.shape[0]
+
+    # If y is a vector, add a dimension to make it a matrix
+    if y.ndim == 1:
+        y = y[:, np.newaxis]
 
     # LARS path
     lambdas, _, coef_path = lars_path(

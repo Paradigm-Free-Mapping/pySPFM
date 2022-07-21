@@ -19,13 +19,6 @@
 #
 import os
 import sys
-from datetime import datetime  # access current time and date
-from distutils.version import LooseVersion
-
-import sphinx
-import sphinx_rtd_theme
-
-import pySPFM
 
 sys.path.insert(0, os.path.abspath("sphinxext"))
 sys.path.insert(0, os.path.abspath(os.path.pardir))
@@ -43,7 +36,8 @@ autosummary_generate = True
 add_module_names = False
 
 # Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
+# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
+# ones.
 extensions = [
     "matplotlib.sphinxext.plot_directive",
     "sphinx.ext.autodoc",
@@ -54,9 +48,12 @@ extensions = [
     "sphinx.ext.linkcode",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
-    "sphinxarg.ext",  # argparse
-    "sphinxcontrib.bibtex",  # for foot-citations
+    "sphinxarg.ext",
 ]
+
+from distutils.version import LooseVersion
+
+import sphinx
 
 if LooseVersion(sphinx.__version__) < LooseVersion("1.4"):
     extensions.append("sphinx.ext.pngmath")
@@ -73,16 +70,19 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
+from datetime import datetime  # access current time and date
 
 project = "pySPFM"
-copyright = "2021-" + datetime.today().strftime("%Y") + ", pySPFM Developers"
-author = "pySPFM Developers"
+copyright = "2017-" + datetime.today().strftime("%Y") + ", pySPFM developers"
+author = "pySPFM developers"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-
+#
 # The short X.Y version.
+import pySPFM
+
 version = pySPFM.__version__
 # The full version, including alpha/beta/rc tags.
 release = pySPFM.__version__
@@ -121,22 +121,20 @@ napoleon_use_param = False
 napoleon_use_keyword = True
 napoleon_use_rtype = False
 
-# -----------------------------------------------------------------------------
-# nbsphinx settings
-# -----------------------------------------------------------------------------
-nbsphinx_execute = "never"
-
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
 # installing theme package
+import sphinx_rtd_theme
+
 html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
+
 html_theme_options = {
     "includehidden": False,
 }
@@ -146,24 +144,14 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
-# -----------------------------------------------------------------------------
-# sphinxcontrib-bibtex
-# -----------------------------------------------------------------------------
-bibtex_bibfiles = ["./references.bib"]
-bibtex_style = "unsrt"
-bibtex_reference_style = "author_year"
-bibtex_footbibliography_header = ""
 
-
+# https://github.com/rtfd/sphinx_rtd_theme/issues/117
 def setup(app):
-    """Add CSS/JS extensions.
-
-    Notes
-    -----
-    From https://github.com/rtfd/sphinx_rtd_theme/issues/117
-    """
     app.add_css_file("theme_overrides.css")
-    app.add_js_file("zenodo.js")
+    app.add_js_file("https://cdn.rawgit.com/chrisfilo/zenodo.js/v0.1/zenodo.js")
+
+
+html_favicon = "_static/pySPFM_favicon.png"
 
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -174,7 +162,7 @@ htmlhelp_basename = "pySPFMdoc"
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
     "pySPFM",
-    "https://github.com/pySPFM/pySPFM/blob/{revision}/{package}/{path}#L{lineno}",
+    "https://github.com/eurunuela/" "pySPFM/blob/{revision}/" "{package}/{path}#L{lineno}",
 )
 
 # Example configuration for intersphinx: refer to the Python standard library.

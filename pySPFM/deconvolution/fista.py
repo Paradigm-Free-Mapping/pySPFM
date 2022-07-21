@@ -17,14 +17,14 @@ def proximal_operator_lasso(y, thr):
 
     Parameters
     ----------
-    y : array_like
+    y : ndarray
         Input data to be soft-thresholded.
     thr : float
         Thresholding value.
 
     Returns
     -------
-    x : array_like
+    x : ndarray
         Soft-thresholded data.
     """
     x = y * np.maximum(np.zeros(y.shape), 1 - (thr / abs(y)))
@@ -38,7 +38,7 @@ def proximal_operator_mixed_norm(y, thr, rho_val=0.8, groups="space"):
 
     Parameters
     ----------
-    y : array_like
+    y : ndarray
         Input data to be soft-thresholded.
     thr : float
         Thresholding value.
@@ -49,7 +49,7 @@ def proximal_operator_mixed_norm(y, thr, rho_val=0.8, groups="space"):
 
     Returns
     -------
-    x : array_like
+    x : ndarray
         Data thresholded with L2,1 + L1 mixed-norm proximal operator.
     """
     # Division parameter of proximal operator
@@ -93,7 +93,41 @@ def fista(
     lambda_echo=-1,
     use_pylops=False,
 ):
+    """FISTA solver for PFM.
 
+    Parameters
+    ----------
+    hrf : ndarray
+        HRF matrix.
+    y : ndarray
+        Data to be deconvolved.
+    criterion : str, optional
+        Criterion to select regularization parameter lambda, by default "ut"
+    max_iter : int, optional
+        Maximum number of iterations for FISTA, by default 400
+    min_iter : int, optional
+        Minimum number of iterations for FISTA, by default 10
+    tol : float, optional
+        Tolerance for residuals to find convergence of inverse problem, by default 1e-6
+    group : float, optional
+        Grouping (l2,1-norm) regularization parameter, by default 0.2
+    pcg : float, optional
+        Percentage of the maximum lambda possible to use as lambda, by default 0.8
+    factor : int, optional
+        Factor of the estimate of the level of noise to use as lambda, by default 10
+    lambda_echo : int, optional
+        When using multi-echo data, the number of TE to use to estimate the level of the noise,
+        by default -1
+    use_pylops : bool, optional
+        Use pylops library to solve FISTA instead of using pySPFM's FISTA, by default False
+
+    Returns
+    -------
+    S : ndarray
+        Estimates of the activity-inducing (spike model) or innovation (block model) signal
+    lambda_ : float
+        Selected regularization parameter lambda
+    """
     if len(y.shape) == 1:
         nvoxels = 1
         y = y[:, np.newaxis]
