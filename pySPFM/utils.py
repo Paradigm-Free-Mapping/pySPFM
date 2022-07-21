@@ -77,6 +77,7 @@ def dask_scheduler(jobs):
     # look if default ~ .config/dask/jobqueue.yaml exists
     with open(join(expanduser("~"), ".config/dask/jobqueue.yaml"), "r") as stream:
         data = yaml.load(stream, Loader=yaml.FullLoader)
+
     if data is None:
         LGR.warning(
             "dask configuration wasn't detected, "
@@ -84,7 +85,7 @@ def dask_scheduler(jobs):
             "the jobqueue YAML example, modify it so it works in your cluster "
             "and add it to ~/.config/dask "
             "local configuration will be used."
-            "You can find a jobqueue YAML example in the connPFM/utils/jobqueue.yaml file."
+            "You can find a jobqueue YAML example in the pySPFM/jobqueue.yaml file."
         )
         cluster = None
     else:
@@ -109,7 +110,7 @@ def dask_scheduler(jobs):
                 "the jobqueue YAML example, modify it so it works in your cluster "
                 "and add it to ~/.config/dask "
                 "local configuration will be used."
-                "You can find a jobqueue YAML example in the connPFM/utils/jobqueue.yaml file."
+                "You can find a jobqueue YAML example in the pySPFM/jobqueue.yaml file."
             )
             cluster = None
     if cluster is None:
