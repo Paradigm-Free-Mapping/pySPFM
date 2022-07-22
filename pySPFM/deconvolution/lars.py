@@ -12,7 +12,7 @@ def select_optimal_lambda(residuals, non_zero_count, n_scans, criterion="bic"):
         Residuals of the model
     non_zero_count : ndarray
         Number of non-zero coefficients for each lambda
-    nscans : int
+    n_scans : int
         Number of scans
     criterion : str, optional
         Criterion to find the optimal solution, by default "bic"
