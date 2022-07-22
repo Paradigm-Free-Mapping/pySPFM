@@ -268,8 +268,8 @@ def _get_parser():
         dest="is_bids",
         action="store_true",
         help=(
-            "Use BIDS-style output (default = False). pySPFM assumes that `output` follows the"
-            "BIDS convention."
+            "Use BIDS-style suffix on the given `output` (default = False). pySPFM assumes that"
+            "`output` follows the BIDS convention."
         ),
         default=False,
     )
