@@ -14,20 +14,14 @@ class HRFMatrix:
 
     Parameters
     ----------
-    tr : float
-        tr of the acquisition, by default 2
     TE : list
         Values of TE in ms, by default None
-    n_scans : int
-        Number of volumes in acquisition, by default 200
-    r2only : bool
-        Whether to only consider R2* in the signal model, by default True
-    is_afni : bool
-        Whether to use AFNI's 3dDeconvolve to generate HRF matrix, by default True
-    hrf_model : str
-        3dDeconvolve option to select HRF shape, by default "SPMG1"
+    model : str
+        Model to use for HRF, by default "spm"
     block : bool
         Whether to use the block model in favor of the spike model, by default false
+    custom : str
+        Path to custom HRF file, by default None
     """
 
     def __init__(
@@ -35,23 +29,29 @@ class HRFMatrix:
         te=None,
         model="spm",
         block=True,
-        custom=None,
     ):
         self.te = te
         self.model = model
         self.block = block
-        self.custom = custom
 
     def generate_hrf(self, tr, n_scans):
         """Generate HRF matrix.
 
+        Parameters
+        ----------
+        tr : float
+            tr of the acquisition.
+        n_scans : int
+            Number of scans.
+
         Returns
         -------
-        self
+        self.hrf_ : array_like
+            A hemodynamic response function (HRF).
         """
 
-        # Read custom HRF from file
-        if self.custom is not None:
+        # Read custom HRF from file if self.model ends in .1D or .txt
+        if self.model.endswith(".1D") or self.model.endswith(".txt"):
             hrf = np.loadtxt(self.custom)
         else:
             # Get HRF from nilearn
