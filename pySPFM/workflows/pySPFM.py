@@ -390,8 +390,8 @@ def pySPFM(
     is_atlas : bool, optional
         Read mask as atlas with different labels, by default False
     is_bids : bool, optional
-        Use BIDS-style output (default = False). pySPFM assumes that `output` follows the BIDS
-        convention.
+        Use BIDS-style suffix on the given `output` (default = False). pySPFM assumes that `output`
+        follows the BIDS convention.
     debug : bool, optional
         Logger option for debugging, by default False
     quiet : bool, optional
