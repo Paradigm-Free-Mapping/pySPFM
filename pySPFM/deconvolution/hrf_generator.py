@@ -53,12 +53,25 @@ class HRFMatrix:
         # Read custom HRF from file if self.model ends in .1D or .txt
         if self.model.endswith(".1D") or self.model.endswith(".txt"):
             hrf = np.loadtxt(self.custom)
+
+            # Make sure that the HRF is not longer than the number of scans
+            # If it is, then raise an error
+            if len(hrf) > n_scans:
+                raise ValueError(
+                    "HRF is longer than the number of scans. "
+                    "Please make sure that your custom HRF is not longer than the number of scans."
+                )
         else:
             # Get HRF from nilearn
             if self.model == "spm":
                 hrf = spm_hrf(tr, oversampling=1, time_length=n_scans * tr)
             elif self.model == "glover":
                 hrf = glover_hrf(tr, oversampling=1, time_length=n_scans * tr)
+            else:
+                raise ValueError(
+                    "Model must be either 'spm', 'glover' or a custom '.1D' or '.txt' file, not %s"
+                    % self.model
+                )
 
         # Calculate maximum HRF value
         max_val = max(abs(hrf))
