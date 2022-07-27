@@ -93,7 +93,7 @@ def _get_parser():
         dest="hrf_model",
         type=str,
         help=(
-            "HRF model to use. Default is 'spm'. Options are 'spm', 'glover', or a custom HRF"
+            "HRF model to use. Default is 'spm'. Options are 'spm', 'glover', or a custom HRF "
             "file with the '.1D' or '.txt' extension."
         ),
         default="spm",
@@ -265,11 +265,11 @@ def _get_parser():
     optional.add_argument(
         "-bids",
         "--bids",
-        dest="is_bids",
+        dest="use_bids",
         action="store_true",
         help=(
-            "Use BIDS-style suffix on the given `output` (default = False). pySPFM assumes that"
-            "`output` follows the BIDS convention. Not using this option will default to using"
+            "Use BIDS-style suffix on the given `output` (default = False). pySPFM assumes that "
+            "`output` follows the BIDS convention. Not using this option will default to using "
             "AFNI to update the header of the output."
         ),
         default=False,
@@ -326,7 +326,7 @@ def pySPFM(
     mu=0.01,
     tolerance=1e-6,
     is_atlas=False,
-    is_bids=False,
+    use_bids=False,
     debug=False,
     quiet=False,
 ):
@@ -390,7 +390,7 @@ def pySPFM(
         Tolerance for residuals to find convergence of inverse problem, by default 1e-6
     is_atlas : bool, optional
         Read mask as atlas with different labels, by default False
-    is_bids : bool, optional
+    use_bids : bool, optional
         Use BIDS-style suffix on the given `output` (default = False). pySPFM assumes that `output`
         follows the BIDS convention. Not using this option will default to using AFNI to update the
         header of the output."
@@ -604,7 +604,7 @@ def pySPFM(
     # Save innovation signal
     if block_model:
         estimates_block = final_estimates
-        output_name = get_outname(output_filename, "innovation", "nii.gz", is_bids)
+        output_name = get_outname(output_filename, "innovation", "nii.gz", use_bids)
         out_bids_keywords.append("innovation")
         write_data(
             estimates_block,
@@ -613,15 +613,15 @@ def pySPFM(
             data_header,
             command_str,
             is_atlas=is_atlas,
-            is_bids=is_bids,
+            use_bids=use_bids,
         )
 
     # Save activity-inducing signal
     if n_te == 1:
-        output_name = get_outname(output_filename, "beta", "nii.gz", is_bids)
+        output_name = get_outname(output_filename, "beta", "nii.gz", use_bids)
         out_bids_keywords.append("beta")
     elif n_te > 1:
-        output_name = get_outname(output_filename, "DR2", "nii.gz", is_bids)
+        output_name = get_outname(output_filename, "DR2", "nii.gz", use_bids)
         out_bids_keywords.append("DR2")
     write_data(
         estimates_spike,
@@ -630,12 +630,12 @@ def pySPFM(
         data_header,
         command_str,
         is_atlas=is_atlas,
-        is_bids=is_bids,
+        use_bids=use_bids,
     )
 
     # Save fitts
     if n_te == 1:
-        output_name = get_outname(output_filename, "fitted", "nii.gz", is_bids)
+        output_name = get_outname(output_filename, "fitted", "nii.gz", use_bids)
         out_bids_keywords.append("fitted")
         write_data(
             fitts,
@@ -644,13 +644,13 @@ def pySPFM(
             data_header,
             command_str,
             is_atlas=is_atlas,
-            is_bids=is_bids,
+            use_bids=use_bids,
         )
     elif n_te > 1:
         for te_idx in range(n_te):
             te_data = fitts[te_idx * n_scans : (te_idx + 1) * n_scans, :]
             output_name = get_outname(
-                output_filename, f"echo-0{te_idx + 1}_dr2HRF", "nii.gz", is_bids
+                output_filename, f"echo-0{te_idx + 1}_dr2HRF", "nii.gz", use_bids
             )
             out_bids_keywords.append(f"echo-0{te_idx + 1}_dr2HRF")
             write_data(
@@ -660,12 +660,12 @@ def pySPFM(
                 data_header,
                 command_str,
                 is_atlas=is_atlas,
-                is_bids=is_bids,
+                use_bids=use_bids,
             )
 
     # Save noise estimate
     if n_te == 1:
-        output_name = get_outname(output_filename, "MAD", "nii.gz", is_bids)
+        output_name = get_outname(output_filename, "MAD", "nii.gz", use_bids)
         out_bids_keywords.append("MAD")
         y = data_masked[:n_scans, :]
         _, _, noise_estimate = select_lambda(hrf=hrf, y=y)
@@ -676,12 +676,12 @@ def pySPFM(
             data_header,
             command_str,
             is_atlas=is_atlas,
-            is_bids=is_bids,
+            use_bids=use_bids,
         )
     else:
         for te_idx in range(n_te):
             output_name = get_outname(
-                output_filename, f"echo-0{te_idx + 1}_MAD", "nii.gz", is_bids
+                output_filename, f"echo-0{te_idx + 1}_MAD", "nii.gz", use_bids
             )
             out_bids_keywords.append(f"echo-0{te_idx + 1}_MAD")
             if te_idx == 0:
@@ -696,11 +696,11 @@ def pySPFM(
                 data_header,
                 command_str,
                 is_atlas=is_atlas,
-                is_bids=is_bids,
+                use_bids=use_bids,
             )
 
     # Save lambda
-    output_name = get_outname(output_filename, "lambda", "nii.gz", is_bids)
+    output_name = get_outname(output_filename, "lambda", "nii.gz", use_bids)
     out_bids_keywords.append("lambda")
     write_data(
         np.expand_dims(lambda_map, axis=0),
@@ -709,11 +709,11 @@ def pySPFM(
         data_header,
         command_str,
         is_atlas=is_atlas,
-        is_bids=is_bids,
+        use_bids=use_bids,
     )
 
     # Save BIDS compatible sidecar file
-    if is_bids:
+    if use_bids:
         write_json(output_filename, out_bids_keywords, out_dir)
 
     LGR.info("Results saved.")
