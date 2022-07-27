@@ -358,7 +358,7 @@ def pySPFM(
         by default 3
     mu : float, optional
         Step size for spatial regularization, by default 0.01
-    tolerance : _type_, optional
+    tolerance : float, optional
         Tolerance for residuals to find convergence of inverse problem, by default 1e-6
     is_atlas : bool, optional
         Read mask as atlas with different labels, by default False
