@@ -650,9 +650,9 @@ def pySPFM(
         for te_idx in range(n_te):
             te_data = fitts[te_idx * n_scans : (te_idx + 1) * n_scans, :]
             output_name = get_outname(
-                output_filename, f"echo-0{te_idx + 1}_dr2HRF", "nii.gz", use_bids
+                output_filename, f"echo-{te_idx + 1}_dr2HRF", "nii.gz", use_bids
             )
-            out_bids_keywords.append(f"echo-0{te_idx + 1}_dr2HRF")
+            out_bids_keywords.append(f"echo-{te_idx + 1}_dr2HRF")
             write_data(
                 te_data,
                 os.path.join(out_dir, output_name),
