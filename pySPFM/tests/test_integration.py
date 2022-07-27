@@ -77,9 +77,9 @@ def test_integration_five_echo(skip_integration, script_runner, mask_five_echo):
         shutil.rmtree(out_dir)
 
     # download data and run the test
-    download_test_data("https://osf.io/9c42e/download", os.path.dirname(out_dir))
+    download_test_data("https://osf.io/vg4wy/download", os.path.dirname(out_dir))
     prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
-    suffix = ".sm.nii.gz"
+    suffix = ".psc.nii.gz"
     datalist = [prepend + str(i + 1) + suffix for i in range(5)]
     echo_times = [15.4, 29.7, 44.0, 58.3, 72.6]
 
@@ -131,9 +131,9 @@ def test_integration_lars(skip_integration, script_runner, mask_five_echo):
         shutil.rmtree(out_dir)
 
     # download data and run the test using the second echo time
-    download_test_data("https://osf.io/9c42e/download", os.path.dirname(out_dir))
+    download_test_data("https://osf.io/vg4wy/download", os.path.dirname(out_dir))
     prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
-    suffix = ".sm.nii.gz"
+    suffix = ".psc.nii.gz"
     data = f"{prepend}2{suffix}"
 
     # CLI args
