@@ -681,9 +681,9 @@ def pySPFM(
     else:
         for te_idx in range(n_te):
             output_name = get_outname(
-                output_filename, f"echo-0{te_idx + 1}_MAD", "nii.gz", use_bids
+                output_filename, f"echo-{te_idx + 1}_MAD", "nii.gz", use_bids
             )
-            out_bids_keywords.append(f"echo-0{te_idx + 1}_MAD")
+            out_bids_keywords.append(f"echo-{te_idx + 1}_MAD")
             if te_idx == 0:
                 y_echo = data_masked[:n_scans, :]
             else:
