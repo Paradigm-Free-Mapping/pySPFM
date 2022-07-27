@@ -63,7 +63,7 @@ def teardown_loggers():
             local_logger.removeHandler(handler)
 
 
-def get_outname(outname, keyword, ext, is_bids=False):
+def get_outname(outname, keyword, ext, use_bids=False):
     """Get the output name.
 
     Parameters
@@ -74,7 +74,7 @@ def get_outname(outname, keyword, ext, is_bids=False):
         Keyword added by pySPFM.
     ext : str
         Extension of the output file.
-    is_bids : bool, optional
+    use_bids : bool, optional
         Whether the output file is in BIDS format, by default False
 
     Returns
@@ -82,7 +82,7 @@ def get_outname(outname, keyword, ext, is_bids=False):
     outname : str
         Name of the output file.
     """
-    if is_bids:
+    if use_bids:
         outname = f"{outname}_desc-pySPFM_{keyword}.{ext}"
     else:
         outname = f"{outname}_pySPFM_{keyword}.{ext}"

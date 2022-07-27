@@ -77,7 +77,7 @@ def update_header(filename, command):
     run(f'3dNotes -h "{command}" {filename}', shell=True)
 
 
-def write_data(data, filename, mask, header, command, is_atlas=False, is_bids=False):
+def write_data(data, filename, mask, header, command, is_atlas=False, use_bids=False):
     """Write data into NIFTI file.
 
     Parameters
@@ -101,7 +101,7 @@ def write_data(data, filename, mask, header, command, is_atlas=False, is_bids=Fa
     out_img.to_filename(filename)
 
     # Update header with AFNI if BIDS is not required
-    if not is_bids:
+    if not use_bids:
         update_header(filename, command)
 
 
