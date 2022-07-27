@@ -269,7 +269,8 @@ def _get_parser():
         action="store_true",
         help=(
             "Use BIDS-style suffix on the given `output` (default = False). pySPFM assumes that"
-            "`output` follows the BIDS convention."
+            "`output` follows the BIDS convention. Not using this option will default to using"
+            "AFNI to update the header of the output."
         ),
         default=False,
     )
@@ -391,7 +392,8 @@ def pySPFM(
         Read mask as atlas with different labels, by default False
     is_bids : bool, optional
         Use BIDS-style suffix on the given `output` (default = False). pySPFM assumes that `output`
-        follows the BIDS convention.
+        follows the BIDS convention. Not using this option will default to using AFNI to update the
+        header of the output."
     debug : bool, optional
         Logger option for debugging, by default False
     quiet : bool, optional
