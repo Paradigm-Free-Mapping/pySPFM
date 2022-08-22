@@ -105,8 +105,16 @@ def write_data(data, filename, mask, header, command, is_atlas=False, use_bids=F
         update_header(filename, command)
 
 
-def write_json(fname, keywords, out_dir):
+def write_json(keywords, out_dir):
+    """Write dataset description into JSON file.
 
+    Parameters
+    ----------
+    keywords : list
+        List of keywords to be added to the JSON file.
+    out_dir : str or path
+        Path to the output directory.
+    """
     # Create dictionary with all the information
     out_dict = {}
 
@@ -117,7 +125,7 @@ def write_json(fname, keywords, out_dir):
         out_dict[keyword]["method"] = "pySPFM"
 
     # Create output filename
-    outname = f"{fname}_desc-pySPFM.json"
+    outname = "dataset_description.json"
 
     # Write json file
     with open(op.join(out_dir, outname), "w") as f:
