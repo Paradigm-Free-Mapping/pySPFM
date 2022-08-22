@@ -5,7 +5,7 @@ test-me_echo-2_desc-denoised_bold.nii.gz
 test-me_echo-3_desc-denoised_bold.nii.gz
 test-me_echo-4_desc-denoised_bold.nii.gz
 test-me_echo-5_desc-denoised_bold.nii.gz
-test-me_desc-percentSignalChange_R2starw.nii.gz
+test-me_desc-activityInducing.nii.gz
 test-me_desc-innovation.nii.gz
 test-me_desc-stat-lambda_statmap.nii.gz
 test-me_desc-echo-1_MAD.nii.gz

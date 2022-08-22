@@ -124,6 +124,18 @@ def write_json(keywords, out_dir):
         out_dict[keyword]["description"] = get_keyword_description(keyword)
         out_dict[keyword]["method"] = "pySPFM"
 
+        # Add units
+        if "bold" in keyword:
+            out_dict[keyword]["units"] = "percent"
+        elif "activityInducing" in keyword:
+            # Count how many keywords have "bold" in their name
+            bold_count = 0
+            for k in keywords:
+                if "bold" in k:
+                    bold_count += 1
+            if bold_count > 1:
+                out_dict[keyword]["units"] = "s-1"
+
     # Create output filename
     outname = "dataset_description.json"
 
