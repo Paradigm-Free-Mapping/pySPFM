@@ -702,8 +702,11 @@ def pySPFM(
             )
 
     # Save lambda
-    output_name = get_outname(output_filename, "stat-lambda_statmap", "nii.gz", use_bids)
-    out_bids_keywords.append("stat-lambda_statmap")
+    out_keyword = "lambda"
+    if use_bids:
+        out_keyword = f"stat-{out_keyword}_statmap"
+    output_name = get_outname(output_filename, out_keyword, "nii.gz", use_bids)
+    out_bids_keywords.append(out_keyword)
     write_data(
         np.expand_dims(lambda_map, axis=0),
         os.path.join(out_dir, output_name),
@@ -716,7 +719,7 @@ def pySPFM(
 
     # Save BIDS compatible sidecar file
     if use_bids:
-        write_json(output_filename, out_bids_keywords, out_dir)
+        write_json(out_bids_keywords, out_dir)
 
     LGR.info("Results saved.")
 
