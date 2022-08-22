@@ -618,13 +618,13 @@ def pySPFM(
 
     # Save activity-inducing signal
     if n_te == 1:
-        output_name = get_outname(output_filename, "beta", "nii.gz", use_bids)
-        out_bids_keywords.append("beta")
+        output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
+        out_bids_keywords.append("activityInducing")
     elif n_te > 1:
         output_name = get_outname(
-            output_filename, "percentSignalChange_R2starw", "nii.gz", use_bids
+            output_filename, "activityInducing", "nii.gz", use_bids
         )
-        out_bids_keywords.append("percentSignalChange_R2starw")
+        out_bids_keywords.append("activityInducing")
     write_data(
         estimates_spike,
         os.path.join(out_dir, output_name),
@@ -669,8 +669,8 @@ def pySPFM(
     if n_te == 1:
         output_name = get_outname(output_filename, "MAD", "nii.gz", use_bids)
         out_bids_keywords.append("MAD")
-        y = data_masked[:n_scans, :]
-        _, _, noise_estimate = select_lambda(hrf=hrf, y=y)
+        out_data = data_masked[:n_scans, :]
+        _, _, noise_estimate = select_lambda(hrf=hrf, y=out_data)
         write_data(
             np.expand_dims(noise_estimate, axis=0),
             os.path.join(out_dir, output_name),
