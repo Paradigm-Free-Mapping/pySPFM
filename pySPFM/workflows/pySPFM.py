@@ -621,8 +621,10 @@ def pySPFM(
         output_name = get_outname(output_filename, "beta", "nii.gz", use_bids)
         out_bids_keywords.append("beta")
     elif n_te > 1:
-        output_name = get_outname(output_filename, "DR2", "nii.gz", use_bids)
-        out_bids_keywords.append("DR2")
+        output_name = get_outname(
+            output_filename, "percentSignalChange_R2starw", "nii.gz", use_bids
+        )
+        out_bids_keywords.append("percentSignalChange_R2starw")
     write_data(
         estimates_spike,
         os.path.join(out_dir, output_name),
@@ -635,8 +637,8 @@ def pySPFM(
 
     # Save fitts
     if n_te == 1:
-        output_name = get_outname(output_filename, "fitted", "nii.gz", use_bids)
-        out_bids_keywords.append("fitted")
+        output_name = get_outname(output_filename, "denoised_bold", "nii.gz", use_bids)
+        out_bids_keywords.append("denoised_bold")
         write_data(
             fitts,
             os.path.join(out_dir, output_name),
@@ -650,9 +652,9 @@ def pySPFM(
         for te_idx in range(n_te):
             te_data = fitts[te_idx * n_scans : (te_idx + 1) * n_scans, :]
             output_name = get_outname(
-                output_filename, f"echo-{te_idx + 1}_dr2HRF", "nii.gz", use_bids
+                f"{output_filename}_echo-{te_idx + 1}", "denoised_bold", "nii.gz", use_bids
             )
-            out_bids_keywords.append(f"echo-{te_idx + 1}_dr2HRF")
+            out_bids_keywords.append(f"echo-{te_idx + 1}_desc-denoised_bold")
             write_data(
                 te_data,
                 os.path.join(out_dir, output_name),
@@ -700,8 +702,8 @@ def pySPFM(
             )
 
     # Save lambda
-    output_name = get_outname(output_filename, "lambda", "nii.gz", use_bids)
-    out_bids_keywords.append("lambda")
+    output_name = get_outname(output_filename, "stat-lambda_statmap", "nii.gz", use_bids)
+    out_bids_keywords.append("stat-lambda_statmap")
     write_data(
         np.expand_dims(lambda_map, axis=0),
         os.path.join(out_dir, output_name),

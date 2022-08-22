@@ -83,7 +83,7 @@ def get_outname(outname, keyword, ext, use_bids=False):
         Name of the output file.
     """
     if use_bids:
-        outname = f"{outname}_desc-pySPFM_{keyword}.{ext}"
+        outname = f"{outname}_desc-{keyword}.{ext}"
     else:
         outname = f"{outname}_pySPFM_{keyword}.{ext}"
     return outname
