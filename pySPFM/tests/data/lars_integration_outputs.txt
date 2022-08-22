@@ -1,6 +1,6 @@
 _references.txt
 call.sh
-test_lars_pySPFM_fitted.nii.gz
+test_lars_pySPFM_denoised_bold.nii.gz
 test_lars_pySPFM_beta.nii.gz
 test_lars_pySPFM_lambda.nii.gz
 test_lars_pySPFM_MAD.nii.gz
