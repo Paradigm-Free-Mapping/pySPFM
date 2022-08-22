@@ -114,7 +114,7 @@ def get_keyword_description(keyword):
         keyword_description = (
             "Deconvolution-estimated activity-inducing signal; i.e., induces BOLD response."
         )
-    elif "R2star" in keyword:
+    elif "activityInducing" in keyword:
         keyword_description = (
             "Deconvolution-estimated activity-inducing signal that represents"
             "changes in the R2* component of the multi-echo signal; i.e., induces BOLD response."
