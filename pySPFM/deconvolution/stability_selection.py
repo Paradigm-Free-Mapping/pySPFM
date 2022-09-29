@@ -66,13 +66,10 @@ def calculate_auc(coefs, lambdas):
     return auc
 
 
-def stability_selection(hrf_norm, data, n_lambdas, n_surrogates, n_jobs):
+def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
     # Get n_scans, n_echos, n_voxels
     n_scans = hrf_norm.shape[1]
     n_echos = int(np.ceil(hrf_norm.shape[0] / n_scans))
-
-    # Initialize the scheduler
-    # _, cluster = dask_scheduler(n_jobs)
 
     # Initialize variables to store the results
     estimates = np.zeros((n_scans, n_lambdas, n_surrogates))
