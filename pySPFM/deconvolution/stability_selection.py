@@ -93,7 +93,6 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates, n_jobs):
         )
         stability_estimates.append(fut_stability)
 
-
     for surr_idx in range(n_surrogates):
         estimates[:, :, surr_idx] = np.squeeze(stability_estimates[surr_idx][0])
         lambdas[:, surr_idx] = np.squeeze(stability_estimates[surr_idx][1])
