@@ -1,7 +1,7 @@
 """Selection of the regularization parameter lambda for the deconvolution."""
 import numpy as np
 from pywt import wavedec
-from scipy.stats import median_absolute_deviation
+from scipy.stats import median_abs_deviation
 
 
 def select_lambda(hrf, y, criterion="ut", factor=1, pcg=0.7, lambda_echo=-1):
@@ -72,7 +72,7 @@ def select_lambda(hrf, y, criterion="ut", factor=1, pcg=0.7, lambda_echo=-1):
             y = y[(lambda_echo - 1) * nt : lambda_echo * nt, :]
 
     _, cD1 = wavedec(y, "db3", level=1, axis=0)
-    noise_estimate = median_absolute_deviation(cD1) / 0.6745  # 0.8095
+    noise_estimate = median_abs_deviation(cD1) / 0.6745  # 0.8095
 
     if criterion == "mad":
         lambda_selection = noise_estimate

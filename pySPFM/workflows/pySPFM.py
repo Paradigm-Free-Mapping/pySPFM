@@ -265,6 +265,14 @@ def _get_parser():
         default=False,
     )
     optional.add_argument(
+        "-nsur",
+        "--nsurrogates",
+        dest="n_surrogates",
+        type=int,
+        help="Number of surrogates to generate for stability selection (default = 50).",
+        default=50,
+    )
+    optional.add_argument(
         "-debug",
         "--debug",
         dest="debug",
@@ -315,7 +323,7 @@ def pySPFM(
     mu=0.01,
     tolerance=1e-6,
     is_atlas=False,
-    n_surrogates=100,
+    n_surrogates=50,
     debug=False,
     quiet=False,
 ):
@@ -376,6 +384,8 @@ def pySPFM(
         Tolerance for residuals to find convergence of inverse problem, by default 1e-6
     is_atlas : bool, optional
         Read mask as atlas with different labels, by default False
+    n_surrogates : int, optional
+        Number of surrogates to generate for stability selection, by default 50
     debug : bool, optional
         Logger option for debugging, by default False
     quiet : bool, optional
