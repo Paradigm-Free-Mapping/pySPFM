@@ -546,7 +546,6 @@ def pySPFM(
                     data_temp_reg[:, vox_idx],
                     n_lambdas,
                     n_surrogates,
-                    n_jobs,
                 )
                 futures.append(fut)
 
