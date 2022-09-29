@@ -60,8 +60,11 @@ def calculate_auc(coefs, lambdas):
     # Sort coefficients to match lambdas
     coefs_sorted = coefs_shared[lambdas_sorted_idx]
 
+    # Turn coefs_sorted into a binary vector
+    coefs_sorted[coefs_sorted != 0] = 1
+
     # Calculate the AUC as the normalized area under the curve
-    auc = np.trapz(coefs_sorted, lambdas_sorted) / np.sum(lambdas_sorted)
+    auc = np.trapz(coefs_sorted, lambdas_sorted) / np.sum(lambdas_sorted) / coefs.shape[-1]
 
     return auc
 
@@ -72,35 +75,32 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates, n_jobs):
     n_echos = int(np.ceil(hrf_norm.shape[0] / n_scans))
 
     # Initialize the scheduler
-    _, cluster = dask_scheduler(n_jobs)
+    # _, cluster = dask_scheduler(n_jobs)
 
     # Initialize variables to store the results
     estimates = np.zeros((n_scans, n_lambdas, n_surrogates))
     lambdas = np.zeros((n_lambdas, n_surrogates))
 
     # Generate surrogates and compute the regularization path
-    futures_stability = []
+    stability_estimates = []
     for surr_idx in range(n_surrogates):
         # Subsampling for Stability Selection
         subsample_idx = get_subsampling_indices(n_scans, n_echos)
 
         # Solve LARS
-        fut_stability = delayed_dask(solve_regularization_path, pure=False)(
+        fut_stability = solve_regularization_path(
             hrf_norm[subsample_idx, :], data[subsample_idx], n_lambdas, "stability"
         )
-        futures_stability.append(fut_stability)
+        stability_estimates.append(fut_stability)
 
-    stability_estimates = compute(futures_stability)[0]
 
     for surr_idx in range(n_surrogates):
         estimates[:, :, surr_idx] = np.squeeze(stability_estimates[surr_idx][0])
         lambdas[:, surr_idx] = np.squeeze(stability_estimates[surr_idx][1])
 
     # Calculate the AUC for each TR
-    futures_auc = []
+    auc = np.zeros((n_scans))
     for tr_idx in range(n_scans):
-        fut_auc = delayed_dask(calculate_auc, pure=False)(estimates[tr_idx, :, :], lambdas)
-        futures_auc.append(fut_auc)
-    auc = compute(futures_auc)[0]
+        auc[tr_idx] = calculate_auc(estimates[tr_idx, :, :], lambdas)
 
     return auc
