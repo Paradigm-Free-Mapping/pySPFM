@@ -2,11 +2,8 @@ import logging
 import os
 
 import numpy as np
-from dask import compute
-from dask import delayed as delayed_dask
 
 from pySPFM.deconvolution.lars import solve_regularization_path
-from pySPFM.utils import dask_scheduler
 
 LGR = logging.getLogger("GENERAL")
 
