@@ -550,7 +550,8 @@ def pySPFM(
                 for vox_idx in range(n_voxels)
             ]
 
-            stability_estimates = client.compute(futures)[0]
+            stability_estimates = compute(futures)[0]
+            print(stability_estimates)
             for vox_idx in range(n_voxels):
                 auc[:, vox_idx] = np.squeeze(stability_estimates[vox_idx])
 
