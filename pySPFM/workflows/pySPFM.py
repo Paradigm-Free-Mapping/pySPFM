@@ -555,6 +555,7 @@ def pySPFM(
                 for vox_idx in range(n_voxels)
             ]
 
+            # Gather results
             if client is not None:
                 stability_estimates = compute(futures)[0]
             else:
