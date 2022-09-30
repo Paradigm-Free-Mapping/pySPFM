@@ -539,15 +539,16 @@ def pySPFM(
             auc = np.zeros((n_scans, n_voxels))
 
             # Solve stability regularization
-            futures = []
-            for vox_idx in range(n_voxels):
-                fut = delayed_dask(stability_selection)(
-                    hrf_norm,
+            hrf_norm_fut = client.scatter(hrf_norm)
+            futures = [
+                delayed_dask(stability_selection)(
+                    hrf_norm_fut,
                     data_temp_reg[:, vox_idx],
                     n_lambdas,
                     n_surrogates,
                 )
-                futures.append(fut)
+                for vox_idx in range(n_voxels)
+            ]
 
             stability_estimates = client.compute(futures)[0]
             for vox_idx in range(n_voxels):
