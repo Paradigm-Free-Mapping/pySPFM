@@ -481,7 +481,7 @@ def pySPFM(
         final_estimates = np.empty((n_scans, n_voxels))
 
     # Iterate between temporal and spatial regularizations
-    _, cluster = dask_scheduler(n_jobs)
+    client, _ = dask_scheduler(n_jobs)
     for iter_idx in range(max_iter):
         if spatial_weight > 0:
             data_temp_reg = final_estimates - estimates_temporal + data_masked
@@ -502,7 +502,7 @@ def pySPFM(
                 )
                 futures.append(fut)
 
-            lars_estimates = compute(futures)[0]
+            lars_estimates = client.compute(futures)[0]
 
             for vox_idx in range(n_voxels):
                 estimates[:, vox_idx] = np.squeeze(lars_estimates[vox_idx][0])
@@ -527,7 +527,7 @@ def pySPFM(
                 )
                 futures.append(fut)
 
-            fista_estimates = compute(futures)[0]
+            fista_estimates = client.compute(futures)[0]
 
             for vox_idx in range(n_voxels):
                 estimates[:, vox_idx] = np.squeeze(fista_estimates[vox_idx][0])
@@ -549,7 +549,7 @@ def pySPFM(
                 )
                 futures.append(fut)
 
-            stability_estimates = compute(futures)[0]
+            stability_estimates = client.compute(futures)[0]
             for vox_idx in range(n_voxels):
                 auc[:, vox_idx] = np.squeeze(stability_estimates[vox_idx])
 
