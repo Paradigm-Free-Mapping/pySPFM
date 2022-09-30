@@ -538,8 +538,13 @@ def pySPFM(
             n_lambdas = int(np.ceil(max_iter_factor * n_scans))
             auc = np.zeros((n_scans, n_voxels))
 
+            # Scatter data to workers if client is not None
+            if client is not None:
+                hrf_norm_fut = client.scatter(hrf_norm)
+            else:
+                hrf_norm_fut = hrf_norm
+
             # Solve stability regularization
-            hrf_norm_fut = client.scatter(hrf_norm)
             futures = [
                 delayed_dask(stability_selection)(
                     hrf_norm_fut,
@@ -550,8 +555,11 @@ def pySPFM(
                 for vox_idx in range(n_voxels)
             ]
 
-            stability_estimates = compute(futures)[0]
-            print(stability_estimates)
+            if client is not None:
+                stability_estimates = compute(futures)[0]
+            else:
+                stability_estimates = compute(futures, scheduler="single-threaded")[0]
+
             for vox_idx in range(n_voxels):
                 auc[:, vox_idx] = np.squeeze(stability_estimates[vox_idx])
 
