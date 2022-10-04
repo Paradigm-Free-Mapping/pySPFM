@@ -60,8 +60,13 @@ def calculate_auc(coefs, lambdas, n_surrogates):
     # Turn coefs_sorted into a binary vector
     coefs_sorted[coefs_sorted != 0] = 1
 
-    # Calculate the AUC as the normalized area under the curve
-    auc = np.trapz(coefs_sorted, lambdas_sorted) / np.sum(lambdas_sorted) / n_surrogates
+    # Calculate the AUC
+    for i in range(lambdas_sorted.shape[0]):
+        if i == 0:
+            auc = coefs_sorted[i] / n_surrogates * lambdas_sorted[i] / np.sum(lambdas_sorted)
+        else:
+            auc += coefs_sorted[i] / n_surrogates * lambdas_sorted[i] / np.sum(lambdas_sorted)
+    # auc = np.trapz(coefs_sorted, lambdas_sorted) / np.sum(lambdas_sorted) / n_surrogates
 
     return auc
 
