@@ -37,7 +37,7 @@ def get_subsampling_indices(n_scans, n_echos, mode="same"):
     return subsample_idx
 
 
-def calculate_auc(coefs, lambdas):
+def calculate_auc(coefs, lambdas, n_surrogates):
 
     # Create shared space of lambdas and coefficients
     lambdas_shared = np.zeros((lambdas.shape[0] * lambdas.shape[1]))
@@ -54,14 +54,19 @@ def calculate_auc(coefs, lambdas):
     lambdas_sorted_idx = np.argsort(lambdas_shared)
     lambdas_sorted = np.sort(lambdas_shared)
 
-    # Sort coefficients to match lambdas
+    # Sum of all lambdas
+    sum_lambdas = np.sum(lambdas_sorted)
+
+    # Sort coefficients
     coefs_sorted = coefs_shared[lambdas_sorted_idx]
 
-    # Turn coefs_sorted into a binary vector
+    # Make coefs_sorted binary
     coefs_sorted[coefs_sorted != 0] = 1
 
-    # Calculate the AUC as the normalized area under the curve
-    auc = np.trapz(coefs_sorted, lambdas_sorted) / np.sum(lambdas_sorted) / coefs.shape[-1]
+    # Calculate the AUC
+    auc = 0
+    for i in range(lambdas_shared.shape[0]):
+        auc += coefs_sorted[i] * lambdas_sorted[i] / sum_lambdas
 
     return auc
 
@@ -94,6 +99,6 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
     # Calculate the AUC for each TR
     auc = np.zeros((n_scans))
     for tr_idx in range(n_scans):
-        auc[tr_idx] = calculate_auc(estimates[tr_idx, :, :], lambdas)
+        auc[tr_idx] = calculate_auc(estimates[tr_idx, :, :], lambdas, n_surrogates)
 
     return auc
