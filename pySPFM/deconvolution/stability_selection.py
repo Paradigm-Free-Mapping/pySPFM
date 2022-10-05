@@ -54,19 +54,19 @@ def calculate_auc(coefs, lambdas, n_surrogates):
     lambdas_sorted_idx = np.argsort(lambdas_shared)
     lambdas_sorted = np.sort(lambdas_shared)
 
-    # Sort coefficients to match lambdas
+    # Sum of all lambdas
+    sum_lambdas = np.sum(lambdas_sorted)
+
+    # Sort coefficients
     coefs_sorted = coefs_shared[lambdas_sorted_idx]
 
-    # Turn coefs_sorted into a binary vector
+    # Make coefs_sorted binary
     coefs_sorted[coefs_sorted != 0] = 1
 
     # Calculate the AUC
-    for i in range(lambdas_sorted.shape[0]):
-        if i == 0:
-            auc = coefs_sorted[i] / n_surrogates * lambdas_sorted[i] / np.sum(lambdas_sorted)
-        else:
-            auc += coefs_sorted[i] / n_surrogates * lambdas_sorted[i] / np.sum(lambdas_sorted)
-    # auc = np.trapz(coefs_sorted, lambdas_sorted) / np.sum(lambdas_sorted) / n_surrogates
+    auc = 0
+    for i in range(lambdas_shared.shape[0]):
+        auc += coefs_sorted[i] * lambdas_sorted[i] / sum_lambdas
 
     return auc
 
