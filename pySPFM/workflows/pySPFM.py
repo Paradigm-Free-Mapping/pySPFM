@@ -481,7 +481,7 @@ def pySPFM(
         final_estimates = np.empty((n_scans, n_voxels))
 
     # Iterate between temporal and spatial regularizations
-    _, cluster = dask_scheduler(n_jobs)
+    client, _ = dask_scheduler(n_jobs)
     for iter_idx in range(max_iter):
         if spatial_weight > 0:
             data_temp_reg = final_estimates - estimates_temporal + data_masked
@@ -491,6 +491,12 @@ def pySPFM(
         estimates = np.zeros((n_scans, n_voxels))
         lambda_map = np.zeros(n_voxels)
 
+        # Scatter data to workers if client is not None
+        if client is not None:
+            hrf_norm_fut = client.scatter(hrf_norm)
+        else:
+            hrf_norm_fut = hrf_norm
+
         if criterion in lars_criteria:
             LGR.info("Solving inverse problem with LARS...")
             n_lambdas = int(np.ceil(max_iter_factor * n_scans))
@@ -498,11 +504,15 @@ def pySPFM(
             futures = []
             for vox_idx in range(n_voxels):
                 fut = delayed_dask(solve_regularization_path, pure=False)(
-                    hrf_norm, data_temp_reg[:, vox_idx], n_lambdas, criterion
+                    hrf_norm_fut, data_temp_reg[:, vox_idx], n_lambdas, criterion
                 )
                 futures.append(fut)
 
-            lars_estimates = compute(futures)[0]
+            # Gather results
+            if client is not None:
+                lars_estimates = compute(futures)[0]
+            else:
+                lars_estimates = compute(futures, scheduler="single-threaded")[0]
 
             for vox_idx in range(n_voxels):
                 estimates[:, vox_idx] = np.squeeze(lars_estimates[vox_idx][0])
@@ -514,7 +524,7 @@ def pySPFM(
             futures = []
             for vox_idx in range(n_voxels):
                 fut = delayed_dask(fista, pure=False)(
-                    hrf_norm,
+                    hrf_norm_fut,
                     data_temp_reg[:, vox_idx],
                     criterion,
                     max_iter_fista,
@@ -527,7 +537,11 @@ def pySPFM(
                 )
                 futures.append(fut)
 
-            fista_estimates = compute(futures)[0]
+            # Gather results
+            if client is not None:
+                fista_estimates = compute(futures)[0]
+            else:
+                fista_estimates = compute(futures, scheduler="single-threaded")[0]
 
             for vox_idx in range(n_voxels):
                 estimates[:, vox_idx] = np.squeeze(fista_estimates[vox_idx][0])
@@ -539,17 +553,22 @@ def pySPFM(
             auc = np.zeros((n_scans, n_voxels))
 
             # Solve stability regularization
-            futures = []
-            for vox_idx in range(n_voxels):
-                fut = delayed_dask(stability_selection)(
-                    hrf_norm,
+            futures = [
+                delayed_dask(stability_selection)(
+                    hrf_norm_fut,
                     data_temp_reg[:, vox_idx],
                     n_lambdas,
                     n_surrogates,
                 )
-                futures.append(fut)
+                for vox_idx in range(n_voxels)
+            ]
 
-            stability_estimates = compute(futures)[0]
+            # Gather results
+            if client is not None:
+                stability_estimates = compute(futures)[0]
+            else:
+                stability_estimates = compute(futures, scheduler="single-threaded")[0]
+
             for vox_idx in range(n_voxels):
                 auc[:, vox_idx] = np.squeeze(stability_estimates[vox_idx])
 
