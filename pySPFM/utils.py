@@ -1,5 +1,11 @@
 """Utils of pySPFM."""
 import logging
+from os.path import expanduser, join
+
+import yaml
+from dask import config
+from dask.distributed import Client
+from dask_jobqueue import PBSCluster, SGECluster, SLURMCluster
 
 LGR = logging.getLogger("GENERAL")
 RefLGR = logging.getLogger("REFERENCES")
@@ -134,3 +140,54 @@ def get_keyword_description(keyword):
         )
 
     return keyword_description
+
+
+def dask_scheduler(jobs):
+    """
+    Checks if the user has a dask_jobqueue configuration file, and if so,
+    returns the appropriate scheduler according to the file parameters
+    """
+    # look if default ~ .config/dask/jobqueue.yaml exists
+    with open(join(expanduser("~"), ".config/dask/jobqueue.yaml"), "r") as stream:
+        data = yaml.load(stream, Loader=yaml.FullLoader)
+
+    if data is None:
+        LGR.warning(
+            "dask configuration wasn't detected, "
+            "if you are using a cluster please look at "
+            "the jobqueue YAML example, modify it so it works in your cluster "
+            "and add it to ~/.config/dask "
+            "local configuration will be used."
+            "You can find a jobqueue YAML example in the pySPFM/jobqueue.yaml file."
+        )
+        cluster = None
+    else:
+        config.set(distributed__comm__timeouts__tcp="90s")
+        config.set(distributed__comm__timeouts__connect="90s")
+        config.set(scheduler="single-threaded")
+        config.set({"distributed.scheduler.allowed-failures": 50})
+        config.set(admin__tick__limit="3h")
+        if "sge" in data["jobqueue"]:
+            cluster = SGECluster()
+            cluster.scale(jobs)
+        elif "pbs" in data["jobqueue"]:
+            cluster = PBSCluster()
+            cluster.scale(jobs)
+        elif "slurm" in data["jobqueue"]:
+            cluster = SLURMCluster()
+            cluster.scale(jobs)
+        else:
+            LGR.warning(
+                "dask configuration wasn't detected, "
+                "if you are using a cluster please look at "
+                "the jobqueue YAML example, modify it so it works in your cluster "
+                "and add it to ~/.config/dask "
+                "local configuration will be used."
+                "You can find a jobqueue YAML example in the pySPFM/jobqueue.yaml file."
+            )
+            cluster = None
+    if cluster is None:
+        client = None
+    else:
+        client = Client(cluster)
+    return client, cluster

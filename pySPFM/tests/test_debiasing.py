@@ -23,8 +23,6 @@ def test_debiasing_spike(sim_data, sim_hrf):
         sim_hrf,
         sim_data,
         estimates,
-        progress_bar=False,
-        jobs=1,
     )
 
     # Check that beta is different from zero on the same indices as estimates
@@ -52,9 +50,7 @@ def test_debiasing_block(sim_data, sim_hrf):
     estimates[151:161] = 1
     estimates[210:215] = 1
 
-    beta = debiasing.debiasing_block(
-        sim_hrf, sim_data, estimates_matrix=estimates, progress_bar=False, jobs=1
-    )
+    beta = debiasing.debiasing_block(sim_hrf, sim_data, estimates_matrix=estimates)
 
     # Check that the derivative of beta is equal to estimates
     assert np.allclose(np.diff(beta) != 0, estimates != 0)
