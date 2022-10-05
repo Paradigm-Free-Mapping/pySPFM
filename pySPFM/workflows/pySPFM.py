@@ -525,9 +525,9 @@ def pySPFM(
 
         # Scatter data to workers if client is not None
         if client is not None:
-            hrf_norm_fut = client.scatter(hrf_norm)
+            hrf_fut = client.scatter(hrf)
         else:
-            hrf_norm_fut = hrf_norm
+            hrf_fut = hrf
 
         if criterion in lars_criteria:
             LGR.info("Solving inverse problem with LARS...")
@@ -536,7 +536,7 @@ def pySPFM(
             futures = []
             for vox_idx in range(n_voxels):
                 fut = delayed_dask(solve_regularization_path, pure=False)(
-                    hrf_norm_fut, data_temp_reg[:, vox_idx], n_lambdas, criterion
+                    hrf_fut, data_temp_reg[:, vox_idx], n_lambdas, criterion
                 )
                 futures.append(fut)
 
@@ -556,7 +556,7 @@ def pySPFM(
             futures = []
             for vox_idx in range(n_voxels):
                 fut = delayed_dask(fista, pure=False)(
-                    hrf_norm_fut,
+                    hrf_fut,
                     data_temp_reg[:, vox_idx],
                     criterion,
                     max_iter_fista,
@@ -587,7 +587,7 @@ def pySPFM(
             # Solve stability regularization
             futures = [
                 delayed_dask(stability_selection)(
-                    hrf_norm_fut,
+                    hrf_fut,
                     data_temp_reg[:, vox_idx],
                     n_lambdas,
                     n_surrogates,
@@ -704,9 +704,9 @@ def pySPFM(
 
         if not debias:
             hrf_obj = HRFMatrix(TR=tr, n_scans=n_scans, TE=te, block=False)
-            hrf_norm = hrf_obj.generate_hrf().hrf_norm
+            hrf = hrf_obj.generate_hrf().hrf
             estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
-            fitts = np.dot(hrf_norm, estimates_spike)
+            fitts = np.dot(hrf, estimates_spike)
 
     # Save activity-inducing signal
     if n_te == 1:
