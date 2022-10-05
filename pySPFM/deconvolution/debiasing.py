@@ -3,10 +3,12 @@ import logging
 
 import numpy as np
 import scipy as sci
-from joblib import Parallel, delayed
+from dask import compute
+from dask import delayed as delayed_dask
 from scipy.signal import find_peaks
 from sklearn.linear_model import RidgeCV
-from tqdm import tqdm
+
+from pySPFM.utils import dask_scheduler
 
 LGR = logging.getLogger("GENERAL")
 RefLGR = logging.getLogger("REFERENCES")
@@ -112,7 +114,7 @@ def do_debias_block(hrf, y, estimates_matrix, dist=2):
     return beta_out
 
 
-def debiasing_block(hrf, y, estimates_matrix, dist=2, progress_bar=True, jobs=1):
+def debiasing_block(hrf, y, estimates_matrix, dist=2, n_jobs=4):
     """Voxelwise block model debiasing workflow.
 
     Parameters
@@ -140,16 +142,14 @@ def debiasing_block(hrf, y, estimates_matrix, dist=2, progress_bar=True, jobs=1)
 
     LGR.info("Starting debiasing step...")
     # Performs debiasing
-    if progress_bar:
-        debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
-            delayed(do_debias_block)(hrf, y[:, voxidx], estimates_matrix[:, voxidx])
-            for voxidx in tqdm(range(n_voxels))
+    _, cluster = dask_scheduler(n_jobs)
+    futures = []
+    for voxidx in range(n_voxels):
+        fut = delayed_dask(do_debias_block, pure=False)(
+            hrf, y[:, voxidx], estimates_matrix[:, voxidx]
         )
-    else:
-        debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
-            delayed(do_debias_block)(hrf, y[:, voxidx], estimates_matrix[:, voxidx])
-            for voxidx in range(n_voxels)
-        )
+        futures.append(fut)
+    debiased = compute(futures)[0]
 
     for vox_idx in range(n_voxels):
         beta_out[:, vox_idx] = debiased[vox_idx]
@@ -191,7 +191,7 @@ def do_debias_spike(hrf, y, estimates_matrix):
     return beta_out, fitts_out
 
 
-def debiasing_spike(hrf, y, estimates_matrix, progress_bar=True, jobs=1):
+def debiasing_spike(hrf, y, estimates_matrix, n_jobs=4):
     """Perform voxelwise debiasing with spike model.
 
     Parameters
@@ -217,20 +217,14 @@ def debiasing_spike(hrf, y, estimates_matrix, progress_bar=True, jobs=1):
     index_voxels = np.unique(np.where(abs(estimates_matrix) > 10 * np.finfo(float).eps)[1])
 
     LGR.info("Performing debiasing step...")
-    if progress_bar:
-        debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
-            delayed(do_debias_spike)(
-                hrf, y[:, index_voxels[voxidx]], estimates_matrix[:, index_voxels[voxidx]]
-            )
-            for voxidx in tqdm(range(len(index_voxels)))
+    _, cluster = dask_scheduler(n_jobs)
+    futures = []
+    for voxidx in range(len(index_voxels)):
+        fut = delayed_dask(do_debias_spike, pure=False)(
+            hrf, y[:, index_voxels[voxidx]], estimates_matrix[:, index_voxels[voxidx]]
         )
-    else:
-        debiased = Parallel(n_jobs=jobs, backend="multiprocessing")(
-            delayed(do_debias_spike)(
-                hrf, y[:, index_voxels[voxidx]], estimates_matrix[:, index_voxels[voxidx]]
-            )
-            for voxidx in range(len(index_voxels))
-        )
+        futures.append(fut)
+    debiased = compute(futures)[0]
 
     for voxidx in range(len(index_voxels)):
         beta_out[:, index_voxels[voxidx]] = debiased[voxidx][0]
