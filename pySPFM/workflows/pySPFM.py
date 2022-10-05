@@ -672,13 +672,11 @@ def pySPFM(
         LGR.info("Debiasing estimates...")
         if block_model:
             estimates_spike = debiasing_block(
-                hrf=hrf, y=data_masked, estimates_matrix=final_estimates, jobs=n_jobs
+                hrf=hrf, y=data_masked, estimates_matrix=final_estimates
             )
             fitts = np.dot(hrf, estimates_spike)
         else:
-            estimates_spike, fitts = debiasing_spike(
-                hrf, data_masked, final_estimates, jobs=n_jobs
-            )
+            estimates_spike, fitts = debiasing_spike(hrf, data_masked, final_estimates)
     elif block_model:
         estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
         fitts = np.dot(hrf, estimates_spike)
