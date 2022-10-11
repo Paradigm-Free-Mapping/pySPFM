@@ -195,7 +195,7 @@ def test_integration_stability_selection(skip_integration, mask_five_echo):
         + ["-m"]
         + [mask_five_echo]
         + ["-o"]
-        + ["test_stability.pySPFM"]
+        + ["test_stability"]
         + ["-tr"]
         + ["2"]
         + ["-d"]

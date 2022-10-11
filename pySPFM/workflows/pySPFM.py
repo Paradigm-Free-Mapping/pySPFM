@@ -512,6 +512,9 @@ def pySPFM(
         estimates_spatial = np.empty((n_scans, n_voxels))
         final_estimates = np.empty((n_scans, n_voxels))
 
+    # Initialize list to save keywords used for BIDS compatible outputs
+    out_bids_keywords = []
+
     # Iterate between temporal and spatial regularizations
     client, _ = dask_scheduler(n_jobs)
     for iter_idx in range(max_iter):
@@ -607,7 +610,8 @@ def pySPFM(
             LGR.info("Stability selection finished.")
 
             LGR.info("Saving AUCs to %s..." % out_dir)
-            output_name = f"{output_filename}_AUC.nii.gz"
+            out_bids_keywords.append("AUC")
+            output_name = get_outname(output_filename, "AUC", "nii.gz", use_bids)
             write_data(
                 auc,
                 os.path.join(out_dir, output_name),
@@ -682,8 +686,6 @@ def pySPFM(
         fitts = np.dot(hrf, estimates_spike)
 
     LGR.info("Saving results...")
-    # Initialize list to save keywords used for BIDS compatible outputs
-    out_bids_keywords = []
 
     # Save innovation signal
     if block_model:
