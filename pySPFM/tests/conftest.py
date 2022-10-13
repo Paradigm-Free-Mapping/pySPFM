@@ -79,13 +79,18 @@ def mask_five_echo(testpath):
 
 
 @pytest.fixture
-def hrf_file(testpath):
-    return fetch_file("gefu4", testpath, "hrf.txt")
+def spm_single_echo_block(testpath):
+    return fetch_file("4k85j", testpath, "spm_single_echo_block.npy")
 
 
 @pytest.fixture
-def hrf_linear_file(testpath):
-    return fetch_file("mkeu2", testpath, "hrf_linear.txt")
+def spm_single_echo(testpath):
+    return fetch_file("zt3pm", testpath, "spm_single_echo.npy")
+
+
+@pytest.fixture
+def glover_multi_echo(testpath):
+    return fetch_file("xke79", testpath, "glover_multi_echo.npy")
 
 
 @pytest.fixture

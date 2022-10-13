@@ -69,6 +69,79 @@ def teardown_loggers():
             local_logger.removeHandler(handler)
 
 
+def get_outname(outname, keyword, ext, use_bids=False):
+    """Get the output name.
+
+    Parameters
+    ----------
+    outname : str
+        Name of the output file.
+    keyword : str
+        Keyword added by pySPFM.
+    ext : str
+        Extension of the output file.
+    use_bids : bool, optional
+        Whether the output file is in BIDS format, by default False
+
+    Returns
+    -------
+    outname : str
+        Name of the output file.
+    """
+    if use_bids:
+        outname = f"{outname}_desc-{keyword}.{ext}"
+    else:
+        outname = f"{outname}_pySPFM_{keyword}.{ext}"
+    return outname
+
+
+def get_keyword_description(keyword):
+    """
+    Get the description of the keyword for BIDS sidecar
+
+
+    Parameters
+    ----------
+    keyword : str
+        Keyword added by pySPFM.
+
+    Returns
+    -------
+    keyword_description : str
+        Description of the keyword.
+    """
+
+    if "innovation" in keyword:
+        keyword_description = (
+            "Deconvolution-estimated innovation signal; i.e., the derivative"
+            "of the activity-inducing signal."
+        )
+    elif "beta" in keyword:
+        keyword_description = (
+            "Deconvolution-estimated activity-inducing signal; i.e., induces BOLD response."
+        )
+    elif "activityInducing" in keyword:
+        keyword_description = (
+            "Deconvolution-estimated activity-inducing signal that represents"
+            "changes in the R2* component of the multi-echo signal; i.e., induces BOLD response."
+        )
+    elif "bold" in keyword:
+        keyword_description = (
+            "Deconvolution-denoised activity-related signal; i.e., denoised BOLD signal."
+        )
+    elif "lambda" in keyword:
+        keyword_description = (
+            "Map of the regularization parameter lambda used to solve the deconvolution problem."
+        )
+    elif "MAD" in keyword:
+        keyword_description = (
+            "Estimated mean absolute deviation of the noise; i.e., noise level"
+            "of the signal to be deconvolved."
+        )
+
+    return keyword_description
+
+
 def dask_scheduler(jobs):
     """
     Checks if the user has a dask_jobqueue configuration file, and if so,
