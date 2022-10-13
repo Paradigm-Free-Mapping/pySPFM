@@ -1,9 +1,13 @@
 """I/O."""
+import json
+import os.path as op
 from subprocess import run
 
 import nibabel as nib
 from nilearn import masking
 from nilearn.input_data import NiftiLabelsMasker
+
+from pySPFM.utils import get_keyword_description
 
 
 def read_data(data_fn, mask_fn, is_atlas=False):
@@ -73,7 +77,7 @@ def update_header(filename, command):
     run(f'3dNotes -h "{command}" {filename}', shell=True)
 
 
-def write_data(data, filename, mask, header, command, is_atlas=False):
+def write_data(data, filename, mask, header, command, is_atlas=False, use_bids=False):
     """Write data into NIFTI file.
 
     Parameters
@@ -95,4 +99,46 @@ def write_data(data, filename, mask, header, command, is_atlas=False):
         reshaped = reshape_data(data, mask)
         out_img = nib.Nifti1Image(reshaped.get_fdata(), None, header=header)
     out_img.to_filename(filename)
-    update_header(filename, command)
+
+    # Update header with AFNI if BIDS is not required
+    if not use_bids:
+        update_header(filename, command)
+
+
+def write_json(keywords, out_dir):
+    """Write dataset description into JSON file.
+
+    Parameters
+    ----------
+    keywords : list
+        List of keywords to be added to the JSON file.
+    out_dir : str or path
+        Path to the output directory.
+    """
+    # Create dictionary with all the information
+    out_dict = {}
+
+    # Iterate over all the keywords and add their description and method to the dictionary
+    for keyword in keywords:
+        out_dict[keyword] = {}
+        out_dict[keyword]["description"] = get_keyword_description(keyword)
+        out_dict[keyword]["method"] = "pySPFM"
+
+        # Add units
+        if "bold" in keyword:
+            out_dict[keyword]["units"] = "percent"
+        elif "activityInducing" in keyword:
+            # Count how many keywords have "bold" in their name
+            bold_count = 0
+            for k in keywords:
+                if "bold" in k:
+                    bold_count += 1
+            if bold_count > 1:
+                out_dict[keyword]["units"] = "s-1"
+
+    # Create output filename
+    outname = "dataset_description.json"
+
+    # Write json file
+    with open(op.join(out_dir, outname), "w") as f:
+        f.write(json.dumps(out_dict, indent=4))
