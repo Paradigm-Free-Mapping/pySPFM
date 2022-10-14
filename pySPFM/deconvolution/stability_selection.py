@@ -151,6 +151,6 @@ def stability_selection(hrf, data, n_lambdas, n_surrogates):
     # Calculate the AUC for each TR
     auc = np.zeros((n_scans))
     for tr_idx in range(n_scans):
-        auc[tr_idx] = calculate_auc(estimates[tr_idx, :, :], lambdas, n_surrogates)
+        auc[tr_idx] = calculate_auc(estimates[tr_idx, :, :], lambdas)
 
     return auc

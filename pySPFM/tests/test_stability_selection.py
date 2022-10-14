@@ -31,7 +31,7 @@ def test_calculate_auc():
     coefs = np.random.rand(n_surrogates, 100)
 
     # Test if auc is calculated correctly
-    auc = np.round(stability_selection.calculate_auc(coefs, lambdas, n_surrogates))
+    auc = np.round(stability_selection.calculate_auc(coefs, lambdas))
     assert auc <= 1.0
     assert auc >= 0.0
 
