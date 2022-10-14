@@ -14,8 +14,6 @@ import pytest
 import requests
 from pkg_resources import resource_filename
 
-from pySPFM.workflows import pySPFM as pySPFM_cli
-
 
 def download_test_data(osf, outpath):
     """
@@ -67,7 +65,7 @@ def check_integration_outputs(fname, outpath):
     assert sorted(tocheck) == sorted(existing)
 
 
-def test_integration_five_echo(skip_integration, mask_five_echo):
+def test_integration_five_echo(skip_integration, script_runner, mask_five_echo):
     """Integration test of the full pySPFM workflow using five-echo test data."""
 
     if skip_integration:
@@ -87,7 +85,7 @@ def test_integration_five_echo(skip_integration, mask_five_echo):
 
     # CLI args
     args = (
-        ["-i"]
+        ["pySPFM", "-i"]
         + datalist
         + ["-te"]
         + [str(te) for te in echo_times]
@@ -114,14 +112,15 @@ def test_integration_five_echo(skip_integration, mask_five_echo):
             "--bids",
         ]
     )
-    pySPFM_cli._main(args)
+    ret = script_runner.run(*args)
+    assert ret.success
 
     # compare the generated output files
     fn = resource_filename("pySPFM", "tests/data/nih_five_echo_outputs_verbose.txt")
     check_integration_outputs(fn, out_dir)
 
 
-def test_integration_lars(skip_integration, mask_five_echo):
+def test_integration_lars(skip_integration, script_runner, mask_five_echo):
     """Integration test of the full pySPFM workflow using five-echo test data."""
 
     if skip_integration:
@@ -140,7 +139,7 @@ def test_integration_lars(skip_integration, mask_five_echo):
 
     # CLI args
     args = (
-        ["-i"]
+        ["pySPFM", "-i"]
         + [data]
         + ["-m"]
         + [mask_five_echo]
@@ -161,14 +160,15 @@ def test_integration_lars(skip_integration, mask_five_echo):
             "--debias",
         ]
     )
-    pySPFM_cli._main(args)
+    ret = script_runner.run(*args)
+    assert ret.success
 
     # compare the generated output files
     fn = resource_filename("pySPFM", "tests/data/lars_integration_outputs.txt")
     check_integration_outputs(fn, out_dir)
 
 
-def test_integration_stability_selection(skip_integration, mask_five_echo):
+def test_integration_stability_selection(skip_integration, script_runner, mask_five_echo):
     """Integration test of the pySPFM stability selection workflow using five-echo test data."""
 
     if skip_integration:
@@ -188,7 +188,7 @@ def test_integration_stability_selection(skip_integration, mask_five_echo):
 
     # CLI args
     args = (
-        ["-i"]
+        ["pySPFM", "-i"]
         + datalist
         + ["-te"]
         + [str(te) for te in echo_times]
@@ -213,10 +213,8 @@ def test_integration_stability_selection(skip_integration, mask_five_echo):
     )
 
     # Run the workflow expecting a SystemExit code 1
-    with pytest.raises(SystemExit) as e:
-        pySPFM_cli._main(args)
-    assert e.type == SystemExit
-    assert e.value.code == 1
+    ret = script_runner.run(*args)
+    assert "pySPFM with stability selection finished." in ret.stderr
 
     # compare the generated output files
     fn = resource_filename("pySPFM", "tests/data/stability_integration_outputs.txt")
