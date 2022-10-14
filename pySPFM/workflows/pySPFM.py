@@ -1,3 +1,4 @@
+"""Main pySPFM workflow"""
 import argparse
 import datetime
 import logging
