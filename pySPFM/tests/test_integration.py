@@ -92,7 +92,7 @@ def test_integration_five_echo(skip_integration, script_runner, mask_five_echo):
         + ["-m"]
         + [mask_five_echo]
         + ["-o"]
-        + ["test_me.pySPFM"]
+        + ["test-me"]
         + ["-tr"]
         + ["2"]
         + ["-d"]
@@ -109,6 +109,7 @@ def test_integration_five_echo(skip_integration, script_runner, mask_five_echo):
             "--debug",
             "--debias",
             "--block",
+            "--bids",
         ]
     )
     ret = script_runner.run(*args)
@@ -143,7 +144,7 @@ def test_integration_lars(skip_integration, script_runner, mask_five_echo):
         + ["-m"]
         + [mask_five_echo]
         + ["-o"]
-        + ["test_lars.pySPFM"]
+        + ["test_lars"]
         + ["-tr"]
         + ["2"]
         + ["-d"]
@@ -164,4 +165,59 @@ def test_integration_lars(skip_integration, script_runner, mask_five_echo):
 
     # compare the generated output files
     fn = resource_filename("pySPFM", "tests/data/lars_integration_outputs.txt")
+    check_integration_outputs(fn, out_dir)
+
+
+def test_integration_stability_selection(skip_integration, mask_five_echo):
+    """Integration test of the pySPFM stability selection workflow using five-echo test data."""
+
+    if skip_integration:
+        pytest.skip("Skipping five-echo integration test")
+
+    out_dir = "/tmp/data/five-echo/pySPFM.five-echo"
+
+    if os.path.exists(out_dir):
+        shutil.rmtree(out_dir)
+
+    # download data and run the test using the second echo time
+    download_test_data("https://osf.io/vg4wy/download", os.path.dirname(out_dir))
+    prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
+    suffix = ".psc.nii.gz"
+    datalist = [prepend + str(i + 1) + suffix for i in range(5)]
+    echo_times = [15.4, 29.7, 44.0, 58.3, 72.6]
+
+    # CLI args
+    args = (
+        ["-i"]
+        + datalist
+        + ["-te"]
+        + [str(te) for te in echo_times]
+        + ["-m"]
+        + [mask_five_echo]
+        + ["-o"]
+        + ["test_stability"]
+        + ["-tr"]
+        + ["2"]
+        + ["-d"]
+        + [out_dir]
+        + ["-crit"]
+        + ["stability"]
+        + ["--max_iter_factor"]
+        + ["0.3"]
+        + ["-jobs"]
+        + ["1"]
+        + [
+            "--debug",
+            "--debias",
+        ]
+    )
+
+    # Run the workflow expecting a SystemExit code 1
+    with pytest.raises(SystemExit) as e:
+        pySPFM_cli._main(args)
+    assert e.type == SystemExit
+    assert e.value.code == 1
+
+    # compare the generated output files
+    fn = resource_filename("pySPFM", "tests/data/stability_integration_outputs.txt")
     check_integration_outputs(fn, out_dir)

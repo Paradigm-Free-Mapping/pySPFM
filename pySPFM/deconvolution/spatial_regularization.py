@@ -4,7 +4,8 @@ from nilearn.masking import apply_mask, unmask
 
 
 def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
-    """Spatial regularization technique based on the Tikhonov regularization as in Total Activation.
+    """Spatial regularization technique based on the Tikhonov regularization as in
+    Total Activation.
 
     This function computes the tikhonov regularization
 
