@@ -1,6 +1,6 @@
 # pySPFM
 
-The Python version of AFNI's [3dPFM]() and [3dMEPFM]() with some extra features like the addition of a spatial regularization similar to the one used by [Total Activation]().
+The Python version of AFNI's [3dPFM](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dPFM.html) and [3dMEPFM](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dMEPFM.html) with some extra features like the addition of a spatial regularization similar to the one used by [Total Activation](https://miplab.epfl.ch/index.php/software/total-activation).
 
 [![Latest Version](https://img.shields.io/pypi/v/pySPFM.svg)](https://pypi.python.org/pypi/pySPFM/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pySPFM.svg)](https://pypi.python.org/pypi/pySPFM/)
