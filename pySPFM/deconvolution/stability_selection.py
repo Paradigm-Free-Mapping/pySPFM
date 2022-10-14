@@ -1,4 +1,4 @@
-"""Stability selection functoins for the deconvolution module."""
+"""Stability selection functions for the deconvolution module."""
 import logging
 import os
 
