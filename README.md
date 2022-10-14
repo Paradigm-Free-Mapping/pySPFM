@@ -4,7 +4,7 @@ The Python version of AFNI's [3dPFM](https://afni.nimh.nih.gov/pub/dist/doc/prog
 
 [![Latest Version](https://img.shields.io/pypi/v/pySPFM.svg)](https://pypi.python.org/pypi/pySPFM/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pySPFM.svg)](https://pypi.python.org/pypi/pySPFM/)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6600163.svg)](https://doi.org/10.5281/zenodo.6600163)
+[![DOI](https://zenodo.org/badge/492450151.svg)](https://zenodo.org/badge/latestdoi/492450151)
 [![License](https://img.shields.io/badge/License-LGPL%202.1-blue.svg)](https://opensource.org/licenses/LGPL-2.1)
 [![CircleCI](https://circleci.com/gh/eurunuela/pySPFM/tree/main.svg?style=shield)](https://circleci.com/gh/eurunuela/pySPFM/tree/main)
 [![Documentation Status](https://readthedocs.org/projects/pyspfm/badge/?version=latest)](http://pyspfm.readthedocs.io/en/latest/?badge=latest)
