@@ -1,3 +1,4 @@
+"""Stability selection functoins for the deconvolution module."""
 import logging
 import os
 
@@ -9,6 +10,24 @@ LGR = logging.getLogger("GENERAL")
 
 
 def get_subsampling_indices(n_scans, n_echos, mode="same"):
+    """
+    Get subsampling indices to generate surrogate data for stability selection.
+
+    Parameters
+    ----------
+    n_scans : int
+        Number of scans.
+    n_echos : int
+        Number of echos.
+    mode : str, optional
+        Mode of subsampling. For multi-echo data you can choose between "same" and "different"
+        subsampling indices across echos. The default is "same".
+
+    Returns
+    -------
+    subsample_idx : np.ndarray
+        Subsampling indices.
+    """
     if "mode" in os.environ.keys():  # only for testing
         np.random.seed(200)
     # Subsampling for Stability Selection
@@ -37,8 +56,22 @@ def get_subsampling_indices(n_scans, n_echos, mode="same"):
     return subsample_idx
 
 
-def calculate_auc(coefs, lambdas, n_surrogates):
+def calculate_auc(coefs, lambdas):
+    """
+    Calculate the AUC at the TR level.
 
+    Parameters
+    ----------
+    coefs : np.ndarray
+        Estimates of the regularization path for different values of lambda and surrogates.
+    lambdas : np.ndarray
+        Values of lambda for the regularization path.
+
+    Returns
+    -------
+    auc : float
+        AUC at the TR level.
+    """
     # Create shared space of lambdas and coefficients
     lambdas_shared = np.zeros((lambdas.shape[0] * lambdas.shape[1]))
     coefs_shared = np.zeros((coefs.shape[0] * coefs.shape[1]))
@@ -71,10 +104,29 @@ def calculate_auc(coefs, lambdas, n_surrogates):
     return auc
 
 
-def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
+def stability_selection(hrf, data, n_lambdas, n_surrogates):
+    """
+    Main stability selection workflow at the voxel level.
+
+    Parameters
+    ----------
+    hrf : np.ndarray
+        Normalized HRF.
+    data : np.ndarray
+        Data to be deconvolved.
+    n_lambdas : int
+        Number of lambdas for the regularization path.
+    n_surrogates : int
+        Number of surrogates.
+
+    Returns
+    -------
+    auc : np.ndarray
+        Time series of AUC values.
+    """
     # Get n_scans, n_echos, n_voxels
-    n_scans = hrf_norm.shape[1]
-    n_echos = int(np.ceil(hrf_norm.shape[0] / n_scans))
+    n_scans = hrf.shape[1]
+    n_echos = int(np.ceil(hrf.shape[0] / n_scans))
 
     # Initialize variables to store the results
     estimates = np.zeros((n_scans, n_lambdas, n_surrogates))
@@ -88,7 +140,7 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
 
         # Solve LARS
         fut_stability = solve_regularization_path(
-            hrf_norm[subsample_idx, :], data[subsample_idx], n_lambdas, "stability"
+            hrf[subsample_idx, :], data[subsample_idx], n_lambdas, "stability"
         )
         stability_estimates.append(fut_stability)
 
