@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from pySPFM.deconvolution.select_lambda import select_lambda
 
@@ -42,3 +43,12 @@ def test_select_lambda(sim_data, sim_hrf):
     print(max_lambda)
     lambda_, _, _ = select_lambda(sim_hrf, sim_data, criterion="pcg", pcg=0.1)
     assert np.allclose(lambda_, max_lambda * 0.1)
+
+    # Test that the code raises an error if pcg is None
+    with pytest.raises(ValueError):
+        select_lambda(sim_hrf, sim_data, criterion="pcg", pcg=None)
+
+    # Eigenvalue
+    lambda_, _, _ = select_lambda(sim_hrf, sim_data[:, np.newaxis], criterion="eigval")
+    assert np.round(lambda_, 1) >= 4.0
+    assert np.round(lambda_, 1) <= 5.0
