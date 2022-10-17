@@ -552,14 +552,14 @@ def pySPFM(
                 fut = delayed_dask(fista, pure=False)(
                     hrf_fut,
                     data_temp_reg[:, vox_idx],
-                    criterion,
-                    max_iter_fista,
-                    min_iter_fista,
-                    tolerance,
-                    group,
-                    pcg,
-                    factor,
-                    lambda_echo,
+                    criterion=criterion,
+                    max_iter=max_iter_fista,
+                    min_iter=min_iter_fista,
+                    tol=tolerance,
+                    group=group,
+                    pcg=pcg,
+                    factor=factor,
+                    lambda_echo=lambda_echo,
                 )
                 futures.append(fut)
 
