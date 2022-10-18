@@ -10,15 +10,18 @@ from dask import compute
 from dask import delayed as delayed_dask
 
 from pySPFM import __version__, utils
-from pySPFM.deconvolution.debiasing import debiasing_block, debiasing_spike
-from pySPFM.deconvolution.fista import fista
-from pySPFM.deconvolution.hrf_generator import HRFMatrix
-from pySPFM.deconvolution.lars import solve_regularization_path
-from pySPFM.deconvolution.select_lambda import select_lambda
-from pySPFM.deconvolution.spatial_regularization import spatial_tikhonov
-from pySPFM.deconvolution.stability_selection import stability_selection
+from pySPFM.deconvolution import (
+    debiasing,
+    fista,
+    hrf_generator,
+    lars,
+    select_lambda,
+    spatial_regularization,
+    stability_selection,
+)
 from pySPFM.io import read_data, write_data, write_json
 from pySPFM.utils import dask_scheduler, get_outname
+from pySPFM.workflows.parser_utils import check_hrf_value, is_valid_file
 
 LGR = logging.getLogger("GENERAL")
 RefLGR = logging.getLogger("REFERENCES")
@@ -44,7 +47,7 @@ def _get_parser():
         "-i",
         "--input",
         dest="data_fn",
-        type=str,
+        type=lambda x: is_valid_file(parser, x),
         nargs="+",
         help="The name of the file containing fMRI data. ",
         required=True,
@@ -53,7 +56,7 @@ def _get_parser():
         "-m",
         "--mask",
         dest="mask_fn",
-        type=str,
+        type=lambda x: is_valid_file(parser, x),
         help="The name of the file containing the mask for the fMRI data. ",
         required=True,
     )
@@ -92,7 +95,7 @@ def _get_parser():
         "-hrf",
         "--hrf",
         dest="hrf_model",
-        type=str,
+        type=check_hrf_value,
         help=(
             "HRF model to use. Default is 'spm'. Options are 'spm', 'glover', or a custom HRF "
             "file with the '.1D' or '.txt' extension."
@@ -245,6 +248,7 @@ def _get_parser():
         "--spatial_dim",
         dest="spatial_dim",
         type=int,
+        choices=[2, 3],
         help=(
             "Slice-wise regularization with dim = 2; whole-volume regularization with dim=3. "
             "Default = 3."
@@ -486,7 +490,7 @@ def pySPFM(
 
     # Generate design matrix with shifted versions of HRF
     LGR.info("Generating design matrix with shifted versions of HRF...")
-    hrf_obj = HRFMatrix(te=te, block=block_model, model=hrf_model)
+    hrf_obj = hrf_generator.HRFMatrix(te=te, block=block_model, model=hrf_model)
     hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
     # Run LARS if bic or aic on given.
@@ -523,7 +527,7 @@ def pySPFM(
 
         # Solve stability regularization
         futures = [
-            delayed_dask(stability_selection)(
+            delayed_dask(stability_selection.stability_selection)(
                 hrf_fut,
                 data_masked[:, vox_idx],
                 n_lambdas,
@@ -572,7 +576,7 @@ def pySPFM(
                 # Solve LARS for each voxel with parallelization
                 futures = []
                 for vox_idx in range(n_voxels):
-                    fut = delayed_dask(solve_regularization_path, pure=False)(
+                    fut = delayed_dask(lars.solve_regularization_path, pure=False)(
                         hrf_fut, data_temp_reg[:, vox_idx], n_lambdas, criterion
                     )
                     futures.append(fut)
@@ -592,7 +596,7 @@ def pySPFM(
                 # Solve fista
                 futures = []
                 for vox_idx in range(n_voxels):
-                    fut = delayed_dask(fista, pure=False)(
+                    fut = delayed_dask(fista.fista, pure=False)(
                         hrf_fut,
                         data_temp_reg[:, vox_idx],
                         criterion=criterion,
@@ -622,7 +626,7 @@ def pySPFM(
             # Convolve with HRF
             if block_model:
                 estimates_block = estimates
-                hrf_obj = HRFMatrix(te=te, block=False, model=hrf_model)
+                hrf_obj = hrf_generator.HRFMatrix(te=te, block=False, model=hrf_model)
                 hrf_fitting = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
                 estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
                 fitts = np.dot(hrf_fitting, estimates_spike)
@@ -636,7 +640,7 @@ def pySPFM(
                 estimates_temporal = estimates_temporal + (estimates - final_estimates)
 
                 # Calculates for the whole volume
-                estimates_tikhonov = spatial_tikhonov(
+                estimates_tikhonov = spatial_regularization.spatial_tikhonov(
                     final_estimates,
                     final_estimates - estimates_spatial + data_masked,
                     mask,
@@ -660,19 +664,21 @@ def pySPFM(
 
         # Update HRF for block model
         if block_model:
-            hrf_obj = HRFMatrix(te=te, block=False, model=hrf_model)
+            hrf_obj = hrf_generator.HRFMatrix(te=te, block=False, model=hrf_model)
             hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
         # Perform debiasing step
         if debias:
             LGR.info("Debiasing estimates...")
             if block_model:
-                estimates_spike = debiasing_block(
+                estimates_spike = debiasing.debiasing_block(
                     hrf=hrf, y=data_masked, estimates_matrix=final_estimates
                 )
                 fitts = np.dot(hrf, estimates_spike)
             else:
-                estimates_spike, fitts = debiasing_spike(hrf, data_masked, final_estimates)
+                estimates_spike, fitts = debiasing.debiasing_spike(
+                    hrf, data_masked, final_estimates
+                )
         elif block_model:
             estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
             fitts = np.dot(hrf, estimates_spike)
@@ -695,7 +701,7 @@ def pySPFM(
             )
 
             if not debias:
-                hrf_obj = HRFMatrix(TR=tr, n_scans=n_scans, TE=te, block=False)
+                hrf_obj = hrf_generator.HRFMatrix(TR=tr, n_scans=n_scans, TE=te, block=False)
                 hrf = hrf_obj.generate_hrf().hrf
                 estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
                 fitts = np.dot(hrf, estimates_spike)
@@ -752,7 +758,7 @@ def pySPFM(
             output_name = get_outname(output_filename, "MAD", "nii.gz", use_bids)
             out_bids_keywords.append("MAD")
             out_data = data_masked[:n_scans, :]
-            _, _, noise_estimate = select_lambda(hrf=hrf, y=out_data)
+            _, _, noise_estimate = select_lambda.select_lambda(hrf=hrf, y=out_data)
             write_data(
                 np.expand_dims(noise_estimate, axis=0),
                 os.path.join(out_dir, output_name),
@@ -772,7 +778,7 @@ def pySPFM(
                     y_echo = data_masked[:n_scans, :]
                 else:
                     y_echo = data_masked[te_idx * n_scans : (te_idx + 1) * n_scans, :]
-                _, _, noise_estimate = select_lambda(hrf=hrf, y=y_echo)
+                _, _, noise_estimate = select_lambda.select_lambda(hrf=hrf, y=y_echo)
                 write_data(
                     np.expand_dims(noise_estimate, axis=0),
                     os.path.join(out_dir, output_name),
