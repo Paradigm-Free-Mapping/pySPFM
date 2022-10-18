@@ -214,7 +214,7 @@ def test_integration_stability_selection(skip_integration, script_runner, mask_f
 
     # Run the workflow expecting a SystemExit code 1
     ret = script_runner.run(*args)
-    assert "pySPFM with stability selection finished." in ret.stderr
+    assert "Stability selection finished." in ret.stderr
 
     # compare the generated output files
     fn = resource_filename("pySPFM", "tests/data/stability_integration_outputs.txt")
