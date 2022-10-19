@@ -8,9 +8,8 @@ from pySPFM import io
 
 
 def test_read_data(nih_five_echo_1, mask_five_echo):
-    data, header, masker = io.read_data(nih_five_echo_1, mask_five_echo)
+    data, masker = io.read_data(nih_five_echo_1, mask_five_echo)
     assert data.shape == (75, 4)
-    assert header.get_data_shape() == (41, 52, 28, 75)
     assert masker.mask_img.shape == (41, 52, 28)
 
 
