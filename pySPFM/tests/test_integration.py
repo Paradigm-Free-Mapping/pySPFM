@@ -9,7 +9,6 @@ import shutil
 import tarfile
 from gzip import GzipFile
 from io import BytesIO
-from statistics import mean
 
 import pytest
 import requests
