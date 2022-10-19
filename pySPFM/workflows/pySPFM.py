@@ -272,14 +272,6 @@ def _get_parser():
         default=1e-6,
     )
     optional.add_argument(
-        "-atlas",
-        "--atlas",
-        dest="is_atlas",
-        action="store_true",
-        help="Use provided mask as an atlas (default = False).",
-        default=False,
-    )
-    optional.add_argument(
         "-bids",
         "--bids",
         dest="use_bids",
@@ -350,7 +342,6 @@ def pySPFM(
     spatial_dim=3,
     mu=0.01,
     tolerance=1e-6,
-    is_atlas=False,
     use_bids=False,
     n_surrogates=50,
     debug=False,
@@ -465,7 +456,7 @@ def pySPFM(
 
     LGR.info("Reading data...")
     if n_te == 1:
-        data_masked, data_header, mask = read_data(data_fn[0], mask_fn, is_atlas=is_atlas)
+        data_masked, data_header, masker = read_data(data_fn[0], mask_fn)
         n_scans = data_masked.shape[0]
         n_voxels = data_masked.shape[1]
     elif n_te > 1:
@@ -475,7 +466,7 @@ def pySPFM(
             data_fn = data_fn[0].split(" ")
 
         for te_idx in range(n_te):
-            data_temp, data_header, mask = read_data(data_fn[te_idx], mask_fn, is_atlas=is_atlas)
+            data_temp, data_header, masker = read_data(data_fn[te_idx], mask_fn)
             if te_idx == 0:
                 data_masked = data_temp
                 n_scans = data_temp.shape[0]
@@ -553,10 +544,10 @@ def pySPFM(
         write_data(
             auc,
             os.path.join(out_dir, output_name),
-            mask,
-            data_header,
+            masker,
+            data_fn[0],
             command_str,
-            is_atlas=is_atlas,
+            use_bids,
         )
 
     # Solve FISTA
@@ -643,7 +634,7 @@ def pySPFM(
                 estimates_tikhonov = spatial_regularization.spatial_tikhonov(
                     final_estimates,
                     final_estimates - estimates_spatial + data_masked,
-                    mask,
+                    masker,
                     max_iter_spatial,
                     spatial_dim,
                     spatial_lambda,
@@ -693,10 +684,9 @@ def pySPFM(
             write_data(
                 estimates_block,
                 os.path.join(out_dir, output_name),
-                mask,
-                data_header,
+                masker,
+                data_fn[0],
                 command_str,
-                is_atlas=is_atlas,
                 use_bids=use_bids,
             )
 
@@ -716,10 +706,9 @@ def pySPFM(
         write_data(
             estimates_spike,
             os.path.join(out_dir, output_name),
-            mask,
-            data_header,
+            masker,
+            data_fn[0],
             command_str,
-            is_atlas=is_atlas,
             use_bids=use_bids,
         )
 
@@ -730,10 +719,9 @@ def pySPFM(
             write_data(
                 fitts,
                 os.path.join(out_dir, output_name),
-                mask,
-                data_header,
+                masker,
+                data_fn[0],
                 command_str,
-                is_atlas=is_atlas,
                 use_bids=use_bids,
             )
         elif n_te > 1:
@@ -746,10 +734,9 @@ def pySPFM(
                 write_data(
                     te_data,
                     os.path.join(out_dir, output_name),
-                    mask,
-                    data_header,
+                    masker,
+                    data_fn[0],
                     command_str,
-                    is_atlas=is_atlas,
                     use_bids=use_bids,
                 )
 
@@ -762,10 +749,9 @@ def pySPFM(
             write_data(
                 np.expand_dims(noise_estimate, axis=0),
                 os.path.join(out_dir, output_name),
-                mask,
-                data_header,
+                masker,
+                data_fn[0],
                 command_str,
-                is_atlas=is_atlas,
                 use_bids=use_bids,
             )
         else:
@@ -782,10 +768,9 @@ def pySPFM(
                 write_data(
                     np.expand_dims(noise_estimate, axis=0),
                     os.path.join(out_dir, output_name),
-                    mask,
-                    data_header,
+                    masker,
+                    data_fn[0],
                     command_str,
-                    is_atlas=is_atlas,
                     use_bids=use_bids,
                 )
 
@@ -798,10 +783,9 @@ def pySPFM(
         write_data(
             np.expand_dims(lambda_map, axis=0),
             os.path.join(out_dir, output_name),
-            mask,
-            data_header,
+            masker,
+            data_fn[0],
             command_str,
-            is_atlas=is_atlas,
             use_bids=use_bids,
         )
 
