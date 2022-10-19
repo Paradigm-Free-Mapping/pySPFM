@@ -321,7 +321,7 @@ def pySPFM(
     mask_fn,
     output_filename,
     tr,
-    out_dir,
+    out_dir=".",
     te=[0],
     hrf_model="spm",
     block_model=False,
