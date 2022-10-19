@@ -10,8 +10,7 @@ from dask import compute
 from dask import delayed as delayed_dask
 
 from pySPFM import __version__, utils
-from pySPFM.deconvolution.debiasing import debiasing_block, debiasing_spike
-from pySPFM.deconvolution.hrf_generator import HRFMatrix
+from pySPFM.deconvolution import debiasing, hrf_generator
 from pySPFM.io import read_data, write_data, write_json
 from pySPFM.utils import dask_scheduler, get_outname
 from pySPFM.workflows.parser_utils import (
@@ -174,7 +173,8 @@ def auc_to_estimates(
     mask_fn,
     output_filename,
     tr,
-    out_dir,
+    thr=0.3,
+    out_dir=".",
     te=[0],
     hrf_model="spm",
     block_model=False,
@@ -198,7 +198,7 @@ def auc_to_estimates(
     LGR = logging.getLogger("GENERAL")
     # RefLGR = logging.getLogger("REFERENCES")
     # create logfile name
-    basename = "pySPFM_"
+    basename = "auc_to_estimates_"
     extension = "tsv"
     start_time = datetime.datetime.now().strftime("%Y-%m-%dT%H%M%S")
     logname = op.join(out_dir, (basename + start_time + "." + extension))
@@ -239,6 +239,94 @@ def auc_to_estimates(
     LGR.info("Reading AUC data...")
     auc, _, _ = read_data(auc_fn, mask_fn)
     LGR.info("AUC data read.")
+
+    # Threshold the AUC if thr is a float and different from 0
+    if isinstance(thr, float) and thr != 0:
+        auc_thr = auc > auc_fn
+
+    # Generate design matrix with shifted versions of HRF
+    LGR.info("Generating design matrix with shifted versions of HRF...")
+    hrf_obj = hrf_generator.HRFMatrix(te=te, block=block_model, model=hrf_model)
+    hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
+
+    # Solve ordinary least squares problem to calculate estimates
+    LGR.info("Calculating estimates...")
+    if block_model:
+        estimates_spike = debiasing.debiasing_block(
+            hrf=hrf, y=data_masked, estimates_matrix=auc_thr
+        )
+        fitts = np.dot(hrf, estimates_spike)
+    else:
+        estimates_spike, fitts = debiasing.debiasing_spike(hrf, data_masked, auc_thr)
+
+    # Save estimates and thresholded AUC
+    LGR.info("Saving results...")
+    out_bids_keywords = []
+
+    # Save thresholded AUC
+    out_bids_keywords.append("AUC")
+    output_name = get_outname(output_filename, "AUC", "nii.gz", use_bids)
+    write_data(
+        auc,
+        os.path.join(out_dir, output_name),
+        masker,
+        data_fn[0],
+        command_str,
+        use_bids,
+    )
+
+    # Save activity-inducing signal
+    if n_te == 1:
+        output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
+        out_bids_keywords.append("activityInducing")
+    elif n_te > 1:
+        output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
+        out_bids_keywords.append("activityInducing")
+    write_data(
+        estimates_spike,
+        os.path.join(out_dir, output_name),
+        masker,
+        data_fn[0],
+        command_str,
+        use_bids=use_bids,
+    )
+
+    # Save fitts
+    if n_te == 1:
+        output_name = get_outname(output_filename, "denoised_bold", "nii.gz", use_bids)
+        out_bids_keywords.append("denoised_bold")
+        write_data(
+            fitts,
+            os.path.join(out_dir, output_name),
+            masker,
+            data_fn[0],
+            command_str,
+            use_bids=use_bids,
+        )
+    elif n_te > 1:
+        for te_idx in range(n_te):
+            te_data = fitts[te_idx * n_scans : (te_idx + 1) * n_scans, :]
+            output_name = get_outname(
+                f"{output_filename}_echo-{te_idx + 1}", "denoised_bold", "nii.gz", use_bids
+            )
+            out_bids_keywords.append(f"echo-{te_idx + 1}_desc-denoised_bold")
+            write_data(
+                te_data,
+                os.path.join(out_dir, output_name),
+                masker,
+                data_fn[0],
+                command_str,
+                use_bids=use_bids,
+            )
+
+    # Save BIDS compatible sidecar file
+    if use_bids:
+        write_json(out_bids_keywords, out_dir)
+
+    LGR.info("Results saved.")
+
+    LGR.info("auc_to_estimates finished.")
+    utils.teardown_loggers()
 
 
 def _main():
