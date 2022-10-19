@@ -7,6 +7,7 @@ from os import path as op
 
 import nibabel as nib
 import numpy as np
+from click import option
 
 from pySPFM import __version__, utils
 from pySPFM.deconvolution import debiasing, hrf_generator
@@ -96,6 +97,18 @@ def _get_parser():
         default=95,
     )
     optional.add_argument(
+        "--strategy",
+        dest="thr_strategy",
+        help=(
+            "Strategy to threshold the AUC data with. If the second mask is a binary mask, "
+            "the can be applied with a static threshold ('static') or a time-dependet threshold "
+            "('time'). Default is 'static'."
+        ),
+        type=str,
+        default="static",
+        choices=["static", "time"],
+    )
+    optional.add_argument(
         "-d",
         "--dir",
         dest="out_dir",
@@ -182,6 +195,7 @@ def auc_to_estimates(
     output_filename,
     tr,
     thr=95,
+    thr_strategy="static",
     out_dir=".",
     te=[0],
     hrf_model="spm",
@@ -248,33 +262,60 @@ def auc_to_estimates(
     auc, _, _ = read_data(auc_fn, mask_fn[0])
     LGR.info("AUC data read.")
 
-    # Threshold the AUC if thr is a float and different from 0
-    LGR.info("Thresholding AUC data...")
-    if isinstance(thr, float) and thr != 0:
+    # Threshold the AUC if thr is not 0 and mask_fn has two elements
+    if thr != 0 and len(mask_fn) == 2:
+        # Read the second mask
+        auc_mask = nib.load(mask_fn[1])
 
-        # If the threshold is a float, threshold the AUC
-        auc_thr = auc.copy()
-        auc_thr[auc_thr < thr] = 0
-    # If thr is a string, it is a path to an image
-    elif isinstance(thr, str):
+        # If the mask is 3D, then it is a binary mask or a static threshold
+        if len(auc_mask.shape) == 3:
+            # If the mask is binary, then read the AUC values inside of the mask
+            if np.max(auc_mask.get_fdata()) == 1:
 
-        # Read image
-        thr_img = nib.load(thr)
+                auc_thr_values = read_data(mask_fn[1], mask_fn[0])[0]
 
-        # If the image is 3D, it is a mask or a threshold image
-        if len(thr_img.shape) == 3:
-            # If the image is a binary mask, load the AUC inside of the mask and
-            if thr_img.get_fdata().max() == 1:
-                thr_vals, _ = read_data(auc_fn, thr)
+                if thr_strategy == "static":
+                    LGR.info(
+                        f"Thresholding AUC values with a {thr}th percentile static threshold..."
+                    )
+                    # Threshold the whole-brain AUC based on the thr percentile of the AUC values in
+                    # the mask
+                    auc_thr = auc - np.percentile(auc_thr_values, thr)
+                    auc_thr[auc_thr < 0] = 0
+                else:
+                    LGR.info(
+                        f"Thresholding AUC values with a {thr}th percentile time-dependet "
+                        "threshold..."
+                    )
 
-        # If the image is 4D, it is a time-dependent threshold
-        elif len(thr_img.shape) == 4:
-            thr_values = masker.fit_transform(thr_img)
-            auc_thr = auc.copy()
-            auc_thr = auc_thr - thr_values
+                    # Calculate and apply percentile at each TR
+                    auc_thr = np.zeros(auc.shape)
+                    for tr_idx in range(n_scans):
+                        auc_thr[tr_idx, :] = auc[tr_idx, :] - np.percentile(
+                            auc_thr_values[tr_idx, :], thr
+                        )
+                        auc_thr[tr_idx, auc_thr[tr_idx, :] < 0] = 0
+
+            # If the mask is a static threshold, then apply it to the AUC values
+            else:
+                LGR.info(f"Thresholding AUC values based on the given 3D threshold...")
+                auc_mask_data = masker.fit_transform(auc_mask)
+
+                # Threshold the AUC values
+                auc_thr = auc - auc_mask_data
+                auc_thr[auc_thr < 0] = 0
+
+        # If the mask is 4D, then it is a time-dependent threshold
+        elif len(auc_mask.shape) == 4:
+            LGR.info(f"Thresholding AUC values based on the given 4D threshold...")
+            # Read the time-dependent threshold
+            auc_mask_data = masker.fit_transform(auc_mask)
+
+            # Threshold the AUC
+            auc_thr = auc - auc_mask_data
             auc_thr[auc_thr < 0] = 0
         else:
-            raise ValueError("Threshold image has an incorrect number of dimensions.")
+            raise ValueError("The mask used to threshold the AUC must be 3D or 4D.")
 
     LGR.info("AUC data thresholded.")
 
@@ -286,12 +327,10 @@ def auc_to_estimates(
     # Solve ordinary least squares problem to calculate estimates
     LGR.info("Calculating estimates...")
     if block_model:
-        estimates_spike = debiasing.debiasing_block(
-            hrf=hrf, y=data_masked, estimates_matrix=auc_thr
-        )
+        estimates_spike = debiasing.debiasing_block(hrf, data_masked, auc_thr, n_jobs)
         fitts = np.dot(hrf, estimates_spike)
     else:
-        estimates_spike, fitts = debiasing.debiasing_spike(hrf, data_masked, auc_thr)
+        estimates_spike, fitts = debiasing.debiasing_spike(hrf, data_masked, auc_thr, n_jobs)
 
     LGR.info("Estimates calculated.")
 
