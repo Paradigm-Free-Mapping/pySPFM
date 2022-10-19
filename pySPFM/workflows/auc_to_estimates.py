@@ -7,17 +7,12 @@ from os import path as op
 
 import nibabel as nib
 import numpy as np
-from click import option
 
 from pySPFM import __version__, utils
 from pySPFM.deconvolution import debiasing, hrf_generator
 from pySPFM.io import read_data, write_data, write_json
 from pySPFM.utils import get_outname
-from pySPFM.workflows.parser_utils import (
-    check_hrf_value,
-    check_thr_value,
-    is_valid_file,
-)
+from pySPFM.workflows.parser_utils import check_hrf_value, is_valid_file
 
 LGR = logging.getLogger("GENERAL")
 RefLGR = logging.getLogger("REFERENCES")
@@ -238,7 +233,6 @@ def auc_to_estimates(
     if n_te == 1:
         data_masked, masker = read_data(data_fn[0], mask_fn[0])
         n_scans = data_masked.shape[0]
-        n_voxels = data_masked.shape[1]
     elif n_te > 1:
         # If the first element of data_fn has spaces, it is a list of paths
         # Convert it into a list
@@ -250,7 +244,6 @@ def auc_to_estimates(
             if te_idx == 0:
                 data_masked = data_temp
                 n_scans = data_temp.shape[0]
-                n_voxels = data_temp.shape[1]
             else:
                 data_masked = np.concatenate((data_masked, data_temp), axis=0)
 
@@ -278,8 +271,8 @@ def auc_to_estimates(
                     LGR.info(
                         f"Thresholding AUC values with a {thr}th percentile static threshold..."
                     )
-                    # Threshold the whole-brain AUC based on the thr percentile of the AUC values in
-                    # the mask
+                    # Threshold the whole-brain AUC based on the thr percentile of the AUC values
+                    # in the mask
                     auc_thr = auc - np.percentile(auc_thr_values, thr)
                     auc_thr[auc_thr < 0] = 0
                 else:
@@ -298,7 +291,7 @@ def auc_to_estimates(
 
             # If the mask is a static threshold, then apply it to the AUC values
             else:
-                LGR.info(f"Thresholding AUC values based on the given 3D threshold...")
+                LGR.info("Thresholding AUC values based on the given 3D threshold...")
                 auc_mask_data = masker.fit_transform(auc_mask)
 
                 # Threshold the AUC values
@@ -307,7 +300,7 @@ def auc_to_estimates(
 
         # If the mask is 4D, then it is a time-dependent threshold
         elif len(auc_mask.shape) == 4:
-            LGR.info(f"Thresholding AUC values based on the given 4D threshold...")
+            LGR.info("Thresholding AUC values based on the given 4D threshold...")
             # Read the time-dependent threshold
             auc_mask_data = masker.fit_transform(auc_mask)
 
