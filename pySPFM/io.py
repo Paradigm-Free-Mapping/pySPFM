@@ -75,7 +75,7 @@ def write_data(data, filename, masker, orig_img, command, use_bids=False):
         Name of the output file.
     masker : nilearn.maskers.NiftiMasker
         Masker.
-    orig_img : nibabel.nifti1.Nifti1Image
+    orig_img : nibabel.nifti1.Nifti1Image or str or path
         Original data.
     command : str
         pySPFM command to add to the header.
@@ -86,6 +86,10 @@ def write_data(data, filename, masker, orig_img, command, use_bids=False):
     copy_header = False
     if not use_bids:
         copy_header = True
+
+    # If orig_img is a string, load it
+    if isinstance(orig_img, str):
+        orig_img = nib.load(orig_img)
 
     # Transform data back to 4D, generate new image and save it
     out_img = masker.inverse_transform(data)
