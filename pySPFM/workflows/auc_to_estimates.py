@@ -252,7 +252,7 @@ def auc_to_estimates(
     LGR.info("Data read.")
 
     LGR.info("Reading AUC data...")
-    auc, _, _ = read_data(auc_fn, mask_fn[0])
+    auc = read_data(auc_fn, mask_fn[0])[0]
     LGR.info("AUC data read.")
 
     # Threshold the AUC if thr is not 0 and mask_fn has two elements
@@ -265,7 +265,7 @@ def auc_to_estimates(
             # If the mask is binary, then read the AUC values inside of the mask
             if np.max(auc_mask.get_fdata()) == 1:
 
-                auc_thr_values = read_data(mask_fn[1], mask_fn[0])[0]
+                auc_thr_values = read_data(auc_fn, mask_fn[1])[0]
 
                 if thr_strategy == "static":
                     LGR.info(
@@ -309,6 +309,13 @@ def auc_to_estimates(
             auc_thr[auc_thr < 0] = 0
         else:
             raise ValueError("The mask used to threshold the AUC must be 3D or 4D.")
+    # Raise error if thr is not 0 and mask_fn has only one element
+    elif thr != 0 and len(mask_fn) != 1:
+        raise ValueError("If the threshold is not 0, then the 'mask' flag must have two elements.")
+    # If thr is 0, then the AUC is supposed to be already thresholded
+    else:
+        LGR.warning("Threshold 0 selected. AUC is assumed to be already thresholded.")
+        auc_thr = auc
 
     LGR.info("AUC data thresholded.")
 
@@ -333,7 +340,7 @@ def auc_to_estimates(
 
     # Save thresholded AUC
     out_bids_keywords.append("AUC")
-    output_name = get_outname(output_filename, "AUC", "nii.gz", use_bids)
+    output_name = get_outname(output_filename, "aucThresholded", "nii.gz", use_bids)
     write_data(
         auc,
         os.path.join(out_dir, output_name),
