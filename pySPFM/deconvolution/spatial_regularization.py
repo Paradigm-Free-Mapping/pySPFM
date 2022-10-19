@@ -3,7 +3,7 @@ import numpy as np
 from nilearn.masking import apply_mask, unmask
 
 
-def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
+def spatial_tikhonov(estimates, data, masker, niter, dim, lambda_, mu):
     """Spatial regularization technique based on the Tikhonov regularization as in
     Total Activation.
 
@@ -21,8 +21,8 @@ def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
         Estimates (output of temporal regularization).
     data : ndarray
         Observations.
-    mask : Nibabel object
-        Mask image to unmask and mask estimates (2D to 4D and back).
+    masker : nilearn.maskers.NiftiMasker
+        Masker image to unmask and mask estimates (2D to 4D and back).
     niter : int
         Number of iterations to perform spatial regularization.
     dim : int
@@ -39,8 +39,8 @@ def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
         Estimates of activity-inducing or innovation signal after spatial regularization.
     """
     # Transform data from 2D into 4D
-    estimates_vol = unmask(estimates, mask)
-    data_vol = unmask(data, mask)
+    estimates_vol = masker.inverse_transform(estimates)
+    data_vol = masker.inverse_trasnform(data)
 
     if dim == 2:
         h = generate_delta(dim=dim)
@@ -83,7 +83,7 @@ def spatial_tikhonov(estimates, data, mask, niter, dim, lambda_, mu):
                     )
                 )
 
-    final_estimates = apply_mask(estimates_vol, mask)
+    final_estimates = masker.fit_trasform(estimates_vol)
 
     return final_estimates
 
