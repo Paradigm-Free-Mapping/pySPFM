@@ -456,7 +456,7 @@ def pySPFM(
 
     LGR.info("Reading data...")
     if n_te == 1:
-        data_masked, data_header, masker = read_data(data_fn[0], mask_fn)
+        data_masked, masker = read_data(data_fn[0], mask_fn)
         n_scans = data_masked.shape[0]
         n_voxels = data_masked.shape[1]
     elif n_te > 1:
@@ -466,7 +466,7 @@ def pySPFM(
             data_fn = data_fn[0].split(" ")
 
         for te_idx in range(n_te):
-            data_temp, data_header, masker = read_data(data_fn[te_idx], mask_fn)
+            data_temp, masker = read_data(data_fn[te_idx], mask_fn)
             if te_idx == 0:
                 data_masked = data_temp
                 n_scans = data_temp.shape[0]
