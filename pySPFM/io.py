@@ -24,14 +24,11 @@ def read_data(data_fn, mask_fn):
     -------
     data : (T x S) ndarray
         Data in 2D.
-    data_header : nib.header
-        Header of the input data.
     masker : nilearn.maskers.NiftiMasker
         Masker.
     """
-    # Read data and get header
+    # Read data
     data_img = nib.load(data_fn)
-    data_header = data_img.header
 
     # Load mask and calculate maximum value
     mask_img = nib.load(mask_fn)
@@ -47,7 +44,7 @@ def read_data(data_fn, mask_fn):
 
     data = masker.fit_transform(data_img)
 
-    return data, data_header, masker
+    return data, masker
 
 
 def update_header(filename, command):
