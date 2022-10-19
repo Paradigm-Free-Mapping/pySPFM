@@ -14,6 +14,11 @@ from pySPFM.deconvolution.debiasing import debiasing_block, debiasing_spike
 from pySPFM.deconvolution.hrf_generator import HRFMatrix
 from pySPFM.io import read_data, write_data, write_json
 from pySPFM.utils import dask_scheduler, get_outname
+from pySPFM.workflows.parser_utils import (
+    check_hrf_value,
+    check_thr_value,
+    is_valid_file,
+)
 
 LGR = logging.getLogger("GENERAL")
 RefLGR = logging.getLogger("REFERENCES")
@@ -39,7 +44,7 @@ def _get_parser():
         "-i",
         "--input",
         dest="data_fn",
-        type=str,
+        type=lambda x: is_valid_file(parser, x),
         nargs="+",
         help="The name of the file containing fMRI data.",
         required=True,
@@ -48,7 +53,7 @@ def _get_parser():
         "-a",
         "--auc",
         dest="auc_fn",
-        type=str,
+        type=lambda x: is_valid_file(parser, x),
         help="The name of the file containing AUC data.",
         required=True,
     )
@@ -56,7 +61,7 @@ def _get_parser():
         "-m",
         "--mask",
         dest="mask_fn",
-        type=str,
+        type=lambda x: is_valid_file(parser, x),
         help="The name of the file containing the mask for the fMRI data.",
         required=True,
     )
@@ -75,11 +80,13 @@ def _get_parser():
         help="TR of the fMRI data acquisition.",
         required=True,
     )
-    required.add_argument(
+    optional.add_argument(
         "-thr",
         "--threshold",
         dest="thr",
-        type=,
+        help="Threshold for the AUC data. It could be a single value, a nifti map, a 4D dataset, or a mask.",
+        type=check_thr_value,
+        default=0.3,
     )
     optional.add_argument(
         "-d",
@@ -101,7 +108,7 @@ def _get_parser():
         "-hrf",
         "--hrf",
         dest="hrf_model",
-        type=str,
+        type=check_hrf_value,
         help=(
             "HRF model to use. Default is 'spm'. Options are 'spm', 'glover', or a custom HRF "
             "file with the '.1D' or '.txt' extension."
@@ -123,14 +130,6 @@ def _get_parser():
         type=int,
         help="Number of jobs to parallelize for loops (default = 4).",
         default=4,
-    )
-    optional.add_argument(
-        "-atlas",
-        "--atlas",
-        dest="is_atlas",
-        action="store_true",
-        help="Use provided mask as an atlas (default = False).",
-        default=False,
     )
     optional.add_argument(
         "-bids",
@@ -180,7 +179,6 @@ def auc_to_estimates(
     hrf_model="spm",
     block_model=False,
     n_jobs=4,
-    is_atlas=False,
     use_bids=False,
     debug=False,
     quiet=False,
@@ -216,7 +214,7 @@ def auc_to_estimates(
 
     LGR.info("Reading data...")
     if n_te == 1:
-        data_masked, data_header, mask = read_data(data_fn[0], mask_fn, is_atlas=is_atlas)
+        data_masked, data_header, masker = read_data(data_fn[0], mask_fn)
         n_scans = data_masked.shape[0]
         n_voxels = data_masked.shape[1]
     elif n_te > 1:
@@ -226,7 +224,7 @@ def auc_to_estimates(
             data_fn = data_fn[0].split(" ")
 
         for te_idx in range(n_te):
-            data_temp, data_header, mask = read_data(data_fn[te_idx], mask_fn, is_atlas=is_atlas)
+            data_temp, data_header, masker = read_data(data_fn[te_idx], mask_fn)
             if te_idx == 0:
                 data_masked = data_temp
                 n_scans = data_temp.shape[0]
@@ -239,10 +237,8 @@ def auc_to_estimates(
     LGR.info("Data read.")
 
     LGR.info("Reading AUC data...")
-    auc, _, _ = read_data(auc_fn, mask_fn, is_atlas=is_atlas)
+    auc, _, _ = read_data(auc_fn, mask_fn)
     LGR.info("AUC data read.")
-
-
 
 
 def _main():
