@@ -33,7 +33,7 @@ def download_test_data(osf, outpath):
     t.extractall(outpath)
 
 
-def check_integration_outputs(fname, outpath):
+def check_integration_outputs(fname, outpath, workflow="pySPFM"):
     """
     Checks outputs of integration tests (taken from tedana)
     Parameters
@@ -51,7 +51,12 @@ def check_integration_outputs(fname, outpath):
     ]
 
     # Checks for log file
-    log_regex = "^pySPFM_[12][0-9]{3}-[0-9]{2}-[0-9]{2}T[0-9]{2}[0-9]{2}[0-9]{2}.tsv$"
+    if workflow == "pySPFM":
+        log_regex = "^pySPFM_[12][0-9]{3}-[0-9]{2}-[0-9]{2}T[0-9]{2}[0-9]{2}[0-9]{2}.tsv$"
+    elif workflow == "auc_to_estimates":
+        log_regex = (
+            "^auc_to_estimates_[12][0-9]{3}-[0-9]{2}-[0-9]{2}T[0-9]{2}[0-9]{2}[0-9]{2}.tsv$"
+        )
     logfiles = [out for out in existing if re.match(log_regex, out)]
     assert len(logfiles) == 1
 
@@ -212,10 +217,164 @@ def test_integration_stability_selection(skip_integration, script_runner, mask_f
         ]
     )
 
-    # Run the workflow expecting a SystemExit code 1
     ret = script_runner.run(*args)
-    assert "Stability selection finished." in ret.stderr
+    assert ret.success
 
     # compare the generated output files
     fn = resource_filename("pySPFM", "tests/data/stability_integration_outputs.txt")
     check_integration_outputs(fn, out_dir)
+
+
+def test_integration_auc_to_estimates(
+    skip_integration, script_runner, mask_five_echo, test_AUC, mean_AUC, auc_4D_thr
+):
+    if skip_integration:
+        pytest.skip("Skipping five-echo integration test")
+
+    out_dir = "/tmp/data/five-echo/pySPFM.five-echo"
+
+    if os.path.exists(out_dir):
+        shutil.rmtree(out_dir)
+
+    # download data and run the test using the second echo time
+    download_test_data("https://osf.io/vg4wy/download", os.path.dirname(out_dir))
+    prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
+    suffix = ".psc.nii.gz"
+    datalist = [prepend + str(i + 1) + suffix for i in range(5)]
+    echo_times = [15.4, 29.7, 44.0, 58.3, 72.6]
+
+    ############################
+    # CLI args for 95th percentile static thresholding
+    args = (
+        ["auc_to_estimates", "-i"]
+        + datalist
+        + ["-te"]
+        + [str(te) for te in echo_times]
+        + ["-m"]
+        + [mask_five_echo, mask_five_echo]
+        + ["-a"]
+        + [test_AUC]
+        + ["-thr"]
+        + ["95"]
+        + ["-o"]
+        + ["test_auc2est"]
+        + ["-tr"]
+        + ["2"]
+        + ["-d"]
+        + [out_dir]
+        + ["-jobs"]
+        + ["1"]
+        + [
+            "--debug",
+        ]
+    )
+
+    ret = script_runner.run(*args)
+    assert ret.success
+
+    # compare the generated output files
+    fn = resource_filename("pySPFM", "tests/data/auc_to_estimates_outputs.txt")
+    check_integration_outputs(fn, out_dir, "auc_to_estimates")
+
+    ############################
+    if os.path.exists(out_dir):
+        shutil.rmtree(out_dir)
+    # CLI args for 95th percentile dynamic thresholding
+    args = (
+        ["auc_to_estimates", "-i"]
+        + datalist
+        + ["-te"]
+        + [str(te) for te in echo_times]
+        + ["-m"]
+        + [mask_five_echo, mask_five_echo]
+        + ["-a"]
+        + [test_AUC]
+        + ["-thr"]
+        + ["95"]
+        + ["--strategy"]
+        + ["time"]
+        + ["-o"]
+        + ["test_auc2est"]
+        + ["-tr"]
+        + ["2"]
+        + ["-d"]
+        + [out_dir]
+        + ["-jobs"]
+        + ["1"]
+        + [
+            "--debug",
+        ]
+    )
+
+    ret = script_runner.run(*args)
+    assert ret.success
+
+    # compare the generated output files
+    fn = resource_filename("pySPFM", "tests/data/auc_to_estimates_outputs.txt")
+    check_integration_outputs(fn, out_dir, "auc_to_estimates")
+
+    ############################
+    if os.path.exists(out_dir):
+        shutil.rmtree(out_dir)
+    # CLI args for 3D mask thresholding
+    args = (
+        ["auc_to_estimates", "-i"]
+        + datalist
+        + ["-te"]
+        + [str(te) for te in echo_times]
+        + ["-m"]
+        + [mask_five_echo, mean_AUC]
+        + ["-a"]
+        + [test_AUC]
+        + ["-o"]
+        + ["test_auc2est"]
+        + ["-tr"]
+        + ["2"]
+        + ["-d"]
+        + [out_dir]
+        + ["-jobs"]
+        + ["1"]
+        + [
+            "--debug",
+        ]
+    )
+
+    ret = script_runner.run(*args)
+    assert ret.success
+
+    # compare the generated output files
+    fn = resource_filename("pySPFM", "tests/data/auc_to_estimates_outputs.txt")
+    check_integration_outputs(fn, out_dir, "auc_to_estimates")
+
+    ############################
+    if os.path.exists(out_dir):
+        shutil.rmtree(out_dir)
+    # CLI args for 4D mask thresholding
+    args = (
+        ["auc_to_estimates", "-i"]
+        + datalist
+        + ["-te"]
+        + [str(te) for te in echo_times]
+        + ["-m"]
+        + [mask_five_echo, auc_4D_thr]
+        + ["-a"]
+        + [test_AUC]
+        + ["-o"]
+        + ["test_auc2est"]
+        + ["-tr"]
+        + ["2"]
+        + ["-d"]
+        + [out_dir]
+        + ["-jobs"]
+        + ["1"]
+        + [
+            "--debug",
+        ]
+    )
+
+    ret = script_runner.run(*args)
+    assert ret.success
+
+    # compare the generated output files
+    fn = resource_filename("pySPFM", "tests/data/auc_to_estimates_outputs.txt")
+    check_integration_outputs(fn, out_dir, "auc_to_estimates")
