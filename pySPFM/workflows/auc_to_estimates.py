@@ -5,14 +5,13 @@ import os
 import sys
 from os import path as op
 
+import nibabel as nib
 import numpy as np
-from dask import compute
-from dask import delayed as delayed_dask
 
 from pySPFM import __version__, utils
 from pySPFM.deconvolution import debiasing, hrf_generator
 from pySPFM.io import read_data, write_data, write_json
-from pySPFM.utils import dask_scheduler, get_outname
+from pySPFM.utils import get_outname
 from pySPFM.workflows.parser_utils import (
     check_hrf_value,
     check_thr_value,
@@ -60,8 +59,12 @@ def _get_parser():
         "-m",
         "--mask",
         dest="mask_fn",
+        nargs="+",
         type=lambda x: is_valid_file(parser, x),
-        help="The name of the file containing the mask for the fMRI data.",
+        help=(
+            "The name of the files containing the mask for the fMRI data and the AUC "
+            "thresholding mask."
+        ),
         required=True,
     )
     required.add_argument(
@@ -83,9 +86,14 @@ def _get_parser():
         "-thr",
         "--threshold",
         dest="thr",
-        help="Threshold for the AUC data. It could be a single value, a nifti map, a 4D dataset, or a mask.",
-        type=check_thr_value,
-        default=0.3,
+        help=(
+            "Percentile to threshold the AUC data with. The percentile is applied to the second "
+            "mask provided with the '-m' flag if the second mask is a binary mask. If the second "
+            "mask is not binary, the values on the second mask are used as the threshold. "
+            "Default is 95."
+        ),
+        type=int,
+        default=95,
     )
     optional.add_argument(
         "-d",
@@ -173,7 +181,7 @@ def auc_to_estimates(
     mask_fn,
     output_filename,
     tr,
-    thr=0.3,
+    thr=95,
     out_dir=".",
     te=[0],
     hrf_model="spm",
@@ -214,7 +222,7 @@ def auc_to_estimates(
 
     LGR.info("Reading data...")
     if n_te == 1:
-        data_masked, data_header, masker = read_data(data_fn[0], mask_fn)
+        data_masked, masker = read_data(data_fn[0], mask_fn[0])
         n_scans = data_masked.shape[0]
         n_voxels = data_masked.shape[1]
     elif n_te > 1:
@@ -224,7 +232,7 @@ def auc_to_estimates(
             data_fn = data_fn[0].split(" ")
 
         for te_idx in range(n_te):
-            data_temp, data_header, masker = read_data(data_fn[te_idx], mask_fn)
+            data_temp, masker = read_data(data_fn[te_idx], mask_fn[0])
             if te_idx == 0:
                 data_masked = data_temp
                 n_scans = data_temp.shape[0]
@@ -237,12 +245,38 @@ def auc_to_estimates(
     LGR.info("Data read.")
 
     LGR.info("Reading AUC data...")
-    auc, _, _ = read_data(auc_fn, mask_fn)
+    auc, _, _ = read_data(auc_fn, mask_fn[0])
     LGR.info("AUC data read.")
 
     # Threshold the AUC if thr is a float and different from 0
+    LGR.info("Thresholding AUC data...")
     if isinstance(thr, float) and thr != 0:
-        auc_thr = auc > auc_fn
+
+        # If the threshold is a float, threshold the AUC
+        auc_thr = auc.copy()
+        auc_thr[auc_thr < thr] = 0
+    # If thr is a string, it is a path to an image
+    elif isinstance(thr, str):
+
+        # Read image
+        thr_img = nib.load(thr)
+
+        # If the image is 3D, it is a mask or a threshold image
+        if len(thr_img.shape) == 3:
+            # If the image is a binary mask, load the AUC inside of the mask and
+            if thr_img.get_fdata().max() == 1:
+                thr_vals, _ = read_data(auc_fn, thr)
+
+        # If the image is 4D, it is a time-dependent threshold
+        elif len(thr_img.shape) == 4:
+            thr_values = masker.fit_transform(thr_img)
+            auc_thr = auc.copy()
+            auc_thr = auc_thr - thr_values
+            auc_thr[auc_thr < 0] = 0
+        else:
+            raise ValueError("Threshold image has an incorrect number of dimensions.")
+
+    LGR.info("AUC data thresholded.")
 
     # Generate design matrix with shifted versions of HRF
     LGR.info("Generating design matrix with shifted versions of HRF...")
@@ -258,6 +292,8 @@ def auc_to_estimates(
         fitts = np.dot(hrf, estimates_spike)
     else:
         estimates_spike, fitts = debiasing.debiasing_spike(hrf, data_masked, auc_thr)
+
+    LGR.info("Estimates calculated.")
 
     # Save estimates and thresholded AUC
     LGR.info("Saving results...")

@@ -21,20 +21,6 @@ def check_hrf_value(string, is_parser=True):
         )
 
 
-def check_thr_value(arg, is_parser=True):
-    """
-    Check if argument is float or str.
-    """
-    if isinstance(arg, float) and arg >= 0:
-        return arg
-    elif isinstance(arg, float) and arg < 0:
-        raise argparse.ArgumentTypeError("Threshold must be a float >=0.")
-    elif isinstance(arg, str) and is_parser:
-        return is_valid_file(argparse.ArgumentParser(), arg)
-    else:
-        raise argparse.ArgumentTypeError("Threshold must be a float or a filename.")
-
-
 def is_valid_file(parser, arg):
     """
     Check if argument is existing file.
