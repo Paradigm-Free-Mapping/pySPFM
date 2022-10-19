@@ -750,7 +750,7 @@ def pySPFM(
                 np.expand_dims(noise_estimate, axis=0),
                 os.path.join(out_dir, output_name),
                 masker,
-                data_header,
+                data_fn[0],
                 command_str,
                 use_bids=use_bids,
             )
@@ -769,7 +769,7 @@ def pySPFM(
                     np.expand_dims(noise_estimate, axis=0),
                     os.path.join(out_dir, output_name),
                     masker,
-                    data_header,
+                    data_fn[0],
                     command_str,
                     use_bids=use_bids,
                 )
@@ -784,7 +784,7 @@ def pySPFM(
             np.expand_dims(lambda_map, axis=0),
             os.path.join(out_dir, output_name),
             masker,
-            data_header,
+            data_fn[0],
             command_str,
             use_bids=use_bids,
         )
