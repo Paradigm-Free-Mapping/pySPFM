@@ -378,3 +378,38 @@ def test_integration_auc_to_estimates(
     # compare the generated output files
     fn = resource_filename("pySPFM", "tests/data/auc_to_estimates_outputs.txt")
     check_integration_outputs(fn, out_dir, "auc_to_estimates")
+
+    ############################
+    if os.path.exists(out_dir):
+        shutil.rmtree(out_dir)
+    # CLI args for circular shift method
+    args = (
+        ["auc_to_estimates", "-i"]
+        + datalist
+        + ["-te"]
+        + [str(te) for te in echo_times]
+        + ["-m"]
+        + [mask_five_echo]
+        + ["-a"]
+        + [test_AUC]
+        + ["-o"]
+        + ["test_auc2est"]
+        + ["--strategy"]
+        + ["circular"]
+        + ["-tr"]
+        + ["2"]
+        + ["-d"]
+        + [out_dir]
+        + ["-jobs"]
+        + ["1"]
+        + [
+            "--debug",
+        ]
+    )
+
+    ret = script_runner.run(*args)
+    assert ret.success
+
+    # compare the generated output files
+    fn = resource_filename("pySPFM", "tests/data/auc_to_estimates_outputs.txt")
+    check_integration_outputs(fn, out_dir, "auc_to_estimates")

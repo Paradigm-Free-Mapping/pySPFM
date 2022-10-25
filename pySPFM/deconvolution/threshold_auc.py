@@ -8,7 +8,27 @@ from pySPFM.io import read_data
 LGR = logging.getLogger("GENERAL")
 
 
-def threshold_auc(auc_fn, mask_fn, thr, thr_strategy, n_scans):
+def circular_shift(auc, n_perm=1000, cutoff=0.05):
+
+    # Create null distribution with circle shift method
+    surr_data = np.zeros((len(auc), n_perm))
+    for i in range(n_perm):
+        surr_data[:, i] = np.roll(auc, np.random.randint(len(auc)))
+
+    # For each TR, calculate if the AUC value is significant
+    p_value = np.zeros(len(auc))
+    surr_data_flat = surr_data.flatten()
+    for tr in range(auc.shape[0]):
+        p_value[tr] = np.mean(surr_data_flat >= auc[tr])
+
+    # Return AUC with significant values
+    auc_sig = auc.copy()
+    auc_sig[p_value > cutoff] = 0
+
+    return auc_sig
+
+
+def threshold_auc(auc_fn, mask_fn, thr, thr_strategy, n_scans, cutoff=0.05):
 
     LGR.info("Reading AUC data...")
     auc, masker = read_data(auc_fn, mask_fn[0])
@@ -68,9 +88,18 @@ def threshold_auc(auc_fn, mask_fn, thr, thr_strategy, n_scans):
             auc_thr[auc_thr < 0] = 0
         else:
             raise ValueError("The mask used to threshold the AUC must be 3D or 4D.")
+
     # Raise error if thr is not 0 and mask_fn has only one element
     elif thr != 0 and len(mask_fn) != 1:
         raise ValueError("If the threshold is not 0, then the 'mask' flag must have two elements.")
+
+    # If thr is 0, but thr_strategy is 'circular', then apply the circular shift method
+    elif thr_strategy == "circular":
+        LGR.info("Thresholding AUC values with the circular shift method...")
+        auc_thr = np.zeros(auc.shape)
+        for voxel_idx in range(auc.shape[1]):
+            auc_thr[:, voxel_idx] = circular_shift(auc[:, voxel_idx], cutoff=cutoff)
+
     # If thr is 0, then the AUC is supposed to be already thresholded
     else:
         LGR.warning("Threshold 0 selected. AUC is assumed to be already thresholded.")

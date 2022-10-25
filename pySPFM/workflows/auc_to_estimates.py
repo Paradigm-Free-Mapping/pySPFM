@@ -97,11 +97,11 @@ def _get_parser():
         help=(
             "Strategy to threshold the AUC data with. If the second mask is a binary mask, "
             "the can be applied with a static threshold ('static') or a time-dependet threshold "
-            "('time'). Default is 'static'."
+            "('time'). A 'circular' shifting method is also available. Default is 'static'."
         ),
         type=str,
         default="static",
-        choices=["static", "time"],
+        choices=["static", "time", "circular"],
     )
     optional.add_argument(
         "-d",
@@ -137,6 +137,12 @@ def _get_parser():
         action="store_true",
         help="Estimate innovation signals. Default = False.",
         default=False,
+    )
+    optional.add_argument(
+        "--cutoff",
+        dest="cutoff",
+        type=float,
+        help="Significance level for the circular shifting threshold. Default is 0.05.",
     )
     optional.add_argument(
         "-jobs",
@@ -195,6 +201,7 @@ def auc_to_estimates(
     te=[0],
     hrf_model="spm",
     block_model=False,
+    cutoff=0.05,
     n_jobs=4,
     use_bids=False,
     debug=False,
@@ -252,7 +259,7 @@ def auc_to_estimates(
     LGR.info("Data read.")
 
     # Read and threshold AUC
-    auc_thr = threshold_auc.threshold_auc(auc_fn, mask_fn, thr, thr_strategy, n_scans)
+    auc_thr = threshold_auc.threshold_auc(auc_fn, mask_fn, thr, thr_strategy, n_scans, cutoff)
 
     # Generate design matrix with shifted versions of HRF
     LGR.info("Generating design matrix with shifted versions of HRF...")
