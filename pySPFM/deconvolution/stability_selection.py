@@ -37,22 +37,22 @@ def get_subsampling_indices(n_scans, n_echos, mode="same"):
     return subsample_idx
 
 
-def calculate_auc(coefs, lambdas, n_surrogates):
+def calculate_auc(coefs, lambdas, n_lambdas, n_surrogates):
 
     # Create shared space of lambdas and coefficients
-    lambdas_shared = np.zeros((lambdas.shape[0] * lambdas.shape[1]))
+    lambdas_shared = lambdas.reshape((n_lambdas * n_surrogates))
     coefs_shared = np.zeros((coefs.shape[0] * coefs.shape[1]))
 
     # Project lambdas and coefficients into shared space
     for i in range(lambdas.shape[0]):
-        lambdas_shared[i * lambdas.shape[1] : (i + 1) * lambdas.shape[1]] = np.squeeze(
-            lambdas[i, :]
-        )
+        # lambdas_shared[i * lambdas.shape[1] : (i + 1) * lambdas.shape[1]] = np.squeeze(
+        #     lambdas[i, :]
+        # )
         coefs_shared[i * coefs.shape[1] : (i + 1) * coefs.shape[1]] = np.squeeze(coefs[i, :])
 
     # Sort lambdas and get the indices
-    lambdas_sorted_idx = np.argsort(lambdas_shared)
-    lambdas_sorted = np.sort(lambdas_shared)
+    lambdas_sorted_idx = np.argsort(-lambdas_shared)
+    lambdas_sorted = -np.sort(-lambdas_shared)
 
     # Sum of all lambdas
     sum_lambdas = np.sum(lambdas_sorted)
@@ -99,6 +99,6 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
     # Calculate the AUC for each TR
     auc = np.zeros((n_scans))
     for tr_idx in range(n_scans):
-        auc[tr_idx] = calculate_auc(estimates[tr_idx, :, :], lambdas, n_surrogates)
+        auc[tr_idx] = calculate_auc(estimates[tr_idx, :, :], lambdas, n_lambdas, n_surrogates)
 
     return auc
