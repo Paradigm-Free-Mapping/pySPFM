@@ -66,7 +66,7 @@ def calculate_auc(coefs, lambdas, n_surrogates):
     # Calculate the AUC
     auc = 0
     for i in range(lambdas_shared.shape[0]):
-        auc += coefs_sorted[i] * lambdas_sorted[i] / sum_lambdas / n_surrogates
+        auc += coefs_sorted[i] * lambdas_sorted[i] / sum_lambdas
 
     return auc
 
