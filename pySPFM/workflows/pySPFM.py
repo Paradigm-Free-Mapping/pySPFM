@@ -11,15 +11,18 @@ from dask import compute
 from dask import delayed as delayed_dask
 
 from pySPFM import __version__, utils
-from pySPFM.deconvolution.debiasing import debiasing_block, debiasing_spike
-from pySPFM.deconvolution.fista import fista
-from pySPFM.deconvolution.hrf_generator import HRFMatrix
-from pySPFM.deconvolution.lars import solve_regularization_path
-from pySPFM.deconvolution.select_lambda import select_lambda
-from pySPFM.deconvolution.spatial_regularization import spatial_tikhonov
-from pySPFM.deconvolution.stability_selection import stability_selection
+from pySPFM.deconvolution import (
+    debiasing,
+    fista,
+    hrf_generator,
+    lars,
+    select_lambda,
+    spatial_regularization,
+    stability_selection,
+)
 from pySPFM.io import read_data, write_data, write_json
 from pySPFM.utils import dask_scheduler, get_outname
+from pySPFM.workflows.parser_utils import check_hrf_value, is_valid_file
 
 LGR = logging.getLogger("GENERAL")
 RefLGR = logging.getLogger("REFERENCES")
@@ -45,7 +48,7 @@ def _get_parser():
         "-i",
         "--input",
         dest="data_fn",
-        type=str,
+        type=lambda x: is_valid_file(parser, x),
         nargs="+",
         help="The name of the file containing fMRI data. ",
         required=True,
@@ -54,7 +57,7 @@ def _get_parser():
         "-m",
         "--mask",
         dest="mask_fn",
-        type=str,
+        type=lambda x: is_valid_file(parser, x),
         help="The name of the file containing the mask for the fMRI data. ",
         required=True,
     )
@@ -93,7 +96,7 @@ def _get_parser():
         "-hrf",
         "--hrf",
         dest="hrf_model",
-        type=str,
+        type=check_hrf_value,
         help=(
             "HRF model to use. Default is 'spm'. Options are 'spm', 'glover', or a custom HRF "
             "file with the '.1D' or '.txt' extension."
@@ -246,6 +249,7 @@ def _get_parser():
         "--spatial_dim",
         dest="spatial_dim",
         type=int,
+        choices=[2, 3],
         help=(
             "Slice-wise regularization with dim = 2; whole-volume regularization with dim=3. "
             "Default = 3."
@@ -267,14 +271,6 @@ def _get_parser():
         type=float,
         help="Tolerance for FISTA (default = 1e-6).",
         default=1e-6,
-    )
-    optional.add_argument(
-        "-atlas",
-        "--atlas",
-        dest="is_atlas",
-        action="store_true",
-        help="Use provided mask as an atlas (default = False).",
-        default=False,
     )
     optional.add_argument(
         "-bids",
@@ -326,7 +322,7 @@ def pySPFM(
     mask_fn,
     output_filename,
     tr,
-    out_dir,
+    out_dir=".",
     te=[0],
     hrf_model="spm",
     block_model=False,
@@ -347,7 +343,6 @@ def pySPFM(
     spatial_dim=3,
     mu=0.01,
     tolerance=1e-6,
-    is_atlas=False,
     use_bids=False,
     n_surrogates=50,
     debug=False,
@@ -462,7 +457,7 @@ def pySPFM(
 
     LGR.info("Reading data...")
     if n_te == 1:
-        data_masked, data_header, mask = read_data(data_fn[0], mask_fn, is_atlas=is_atlas)
+        data_masked, masker = read_data(data_fn[0], mask_fn)
         n_scans = data_masked.shape[0]
         n_voxels = data_masked.shape[1]
     elif n_te > 1:
@@ -472,7 +467,7 @@ def pySPFM(
             data_fn = data_fn[0].split(" ")
 
         for te_idx in range(n_te):
-            data_temp, data_header, mask = read_data(data_fn[te_idx], mask_fn, is_atlas=is_atlas)
+            data_temp, masker = read_data(data_fn[te_idx], mask_fn)
             if te_idx == 0:
                 data_masked = data_temp
                 n_scans = data_temp.shape[0]
@@ -487,7 +482,7 @@ def pySPFM(
 
     # Generate design matrix with shifted versions of HRF
     LGR.info("Generating design matrix with shifted versions of HRF...")
-    hrf_obj = HRFMatrix(te=te, block=block_model, model=hrf_model)
+    hrf_obj = hrf_generator.HRFMatrix(te=te, block=block_model, model=hrf_model)
     hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
     # Run LARS if bic or aic on given.
@@ -509,295 +504,291 @@ def pySPFM(
 
     # Iterate between temporal and spatial regularizations
     client, _ = dask_scheduler(n_jobs)
-    for iter_idx in range(max_iter):
-        if spatial_weight > 0:
-            data_temp_reg = final_estimates - estimates_temporal + data_masked
-        else:
-            data_temp_reg = data_masked
 
-        estimates = np.zeros((n_scans, n_voxels))
-        lambda_map = np.zeros(n_voxels)
+    # Scatter data to workers if client is not None
+    if client is not None:
+        hrf_fut = client.scatter(hrf)
+    else:
+        hrf_fut = hrf
 
-        # Scatter data to workers if client is not None
+    # Solve stability selection
+    if criterion == "stability":
+        LGR.info("Solving inverse problem with stability selection...")
+        n_lambdas = int(np.ceil(max_iter_factor * n_scans))
+        auc = np.zeros((n_scans, n_voxels))
+
+        # Solve stability regularization
+        futures = [
+            delayed_dask(stability_selection.stability_selection)(
+                hrf_fut,
+                data_masked[:, vox_idx],
+                n_lambdas,
+                n_surrogates,
+            )
+            for vox_idx in range(n_voxels)
+        ]
+
+        # Gather results
         if client is not None:
-            hrf_fut = client.scatter(hrf)
+            stability_estimates = compute(futures)[0]
         else:
-            hrf_fut = hrf
+            stability_estimates = compute(futures, scheduler="single-threaded")[0]
 
-        if criterion in lars_criteria:
-            LGR.info("Solving inverse problem with LARS...")
-            n_lambdas = int(np.ceil(max_iter_factor * n_scans))
-            # Solve LARS for each voxel with parallelization
-            futures = []
-            for vox_idx in range(n_voxels):
-                fut = delayed_dask(solve_regularization_path, pure=False)(
-                    hrf_fut, data_temp_reg[:, vox_idx], n_lambdas, criterion
-                )
-                futures.append(fut)
+        for vox_idx in range(n_voxels):
+            auc[:, vox_idx] = np.squeeze(stability_estimates[vox_idx])
 
-            # Gather results
-            if client is not None:
-                lars_estimates = compute(futures)[0]
-            else:
-                lars_estimates = compute(futures, scheduler="single-threaded")[0]
+        LGR.info("Stability selection finished.")
 
-            for vox_idx in range(n_voxels):
-                estimates[:, vox_idx] = np.squeeze(lars_estimates[vox_idx][0])
-                lambda_map[vox_idx] = np.squeeze(lars_estimates[vox_idx][1])
-
-        elif criterion in fista_criteria:
-            LGR.info("Solving inverse problem with FISTA...")
-            # Solve fista
-            futures = []
-            for vox_idx in range(n_voxels):
-                fut = delayed_dask(fista, pure=False)(
-                    hrf_fut,
-                    data_temp_reg[:, vox_idx],
-                    criterion,
-                    max_iter_fista,
-                    min_iter_fista,
-                    tolerance,
-                    group,
-                    pcg,
-                    factor,
-                    lambda_echo,
-                )
-                futures.append(fut)
-
-            # Gather results
-            if client is not None:
-                fista_estimates = compute(futures)[0]
-            else:
-                fista_estimates = compute(futures, scheduler="single-threaded")[0]
-
-            for vox_idx in range(n_voxels):
-                estimates[:, vox_idx] = np.squeeze(fista_estimates[vox_idx][0])
-                lambda_map[vox_idx] = np.squeeze(fista_estimates[vox_idx][1])
-
-        elif criterion == "stability":
-            LGR.info("Solving inverse problem with stability selection...")
-            n_lambdas = int(np.ceil(max_iter_factor * n_scans))
-            auc = np.zeros((n_scans, n_voxels))
-
-            # Solve stability regularization
-            futures = [
-                delayed_dask(stability_selection)(
-                    hrf_fut,
-                    data_temp_reg[:, vox_idx],
-                    n_lambdas,
-                    n_surrogates,
-                )
-                for vox_idx in range(n_voxels)
-            ]
-
-            # Gather results
-            if client is not None:
-                stability_estimates = compute(futures)[0]
-            else:
-                stability_estimates = compute(futures, scheduler="single-threaded")[0]
-
-            for vox_idx in range(n_voxels):
-                auc[:, vox_idx] = np.squeeze(stability_estimates[vox_idx])
-
-            LGR.info("Stability selection finished.")
-
-            LGR.info("Saving AUCs to %s..." % out_dir)
-            out_bids_keywords.append("AUC")
-            output_name = get_outname(output_filename, "AUC", "nii.gz", use_bids)
-            write_data(
-                auc,
-                os.path.join(out_dir, output_name),
-                mask,
-                data_header,
-                command_str,
-                is_atlas=is_atlas,
-            )
-
-            LGR.info("pySPFM with stability selection finished.")
-            sys.exit(1)
-
-        else:
-            raise ValueError("Wrong criterion option given.")
-
-        # Convolve with HRF
-        if block_model:
-            estimates_block = estimates
-            hrf_obj = HRFMatrix(te=te, block=False, model=hrf_model)
-            hrf_fitting = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
-            estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
-            fitts = np.dot(hrf_fitting, estimates_spike)
-        else:
-            estimates_spike = estimates
-            fitts = np.dot(hrf, estimates_spike)
-
-        # Perform spatial regularization if a weight is given
-        if spatial_weight > 0:
-            # Update temporal estimates
-            estimates_temporal = estimates_temporal + (estimates - final_estimates)
-
-            # Calculates for the whole volume
-            estimates_tikhonov = spatial_tikhonov(
-                final_estimates,
-                final_estimates - estimates_spatial + data_masked,
-                mask,
-                max_iter_spatial,
-                spatial_dim,
-                spatial_lambda,
-                mu,
-            )
-
-            # Update spatial estimates
-            estimates_spatial = estimates_spatial + (estimates_tikhonov - final_estimates)
-
-            # Calculate final estimates
-            final_estimates = (
-                estimates_temporal * (1 - spatial_weight) + spatial_weight * estimates_spatial
-            )
-        else:
-            final_estimates = estimates
-
-    LGR.info("Inverse problem solved.")
-
-    # Update HRF for block model
-    if block_model:
-        hrf_obj = HRFMatrix(te=te, block=False, model=hrf_model)
-        hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
-
-    # Perform debiasing step
-    if debias:
-        LGR.info("Debiasing estimates...")
-        if block_model:
-            estimates_spike = debiasing_block(
-                hrf=hrf, y=data_masked, estimates_matrix=final_estimates
-            )
-            fitts = np.dot(hrf, estimates_spike)
-        else:
-            estimates_spike, fitts = debiasing_spike(hrf, data_masked, final_estimates)
-    elif block_model:
-        estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
-        fitts = np.dot(hrf, estimates_spike)
-
-    LGR.info("Saving results...")
-
-    # Save innovation signal
-    if block_model:
-        estimates_block = final_estimates
-        output_name = get_outname(output_filename, "innovation", "nii.gz", use_bids)
-        out_bids_keywords.append("innovation")
+        LGR.info("Saving AUCs to %s..." % out_dir)
+        out_bids_keywords.append("AUC")
+        output_name = get_outname(output_filename, "AUC", "nii.gz", use_bids)
         write_data(
-            estimates_block,
+            auc,
             os.path.join(out_dir, output_name),
-            mask,
-            data_header,
+            masker,
+            data_fn[0],
             command_str,
-            is_atlas=is_atlas,
-            use_bids=use_bids,
+            use_bids,
         )
 
-        if not debias:
-            hrf_obj = HRFMatrix(TR=tr, n_scans=n_scans, TE=te, block=False)
-            hrf = hrf_obj.generate_hrf().hrf
+    # Solve FISTA
+    else:
+        for iter_idx in range(max_iter):
+            if spatial_weight > 0:
+                data_temp_reg = final_estimates - estimates_temporal + data_masked
+            else:
+                data_temp_reg = data_masked
+
+            estimates = np.zeros((n_scans, n_voxels))
+            lambda_map = np.zeros(n_voxels)
+
+            if criterion in lars_criteria:
+                LGR.info("Solving inverse problem with LARS...")
+                n_lambdas = int(np.ceil(max_iter_factor * n_scans))
+                # Solve LARS for each voxel with parallelization
+                futures = []
+                for vox_idx in range(n_voxels):
+                    fut = delayed_dask(lars.solve_regularization_path, pure=False)(
+                        hrf_fut, data_temp_reg[:, vox_idx], n_lambdas, criterion
+                    )
+                    futures.append(fut)
+
+                # Gather results
+                if client is not None:
+                    lars_estimates = compute(futures)[0]
+                else:
+                    lars_estimates = compute(futures, scheduler="single-threaded")[0]
+
+                for vox_idx in range(n_voxels):
+                    estimates[:, vox_idx] = np.squeeze(lars_estimates[vox_idx][0])
+                    lambda_map[vox_idx] = np.squeeze(lars_estimates[vox_idx][1])
+
+            elif criterion in fista_criteria:
+                LGR.info("Solving inverse problem with FISTA...")
+                # Solve fista
+                futures = []
+                for vox_idx in range(n_voxels):
+                    fut = delayed_dask(fista.fista, pure=False)(
+                        hrf_fut,
+                        data_temp_reg[:, vox_idx],
+                        criterion=criterion,
+                        max_iter=max_iter_fista,
+                        min_iter=min_iter_fista,
+                        tol=tolerance,
+                        group=group,
+                        pcg=pcg,
+                        factor=factor,
+                        lambda_echo=lambda_echo,
+                    )
+                    futures.append(fut)
+
+                # Gather results
+                if client is not None:
+                    fista_estimates = compute(futures)[0]
+                else:
+                    fista_estimates = compute(futures, scheduler="single-threaded")[0]
+
+                for vox_idx in range(n_voxels):
+                    estimates[:, vox_idx] = np.squeeze(fista_estimates[vox_idx][0])
+                    lambda_map[vox_idx] = np.squeeze(fista_estimates[vox_idx][1])
+
+            else:
+                raise ValueError("Wrong criterion option given.")
+
+            # Convolve with HRF
+            if block_model:
+                estimates_block = estimates
+                hrf_obj = hrf_generator.HRFMatrix(te=te, block=False, model=hrf_model)
+                hrf_fitting = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
+                estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
+                fitts = np.dot(hrf_fitting, estimates_spike)
+            else:
+                estimates_spike = estimates
+                fitts = np.dot(hrf, estimates_spike)
+
+            # Perform spatial regularization if a weight is given
+            if spatial_weight > 0:
+                # Update temporal estimates
+                estimates_temporal = estimates_temporal + (estimates - final_estimates)
+
+                # Calculates for the whole volume
+                estimates_tikhonov = spatial_regularization.spatial_tikhonov(
+                    final_estimates,
+                    final_estimates - estimates_spatial + data_masked,
+                    masker,
+                    max_iter_spatial,
+                    spatial_dim,
+                    spatial_lambda,
+                    mu,
+                )
+
+                # Update spatial estimates
+                estimates_spatial = estimates_spatial + (estimates_tikhonov - final_estimates)
+
+                # Calculate final estimates
+                final_estimates = (
+                    estimates_temporal * (1 - spatial_weight) + spatial_weight * estimates_spatial
+                )
+            else:
+                final_estimates = estimates
+
+        LGR.info("Inverse problem solved.")
+
+        # Update HRF for block model
+        if block_model:
+            hrf_obj = hrf_generator.HRFMatrix(te=te, block=False, model=hrf_model)
+            hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
+
+        # Perform debiasing step
+        if debias:
+            LGR.info("Debiasing estimates...")
+            if block_model:
+                estimates_spike = debiasing.debiasing_block(
+                    hrf=hrf, y=data_masked, estimates_matrix=final_estimates
+                )
+                fitts = np.dot(hrf, estimates_spike)
+            else:
+                estimates_spike, fitts = debiasing.debiasing_spike(
+                    hrf, data_masked, final_estimates
+                )
+        elif block_model:
             estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
             fitts = np.dot(hrf, estimates_spike)
 
-    # Save activity-inducing signal
-    if n_te == 1:
-        output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
-        out_bids_keywords.append("activityInducing")
-    elif n_te > 1:
-        output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
-        out_bids_keywords.append("activityInducing")
-    write_data(
-        estimates_spike,
-        os.path.join(out_dir, output_name),
-        mask,
-        data_header,
-        command_str,
-        is_atlas=is_atlas,
-        use_bids=use_bids,
-    )
+        LGR.info("Saving results...")
 
-    # Save fitts
-    if n_te == 1:
-        output_name = get_outname(output_filename, "denoised_bold", "nii.gz", use_bids)
-        out_bids_keywords.append("denoised_bold")
-        write_data(
-            fitts,
-            os.path.join(out_dir, output_name),
-            mask,
-            data_header,
-            command_str,
-            is_atlas=is_atlas,
-            use_bids=use_bids,
-        )
-    elif n_te > 1:
-        for te_idx in range(n_te):
-            te_data = fitts[te_idx * n_scans : (te_idx + 1) * n_scans, :]
-            output_name = get_outname(
-                f"{output_filename}_echo-{te_idx + 1}", "denoised_bold", "nii.gz", use_bids
-            )
-            out_bids_keywords.append(f"echo-{te_idx + 1}_desc-denoised_bold")
+        # Save innovation signal
+        if block_model:
+            estimates_block = final_estimates
+            output_name = get_outname(output_filename, "innovation", "nii.gz", use_bids)
+            out_bids_keywords.append("innovation")
             write_data(
-                te_data,
+                estimates_block,
                 os.path.join(out_dir, output_name),
-                mask,
-                data_header,
+                masker,
+                data_fn[0],
                 command_str,
-                is_atlas=is_atlas,
                 use_bids=use_bids,
             )
 
-    # Save noise estimate
-    if n_te == 1:
-        output_name = get_outname(output_filename, "MAD", "nii.gz", use_bids)
-        out_bids_keywords.append("MAD")
-        out_data = data_masked[:n_scans, :]
-        _, _, noise_estimate = select_lambda(hrf=hrf, y=out_data)
+            if not debias:
+                hrf_obj = hrf_generator.HRFMatrix(TR=tr, n_scans=n_scans, TE=te, block=False)
+                hrf = hrf_obj.generate_hrf().hrf
+                estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
+                fitts = np.dot(hrf, estimates_spike)
+
+        # Save activity-inducing signal
+        if n_te == 1:
+            output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
+            out_bids_keywords.append("activityInducing")
+        elif n_te > 1:
+            output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
+            out_bids_keywords.append("activityInducing")
         write_data(
-            np.expand_dims(noise_estimate, axis=0),
+            estimates_spike,
             os.path.join(out_dir, output_name),
-            mask,
-            data_header,
+            masker,
+            data_fn[0],
             command_str,
-            is_atlas=is_atlas,
             use_bids=use_bids,
         )
-    else:
-        for te_idx in range(n_te):
-            output_name = get_outname(
-                output_filename, f"echo-{te_idx + 1}_MAD", "nii.gz", use_bids
+
+        # Save fitts
+        if n_te == 1:
+            output_name = get_outname(output_filename, "denoised_bold", "nii.gz", use_bids)
+            out_bids_keywords.append("denoised_bold")
+            write_data(
+                fitts,
+                os.path.join(out_dir, output_name),
+                masker,
+                data_fn[0],
+                command_str,
+                use_bids=use_bids,
             )
-            out_bids_keywords.append(f"echo-{te_idx + 1}_MAD")
-            if te_idx == 0:
-                y_echo = data_masked[:n_scans, :]
-            else:
-                y_echo = data_masked[te_idx * n_scans : (te_idx + 1) * n_scans, :]
-            _, _, noise_estimate = select_lambda(hrf=hrf, y=y_echo)
+        elif n_te > 1:
+            for te_idx in range(n_te):
+                te_data = fitts[te_idx * n_scans : (te_idx + 1) * n_scans, :]
+                output_name = get_outname(
+                    f"{output_filename}_echo-{te_idx + 1}", "denoised_bold", "nii.gz", use_bids
+                )
+                out_bids_keywords.append(f"echo-{te_idx + 1}_desc-denoised_bold")
+                write_data(
+                    te_data,
+                    os.path.join(out_dir, output_name),
+                    masker,
+                    data_fn[0],
+                    command_str,
+                    use_bids=use_bids,
+                )
+
+        # Save noise estimate
+        if n_te == 1:
+            output_name = get_outname(output_filename, "MAD", "nii.gz", use_bids)
+            out_bids_keywords.append("MAD")
+            out_data = data_masked[:n_scans, :]
+            _, _, noise_estimate = select_lambda.select_lambda(hrf=hrf, y=out_data)
             write_data(
                 np.expand_dims(noise_estimate, axis=0),
                 os.path.join(out_dir, output_name),
-                mask,
-                data_header,
+                masker,
+                data_fn[0],
                 command_str,
-                is_atlas=is_atlas,
                 use_bids=use_bids,
             )
+        else:
+            for te_idx in range(n_te):
+                output_name = get_outname(
+                    output_filename, f"echo-{te_idx + 1}_MAD", "nii.gz", use_bids
+                )
+                out_bids_keywords.append(f"echo-{te_idx + 1}_MAD")
+                if te_idx == 0:
+                    y_echo = data_masked[:n_scans, :]
+                else:
+                    y_echo = data_masked[te_idx * n_scans : (te_idx + 1) * n_scans, :]
+                _, _, noise_estimate = select_lambda.select_lambda(hrf=hrf, y=y_echo)
+                write_data(
+                    np.expand_dims(noise_estimate, axis=0),
+                    os.path.join(out_dir, output_name),
+                    masker,
+                    data_fn[0],
+                    command_str,
+                    use_bids=use_bids,
+                )
 
-    # Save lambda
-    out_keyword = "lambda"
-    if use_bids:
-        out_keyword = f"stat-{out_keyword}_statmap"
-    output_name = get_outname(output_filename, out_keyword, "nii.gz", use_bids)
-    out_bids_keywords.append(out_keyword)
-    write_data(
-        np.expand_dims(lambda_map, axis=0),
-        os.path.join(out_dir, output_name),
-        mask,
-        data_header,
-        command_str,
-        is_atlas=is_atlas,
-        use_bids=use_bids,
-    )
+        # Save lambda
+        out_keyword = "lambda"
+        if use_bids:
+            out_keyword = f"stat-{out_keyword}_statmap"
+        output_name = get_outname(output_filename, out_keyword, "nii.gz", use_bids)
+        out_bids_keywords.append(out_keyword)
+        write_data(
+            np.expand_dims(lambda_map, axis=0),
+            os.path.join(out_dir, output_name),
+            masker,
+            data_fn[0],
+            command_str,
+            use_bids=use_bids,
+        )
 
     # Save BIDS compatible sidecar file
     if use_bids:

@@ -84,6 +84,7 @@ def fista(
     hrf,
     y,
     criterion="ut",
+    lambda_=None,
     max_iter=400,
     min_iter=10,
     tol=1e-6,
@@ -103,6 +104,8 @@ def fista(
         Data to be deconvolved.
     criterion : str, optional
         Criterion to select regularization parameter lambda, by default "ut"
+    lambda_ : float, optional
+        Regularization parameter, by default None
     max_iter : int, optional
         Maximum number of iterations for FISTA, by default 400
     min_iter : int, optional
@@ -136,9 +139,13 @@ def fista(
     n_scans = hrf.shape[1]
 
     # Select lambda
-    lambda_, update_lambda, noise_estimate = select_lambda(
-        hrf, y, criterion, factor, pcg, lambda_echo
-    )
+    if lambda_ is None:
+        lambda_, update_lambda, noise_estimate = select_lambda(
+            hrf, y, criterion, factor, pcg, lambda_echo
+        )
+    else:
+        update_lambda = False
+        noise_estimate = 0
 
     c_ist = 1 / (linalg.norm(hrf) ** 2)
 

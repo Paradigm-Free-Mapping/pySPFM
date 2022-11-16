@@ -106,3 +106,18 @@ def fista_results(testpath):
 @pytest.fixture
 def coef_path_results(testpath):
     return fetch_file("nxgeq", testpath, "coef_path.npy")
+
+
+@pytest.fixture
+def test_AUC(testpath):
+    return fetch_file("spzu9", testpath, "test_AUC.nii.gz")
+
+
+@pytest.fixture
+def mean_AUC(testpath):
+    return fetch_file("vhdm9", testpath, "mean_AUC.nii.gz")
+
+
+@pytest.fixture
+def auc_4D_thr(testpath):
+    return fetch_file("2pqmy", testpath, "test_AUC_4D_thr.nii.gz")

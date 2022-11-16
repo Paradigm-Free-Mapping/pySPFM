@@ -4,13 +4,13 @@ import os.path as op
 from subprocess import run
 
 import nibabel as nib
-from nilearn import masking
-from nilearn.input_data import NiftiLabelsMasker
+from nilearn.image import new_img_like
+from nilearn.maskers import NiftiLabelsMasker, NiftiMasker
 
 from pySPFM.utils import get_keyword_description
 
 
-def read_data(data_fn, mask_fn, is_atlas=False):
+def read_data(data_fn, mask_fn):
     """Read data from filename and apply mask.
 
     Parameters
@@ -22,45 +22,29 @@ def read_data(data_fn, mask_fn, is_atlas=False):
 
     Returns
     -------
-    data_restruct : (T x S) ndarray
-        [description]
-    data_header : nib.header
-        Header of the input data.
-    dims : list
-        List with dimensions of data.
-    mask_idxs : (S x) ndarray
-        Indexes to transform data back to 4D.
-    """
-    data_img = nib.load(data_fn)
-    data_header = data_img.header
-
-    if is_atlas:
-        mask = NiftiLabelsMasker(labels_img=mask_fn, standardize=False, strategy="mean")
-        data = mask.fit_transform(data_img)
-    else:
-        mask = nib.load(mask_fn)
-        data = masking.apply_mask(data_img, mask)
-
-    return data, data_header, mask
-
-
-def reshape_data(signal2d, mask):
-    """Reshape data from 2D back to 4D.
-
-    Parameters
-    ----------
-    signal2d : (T x S) ndarray
+    data : (T x S) ndarray
         Data in 2D.
-    mask : Nifti1Image
-        Mask.
-
-    Returns
-    -------
-    signal4d : (S x S x S x T) ndarray
-        Data in 4D.
+    masker : nilearn.maskers.NiftiMasker
+        Masker.
     """
-    signal4d = masking.unmask(signal2d, mask)
-    return signal4d
+    # Read data
+    data_img = nib.load(data_fn)
+
+    # Load mask and calculate maximum value
+    mask_img = nib.load(mask_fn)
+    mask_max = mask_img.get_fdata().max()
+
+    # Check if mask is binary
+    if mask_max > 1:
+        masker = NiftiLabelsMasker(labels_img=mask_img, standardize=False, strategy="mean")
+    elif mask_max == 1:
+        masker = NiftiMasker(mask_img=mask_img, standardize=False)
+    else:
+        raise ValueError("Mask is not binary or an atlas.")
+
+    data = masker.fit_transform(data_img)
+
+    return data, masker
 
 
 def update_header(filename, command):
@@ -77,7 +61,7 @@ def update_header(filename, command):
     run(f'3dNotes -h "{command}" {filename}', shell=True)
 
 
-def write_data(data, filename, mask, header, command, is_atlas=False, use_bids=False):
+def write_data(data, filename, masker, orig_img, command, use_bids=False):
     """Write data into NIFTI file.
 
     Parameters
@@ -86,19 +70,30 @@ def write_data(data, filename, mask, header, command, is_atlas=False, use_bids=F
         Data in 2D.
     filename : str or path
         Name of the output file.
-    mask : Nifti1Image
-        Mask.
-    header : nib.header
-        Header of the input data.
+    masker : nilearn.maskers.NiftiMasker
+        Masker.
+    orig_img : nibabel.nifti1.Nifti1Image or str or path
+        Original data.
     command : str
         pySPFM command to add to the header.
+    use_bids : bool, optional
+        Whether to use BIDS format, by default False
     """
-    if is_atlas:
-        out_img = mask.inverse_transform(data)
-    else:
-        reshaped = reshape_data(data, mask)
-        out_img = nib.Nifti1Image(reshaped.get_fdata(), None, header=header)
-    out_img.to_filename(filename)
+    # Only copy header if it's going to get updated by AFNI
+    copy_header = False
+    if not use_bids:
+        copy_header = True
+
+    # If orig_img is a string, load it
+    if isinstance(orig_img, str):
+        orig_img = nib.load(orig_img)
+
+    # Transform data back to 4D, generate new image and save it
+    out_img = masker.inverse_transform(data)
+    new_img = new_img_like(
+        orig_img, out_img.get_fdata(), affine=orig_img.affine, copy_header=copy_header
+    )
+    new_img.to_filename(filename)
 
     # Update header with AFNI if BIDS is not required
     if not use_bids:

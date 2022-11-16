@@ -1,0 +1,9 @@
+_references.txt
+call.sh
+test_auc2est_echo-1_pySPFM_denoised_bold.nii.gz
+test_auc2est_echo-2_pySPFM_denoised_bold.nii.gz
+test_auc2est_echo-3_pySPFM_denoised_bold.nii.gz
+test_auc2est_echo-4_pySPFM_denoised_bold.nii.gz
+test_auc2est_echo-5_pySPFM_denoised_bold.nii.gz
+test_auc2est_pySPFM_aucThresholded.nii.gz
+test_auc2est_pySPFM_activityInducing.nii.gz
