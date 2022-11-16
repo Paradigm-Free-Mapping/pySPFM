@@ -73,8 +73,8 @@ master_doc = "index"
 from datetime import datetime  # access current time and date
 
 project = "pySPFM"
-copyright = "2017-" + datetime.today().strftime("%Y") + ", pySPFM developers"
-author = "pySPFM developers"
+copyright = "2017-" + datetime.today().strftime("%Y") + ", Eneko Uruñuela"
+author = "Eneko Uruñuela"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -92,7 +92,7 @@ release = pySPFM.__version__
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
