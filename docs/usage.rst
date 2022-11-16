@@ -47,7 +47,7 @@ Stability selection
 *******************
 
 The stability selection procedure solves the regularization problem in a number of subsampled
-surrogate datasets with the Least Angle Regression algorithm. 
+surrogate datasets `-nsur` with the Least Angle Regression algorithm. 
 
 .. code-block:: bash
 
