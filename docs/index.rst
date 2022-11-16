@@ -64,9 +64,9 @@ When using pySPFM, please include the following citations:
          }
 
          if(version == 'latest') {
-            getLatestIDFromconceptID("7147858", cb);
+            getLatestIDFromconceptID("6600095", cb);
          } else {
-            getZenodoIDFromTag("7147858", version, cb);
+            getZenodoIDFromTag("6600095", version, cb);
          }
       }
       </script>
@@ -74,7 +74,7 @@ When using pySPFM, please include the following citations:
       <span id="pySPFM_citation">pySPFM</span> 
       This link is for the most recent version of the code and that page has links to DOIs 
       for older versions. To support reproducibility, please cite the version you used: 
-      <a id="pySPFM_doi_url" href="https://doi.org/10.5281/zenodo.7147858">https://doi.org/10.5281/zenodo.7147858</a>
+      <a id="pySPFM_doi_url" href="https://doi.org/10.5281/zenodo.6600095">https://doi.org/10.5281/zenodo.6600095</a>
       <img src onerror='fillCitation()' alt=""/>
       </p>
 
