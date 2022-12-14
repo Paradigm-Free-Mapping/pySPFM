@@ -34,6 +34,10 @@ The ``pySPFM`` package is a Python version of AFNI's 3dPFM and 3dMEPFM.
    :target: https://codecov.io/gh/eurunuela/pySPFM
    :alt: Codecov
 
+.. image:: https://results.pre-commit.ci/badge/github/eurunuela/pySPFM/main.svg
+   :target: https://results.pre-commit.ci/latest/github/eurunuela/pySPFM/main
+   :alt: pre-commit.ci status
+
 *****
 About
 *****
