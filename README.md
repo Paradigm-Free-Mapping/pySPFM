@@ -10,6 +10,7 @@ The Python version of AFNI's [3dPFM](https://afni.nimh.nih.gov/pub/dist/doc/prog
 [![Documentation Status](https://readthedocs.org/projects/pyspfm/badge/?version=latest)](http://pyspfm.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/eurunuela/pySPFM/branch/main/graph/badge.svg)](https://codecov.io/gh/eurunuela/pySPFM)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/eurunuela/pySPFM/main.svg)](https://results.pre-commit.ci/latest/github/eurunuela/pySPFM/main)
 
 ## References
 
