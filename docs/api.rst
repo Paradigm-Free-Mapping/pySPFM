@@ -10,7 +10,7 @@ API
 .. _api_pySPFM_ref:
 
 **************************************************
-:mod:`pySPFM.workflows`: The pySPFM workflows
+:mod:`pySPFM.workflows`: The main pySPFM workflow
 **************************************************
 
 .. automodule:: pySPFM.workflows
@@ -47,6 +47,7 @@ API
    pySPFM.deconvolution.lars
    pySPFM.deconvolution.select_lambda
    pySPFM.deconvolution.spatial_regularization
+   pySPFM.deconvolution.stability_selection
 
 
 .. _api_io_ref:
@@ -66,9 +67,9 @@ API
    :template: function.rst
 
    pySPFM.io.read_data
-   pySPFM.io.reshape_data
    pySPFM.io.update_header
    pySPFM.io.write_data
+   pySPFM.io.write_json
 
 
 .. _api_utils_ref:

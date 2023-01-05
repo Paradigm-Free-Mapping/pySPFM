@@ -45,7 +45,7 @@ def select_lambda(hrf, y, criterion="ut", factor=1, pcg=0.7, lambda_echo=-1):
         :math:`\\lambda = \\sigma * \\sqrt{2 * \\log(T) - \\log(1 + 4 * \\log(T))}`, where
         :math:`\\sigma` is the median absolute deviation of the estimated level of noise and T is
         the number of TRs.
-    - 'mad' : mediam absolute deviation.
+    - 'mad' : median absolute deviation.
         Calculate lambda as the median absolute deviation of fine-scale wavelet
         coefficients (Daubechies, order 3). For more information,
         see Karahanoglu et al. (2013).
