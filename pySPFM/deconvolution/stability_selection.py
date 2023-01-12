@@ -61,7 +61,7 @@ def calculate_auc(coefs, lambdas, n_lambdas, n_surrogates):
     # If they are, then use trapezoidal method.
     # If they are not, merge all lambdas into single, shared space.
     if np.allclose(np.sum(lambdas, axis=1), n_lambdas * lambdas[:, 0]):
-        probabilities = np.sum(coefs, axis=1) / n_surrogates
+        probabilities = np.sum(coefs > 0, axis=1) / n_surrogates
         return np.trapz(probabilities, lambdas[:, 0])
     else:
 
