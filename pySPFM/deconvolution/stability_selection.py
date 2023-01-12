@@ -38,37 +38,61 @@ def get_subsampling_indices(n_scans, n_echos, mode="same"):
 
 
 def calculate_auc(coefs, lambdas, n_lambdas, n_surrogates):
+    """Calculate the AUC for a TR.
 
-    # Create shared space of lambdas and coefficients
-    lambdas_shared = lambdas.reshape((n_lambdas * n_surrogates))
-    coefs_shared = np.zeros((coefs.shape[0] * coefs.shape[1]))
+    Parameters
+    ----------
+    coefs : np.ndarray
+        Matrix of coefficients of shape (n_lambdas, n_surrogates).
+    lambdas : np.ndarray
+        Matrix of lambdas of shape (n_lambdas, n_surrogates).
+    n_lambdas : int
+        Number of lambdas.
+    n_surrogates : int
+        Number of surrogates.
 
-    # Project lambdas and coefficients into shared space
-    for i in range(lambdas.shape[0]):
-        # lambdas_shared[i * lambdas.shape[1] : (i + 1) * lambdas.shape[1]] = np.squeeze(
-        #     lambdas[i, :]
-        # )
-        coefs_shared[i * coefs.shape[1] : (i + 1) * coefs.shape[1]] = np.squeeze(coefs[i, :])
+    Returns
+    -------
+    auc : float
+        AUC for a TR.
+    """
 
-    # Sort lambdas and get the indices
-    lambdas_sorted_idx = np.argsort(-lambdas_shared)
-    lambdas_sorted = -np.sort(-lambdas_shared)
+    # Check if all lambdas are the same across axis 1.
+    # If they are, then use trapezoidal method.
+    # If they are not, merge all lambdas into single, shared space.
+    if np.all(lambdas == lambdas[0, :]):
+        probabilities = np.sum(coefs, axis=1) / n_surrogates
+        return np.trapz(probabilities, lambdas[:, 0])
+    else:
 
-    # Sum of all lambdas
-    sum_lambdas = np.sum(lambdas_sorted)
+        # Create shared space of lambdas and coefficients
+        lambdas_shared = lambdas.reshape((n_lambdas * n_surrogates))
+        coefs_shared = np.zeros((coefs.shape[0] * coefs.shape[1]))
 
-    # Sort coefficients
-    coefs_sorted = coefs_shared[lambdas_sorted_idx]
+        # Project lambdas and coefficients into shared space
+        for i in range(lambdas.shape[0]):
+            # lambdas_shared[i * lambdas.shape[1] : (i + 1) * lambdas.shape[1]] = np.squeeze(
+            #     lambdas[i, :]
+            # )
+            coefs_shared[i * coefs.shape[1] : (i + 1) * coefs.shape[1]] = np.squeeze(coefs[i, :])
 
-    # Make coefs_sorted binary
-    coefs_sorted[coefs_sorted != 0] = 1
+        # Sort lambdas and get the indices
+        lambdas_sorted_idx = np.argsort(-lambdas_shared)
+        lambdas_sorted = -np.sort(-lambdas_shared)
 
-    # Calculate the AUC
-    auc = 0
-    for i in range(lambdas_shared.shape[0]):
-        auc += coefs_sorted[i] * lambdas_sorted[i] / sum_lambdas
+        # Sum of all lambdas
+        sum_lambdas = np.sum(lambdas_sorted)
 
-    return auc
+        # Sort coefficients
+        coefs_sorted = coefs_shared[lambdas_sorted_idx]
+
+        # Make coefs_sorted binary
+        coefs_sorted[coefs_sorted != 0] = 1
+
+        return sum(
+            coefs_sorted[i] * lambdas_sorted[i] / sum_lambdas
+            for i in range(lambdas_shared.shape[0])
+        )
 
 
 def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
