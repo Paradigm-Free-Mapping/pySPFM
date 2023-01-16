@@ -72,7 +72,8 @@ def calculate_auc(coefs, lambdas, n_lambdas, n_surrogates):
 
     # If coefs is two-dimensional, use the first dimension to calculate the AUC
     if coefs.ndim == 2:
-        return np.sum(coefs[i, :] * lambdas[i] / lambdas_sum for i in range(lambdas.shape[0]))
+        probs = np.sum(coefs, axis=1) / n_surrogates
+        return np.sum(probs[i] * lambdas[i] / lambdas_sum for i in range(lambdas.shape[0]))
     # If coefs is one-dimensional, use the whole array to calculate the AUC
     elif coefs.ndim == 1:
         return np.sum(coefs[i] * lambdas[i] / lambdas_sum for i in range(lambdas.shape[0]))
@@ -105,9 +106,6 @@ def _generate_shared_lambdas_space(coefs, lambdas, n_lambdas, n_surrogates):
 
     # Project lambdas and coefficients into shared space
     for i in range(lambdas.shape[0]):
-        # lambdas_shared[i * lambdas.shape[1] : (i + 1) * lambdas.shape[1]] = np.squeeze(
-        #     lambdas[i, :]
-        # )
         coefs_shared[i * coefs.shape[1] : (i + 1) * coefs.shape[1]] = np.squeeze(coefs[i, :])
 
     # Sort lambdas and get the indices
