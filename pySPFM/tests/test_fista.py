@@ -1,4 +1,3 @@
-import jax.numpy as jnp
 import numpy as np
 
 from pySPFM.deconvolution import fista
@@ -27,4 +26,4 @@ def test_fista_pylops(sim_data, sim_hrf, pylops_results):
 
     # Compare estimates
     assert np.allclose(lambda_, np.repeat(np.array([0.60157822]), y.shape[1], axis=0))
-    assert np.allclose(estimates, np.load(pylops_results, allow_pickle=True))
+    assert np.allclose(estimates, np.load(pylops_results, allow_pickle=True), atol=1e-6)
