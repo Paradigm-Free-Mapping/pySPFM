@@ -27,13 +27,13 @@ def test_get_subsampling_indices():
 
 def test_calculate_auc():
     n_surrogates = 10
-    lambdas = np.random.rand(n_surrogates, 100)
-    coefs = np.random.rand(n_surrogates, 100)
+    n_lambdas = 10
+    lambdas = np.random.rand(n_lambdas * n_surrogates)
+    coefs = np.random.rand(n_lambdas, n_surrogates)
 
     # Test if auc is calculated correctly
-    auc = np.round(
-        stability_selection.calculate_auc(coefs, lambdas, lambdas.shape[1], n_surrogates)
-    )
+    auc = np.round(stability_selection.calculate_auc(coefs, lambdas, n_surrogates))
+
     assert auc <= 1.0
     assert auc >= 0.0
 
