@@ -1,6 +1,8 @@
 import logging
 import os
 
+import jax
+import jax.numpy as jnp
 import numpy as np
 
 from pySPFM.deconvolution.lars import solve_regularization_path
@@ -37,7 +39,7 @@ def get_subsampling_indices(n_scans, n_echos, mode="same"):
     return subsample_idx
 
 
-def calculate_auc(coefs, lambdas, n_lambdas, n_surrogates):
+def calculate_auc(coefs, lambdas, n_surrogates):
     """Calculate the AUC for a TR.
 
     Parameters
@@ -45,9 +47,7 @@ def calculate_auc(coefs, lambdas, n_lambdas, n_surrogates):
     coefs : np.ndarray
         Matrix of coefficients of shape (n_lambdas, n_surrogates).
     lambdas : np.ndarray
-        Matrix of lambdas of shape (n_lambdas, n_surrogates).
-    n_lambdas : int
-        Number of lambdas.
+        Array of lambdas of shape (n_lambdas).
     n_surrogates : int
         Number of surrogates.
 
@@ -57,26 +57,39 @@ def calculate_auc(coefs, lambdas, n_lambdas, n_surrogates):
         AUC for a TR.
     """
 
-    # Check if all lambdas are the same across axis 1.
-    # If they are not, merge all lambdas into single, shared space.
-    if not np.allclose(np.sum(lambdas, axis=1), n_lambdas * lambdas[:, 0]):
-        coefs, lambdas = _generate_shared_lambdas_space(coefs, lambdas, n_lambdas, n_surrogates)
-    else:
-        lambdas = lambdas[:, 0]
-
     # Sum of all lambdas
-    lambdas_sum = np.sum(lambdas)
+    lambdas_sum = jnp.sum(lambdas)
 
     # Binarize coefficients
-    coefs[coefs != 0] = 1
+    coefs = jnp.where(coefs != 0, 1, 0)
+    sum_ = 0
 
     # If coefs is two-dimensional, use the first dimension to calculate the AUC
     if coefs.ndim == 2:
-        probs = np.sum(coefs, axis=1) / n_surrogates
-        return np.sum(probs[i] * lambdas[i] / lambdas_sum for i in range(lambdas.shape[0]))
+        probs = jnp.sum(coefs, axis=1) / n_surrogates
+        for i in range(len(lambdas)):
+            sum_ += probs[i] * lambdas[i] / lambdas_sum
+
     # If coefs is one-dimensional, use the whole array to calculate the AUC
     elif coefs.ndim == 1:
-        return np.sum(coefs[i] * lambdas[i] / lambdas_sum for i in range(lambdas.shape[0]))
+        for i in range(len(lambdas)):
+            sum_ += coefs[i] * lambdas[i] / lambdas_sum
+
+    return sum_
+
+
+def _get_tr_lambdas(estimates, lambdas, n_lambdas, n_surrogates):
+    # Check if all lambdas are the same across axis 1.
+    # If they are not, merge all lambdas into single, shared space.
+    if not jnp.allclose(jnp.sum(lambdas, axis=1), n_lambdas * lambdas[:, 0]):
+        estimates_tr, lambdas_tr = _generate_shared_lambdas_space(
+            estimates, lambdas, n_lambdas, n_surrogates
+        )
+    else:
+        estimates_tr = estimates
+        lambdas_tr = lambdas[:, 0]
+
+    return estimates_tr, lambdas_tr
 
 
 def _generate_shared_lambdas_space(coefs, lambdas, n_lambdas, n_surrogates):
@@ -145,7 +158,14 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
 
     # Calculate the AUC for each TR
     auc = np.zeros((n_scans))
+    calculate_auc_jit = jax.jit(calculate_auc)
     for tr_idx in range(n_scans):
-        auc[tr_idx] = calculate_auc(estimates[tr_idx, :, :], lambdas, n_lambdas, n_surrogates)
+        # Get lambdas and coefficients for the TR
+        estimates_tr, lambdas_tr = _get_tr_lambdas(
+            estimates[tr_idx, :, :], lambdas, n_lambdas, n_surrogates
+        )
+
+        # Calculate AUC
+        auc[tr_idx] = calculate_auc_jit(estimates_tr, lambdas_tr, n_surrogates).block_until_ready()
 
     return auc
