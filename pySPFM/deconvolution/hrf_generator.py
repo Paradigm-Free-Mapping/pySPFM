@@ -95,7 +95,7 @@ class HRFMatrix:
             )
 
             # Calculate maximum HRF value
-            max_val = max(abs(hrf_mtx_te))
+            max_val = np.max(abs(hrf_mtx_te))
 
             # Concatenate and scale HRFs for multi-echo
             for teidx in range(len(self.te) - 1):
@@ -116,9 +116,9 @@ class HRFMatrix:
             hrf_non_norm = np.dot(hrf_mtx, np.tril(np.ones(n_scans)))
 
             # Normalize HRF
-            self.hrf_ = hrf_non_norm / max(abs(hrf_non_norm))
+            self.hrf_ = hrf_non_norm / np.max(abs(hrf_non_norm))
         else:
-            self.hrf_ = hrf_mtx / max(abs(hrf_mtx))
+            self.hrf_ = hrf_mtx / np.max(abs(hrf_mtx))
 
         return self
 
