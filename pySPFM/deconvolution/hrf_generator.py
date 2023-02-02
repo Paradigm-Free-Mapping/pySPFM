@@ -74,7 +74,8 @@ class HRFMatrix:
             hrf = glover_hrf(tr, oversampling=1, time_length=n_scans * tr)
         else:
             raise ValueError(
-                f"Model must be either 'spm', 'glover' or a custom '.1D' or '.txt' file, not {self.model}"
+                f"Model must be either 'spm', 'glover' or a custom '.1D' or '.txt' file, "
+                f"not {self.model}"
             )
 
         # Calculate maximum HRF value
