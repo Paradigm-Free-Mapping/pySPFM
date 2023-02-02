@@ -78,17 +78,11 @@ class HRFMatrix:
                 f"not {self.model}"
             )
 
-        # Calculate maximum HRF value
-        max_val = max(abs(hrf))
-
         # Generate HRF matrix
         hrf_mtx = hrf
         for i in range(n_scans - 1):
             foo = np.append(np.zeros(i + 1), hrf[: len(hrf) - i - 1])
             hrf_mtx = np.column_stack((hrf_mtx, foo))
-
-        # Normalize HRF matrix
-        hrf_mtx = hrf_mtx / max_val
 
         # Concatenate and scale HRFs for multi-echo,
         # leave it as it is for single-echo.
@@ -99,6 +93,10 @@ class HRFMatrix:
                 if self.block
                 else -self.te[0] * hrf_mtx
             )
+
+            # Calculate maximum HRF value
+            max_val = max(abs(hrf_mtx_te))
+
             # Concatenate and scale HRFs for multi-echo
             for teidx in range(len(self.te) - 1):
                 # Add integrator if necessary
@@ -112,11 +110,15 @@ class HRFMatrix:
                 else:
                     hrf_mtx_te = np.vstack((hrf_mtx_te, -self.te[teidx + 1] * hrf_mtx))
 
-            self.hrf_ = hrf_mtx_te
+            # Normalize HRF
+            self.hrf_ = hrf_mtx_te / max_val
         elif self.block:
-            self.hrf_ = np.dot(hrf_mtx, np.tril(np.ones(n_scans)))
+            hrf_non_norm = np.dot(hrf_mtx, np.tril(np.ones(n_scans)))
+
+            # Normalize HRF
+            self.hrf_ = hrf_non_norm / max(abs(hrf_non_norm))
         else:
-            self.hrf_ = hrf_mtx
+            self.hrf_ = hrf_mtx / max(abs(hrf_mtx))
 
         return self
 
