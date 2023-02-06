@@ -4,7 +4,6 @@ from pySPFM.deconvolution import lars
 
 
 def test_solve_regularization_path(sim_data, sim_hrf, coef_path_results):
-
     sim_data = np.load(sim_data, allow_pickle=True)[:, 0]
     sim_data = sim_data[:, np.newaxis]
 

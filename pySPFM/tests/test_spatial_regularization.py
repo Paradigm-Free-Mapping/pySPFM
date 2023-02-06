@@ -5,7 +5,6 @@ from pySPFM.deconvolution.spatial_regularization import clip, generate_delta
 
 
 def test_clip():
-
     # Test clipping the input to the atlas
     input_array = np.array([1, 2, 3, 4, 5])
     atlas_array = np.array([1, 1, 1, 2, 2])
@@ -18,7 +17,6 @@ def test_clip():
 
 
 def test_generate_delta():
-
     # Test delta generation with dim=2
     h = generate_delta(dim=2)
     assert h.shape == (3, 3)
