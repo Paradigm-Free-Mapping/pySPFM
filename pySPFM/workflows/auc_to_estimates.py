@@ -264,7 +264,6 @@ def auc_to_estimates(
         if len(auc_mask.shape) == 3:
             # If the mask is binary, then read the AUC values inside of the mask
             if np.max(auc_mask.get_fdata()) == 1:
-
                 auc_thr_values = read_data(auc_fn, mask_fn[1])[0]
 
                 if thr_strategy == "static":

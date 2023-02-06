@@ -4,7 +4,6 @@ from pySPFM.deconvolution import fista
 
 
 def test_fista(sim_data, sim_hrf, fista_results):
-
     y = np.load(sim_data, allow_pickle=True)
     hrf_matrix = np.load(sim_hrf, allow_pickle=True)
 
@@ -17,7 +16,6 @@ def test_fista(sim_data, sim_hrf, fista_results):
 
 
 def test_fista_pylops(sim_data, sim_hrf, pylops_results):
-
     y = np.load(sim_data, allow_pickle=True)
     hrf_matrix = np.load(sim_hrf, allow_pickle=True)
 
