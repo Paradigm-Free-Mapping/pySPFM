@@ -275,7 +275,6 @@ def fista(
 
         # Perform FISTA
         for num_iter in range(max_iter):
-
             # Save results from previous iteration
             S_old = S.copy()
             y_ista_S = y_fista_S.copy()
