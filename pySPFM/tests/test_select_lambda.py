@@ -5,7 +5,6 @@ from pySPFM.deconvolution.select_lambda import select_lambda
 
 
 def test_select_lambda(sim_data, sim_hrf):
-
     sim_data = np.load(sim_data, allow_pickle=True)[:, 0]
     sim_hrf = np.load(sim_hrf, allow_pickle=True)
     nt = sim_hrf.shape[1]

@@ -4,7 +4,6 @@ from pySPFM.deconvolution import debiasing
 
 
 def test_debiasing_spike(sim_data, sim_hrf):
-
     sim_data = np.load(sim_data, allow_pickle=True)[:, 0]
     sim_data = sim_data[:, np.newaxis]
     sim_hrf = np.load(sim_hrf, allow_pickle=True)
@@ -34,7 +33,6 @@ def test_debiasing_spike(sim_data, sim_hrf):
 
 
 def test_debiasing_block(sim_data, sim_hrf):
-
     sim_data = np.load(sim_data, allow_pickle=True)[:, 0]
     sim_data = sim_data[:, np.newaxis]
     sim_hrf = np.load(sim_hrf, allow_pickle=True)
