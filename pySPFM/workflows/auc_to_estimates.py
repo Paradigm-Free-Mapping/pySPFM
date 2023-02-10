@@ -159,6 +159,26 @@ def _get_parser():
         default=False,
     )
     optional.add_argument(
+        "--group",
+        dest="group",
+        action="store_true",
+        help=(
+            "Consider consecutive coefficients as belonging to the same block activation. Default "
+            "= False."
+        ),
+        default=False,
+    )
+    optional.add_argument(
+        "--group-distance",
+        dest="group_distance",
+        type=int,
+        help=(
+            "Maximum distance between coefficients to be considered part of the same block "
+            "activation. Default = 3."
+        ),
+        default=3,
+    )
+    optional.add_argument(
         "-debug",
         "--debug",
         dest="debug",
@@ -197,6 +217,8 @@ def auc_to_estimates(
     block_model=False,
     n_jobs=4,
     use_bids=False,
+    group=False,
+    group_distance=3,
     debug=False,
     quiet=False,
     command_str=None,
@@ -329,7 +351,9 @@ def auc_to_estimates(
         estimates_spike = debiasing.debiasing_block(hrf, data_masked, auc_thr, n_jobs)
         fitts = np.dot(hrf, estimates_spike)
     else:
-        estimates_spike, fitts = debiasing.debiasing_spike(hrf, data_masked, auc_thr, n_jobs)
+        estimates_spike, fitts = debiasing.debiasing_spike(
+            hrf, data_masked, auc_thr, n_jobs, group=group, group_dist=group_distance
+        )
 
     LGR.info("Estimates calculated.")
 
