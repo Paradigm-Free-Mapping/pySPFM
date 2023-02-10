@@ -14,6 +14,51 @@ LGR = logging.getLogger("GENERAL")
 RefLGR = logging.getLogger("REFERENCES")
 
 
+def group_hrf(hrf, non_zero_idxs, group_dist=3):
+    """Group HRFs based on the distance between non-zero coefficients.
+
+    Parameters
+    ----------
+    hrf : (E x T) ndarray
+        Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
+        the number of echo-times.
+    non_zero_idxs : (T) ndarray
+        Array containing the indexes of the non-zero coefficients.
+    group_dist : int, optional
+        Maximum distance between non-zero coefficients to be considered as part of the same group,
+        by default 3
+
+    Returns
+    -------
+    hrf_out : (E x T) ndarray
+        Matrix containing shifted HRFs in its columns. E stands for the number of volumes times
+        the number of echo-times.
+    new_idxs : (T) ndarray
+        Array containing the indexes of the non-zero coefficients.
+    """
+    temp = np.zeros(hrf.shape[1])
+    hrf_out = np.zeros(hrf.shape)
+    non_zeros_flipped = np.flip(non_zero_idxs)
+    new_idxs = []
+
+    for iter_idx, non_zero_idx in enumerate(non_zeros_flipped):
+        if (
+            iter_idx != len(non_zeros_flipped) - 1
+            and abs(non_zero_idx - non_zeros_flipped[iter_idx + 1]) <= group_dist
+        ):
+            temp += hrf[:, non_zero_idx]
+        else:
+            temp += hrf[:, non_zero_idx]
+            hrf_out[:, non_zero_idx] = temp
+            temp = np.zeros(hrf.shape[1])
+            new_idxs.append(non_zero_idx)
+
+    new_idxs = np.flip(new_idxs)
+    hrf_out = hrf_out[:, new_idxs]
+
+    return hrf_out, new_idxs
+
+
 # Performs the debiasing step on an estimates_matrix timeseries obtained considering the
 # integrator model
 def innovation_to_block(hrf, y, estimates_matrix, is_ls):
@@ -158,7 +203,7 @@ def debiasing_block(hrf, y, estimates_matrix, dist=2, n_jobs=4):
     return beta_out
 
 
-def do_debias_spike(hrf, y, estimates_matrix):
+def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3):
     """Perform debiasing with the spike model.
 
     Parameters
@@ -181,7 +226,10 @@ def do_debias_spike(hrf, y, estimates_matrix):
     index_events_opt = np.where(abs(estimates_matrix) > 10 * np.finfo(float).eps)[0]
     beta2save = np.zeros((estimates_matrix.shape[0], 1))
 
-    hrf_events = hrf[:, index_events_opt]
+    if group:
+        hrf_events, index_events_opt = group_hrf(hrf, index_events_opt, group_dist)
+    else:
+        hrf_events = hrf[:, index_events_opt]
 
     coef_LSfitdebias, _, _, _ = sci.linalg.lstsq(hrf_events, y, cond=None)
     beta2save[index_events_opt, 0] = coef_LSfitdebias
@@ -191,7 +239,7 @@ def do_debias_spike(hrf, y, estimates_matrix):
     return beta_out, fitts_out
 
 
-def debiasing_spike(hrf, y, estimates_matrix, n_jobs=4):
+def debiasing_spike(hrf, y, estimates_matrix, n_jobs=4, group=False, group_dist=3):
     """Perform voxelwise debiasing with spike model.
 
     Parameters
@@ -221,7 +269,11 @@ def debiasing_spike(hrf, y, estimates_matrix, n_jobs=4):
     futures = []
     for voxidx in range(len(index_voxels)):
         fut = delayed_dask(do_debias_spike, pure=False)(
-            hrf, y[:, index_voxels[voxidx]], estimates_matrix[:, index_voxels[voxidx]]
+            hrf,
+            y[:, index_voxels[voxidx]],
+            estimates_matrix[:, index_voxels[voxidx]],
+            group,
+            group_dist,
         )
         futures.append(fut)
     debiased = compute(futures)[0]
