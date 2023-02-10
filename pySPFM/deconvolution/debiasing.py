@@ -59,6 +59,31 @@ def group_hrf(hrf, non_zero_idxs, group_dist=3):
     return hrf_out, new_idxs
 
 
+def group_betas(betas, non_zero_idxs, group_dist=3):
+    """Group betas based on the distance between non-zero coefficients.
+
+    Parameters
+    ----------
+    betas : (T) ndarray
+        Array containing the non-zero coefficients selected as neuronal-related.
+    non_zero_idxs : (T) ndarray
+        Array containing the indexes of the non-zero coefficients.
+    group_dist : int, optional
+        Maximum distance between non-zero coefficients to be considered as part of the same group,
+        by default 3
+
+    Returns
+    -------
+    betas : (T) ndarray
+        Array containing the non-zero coefficients selected as neuronal-related.
+    """
+    for i in range(len(non_zero_idxs)):
+        if i > 0 and (non_zero_idxs[i] - non_zero_idxs[i - 1]) <= group_dist:
+            betas[non_zero_idxs[i]] = betas[non_zero_idxs[i - 1]]
+
+    return betas
+
+
 # Performs the debiasing step on an estimates_matrix timeseries obtained considering the
 # integrator model
 def innovation_to_block(hrf, y, estimates_matrix, is_ls):
@@ -234,7 +259,10 @@ def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3):
     coef_LSfitdebias, _, _, _ = sci.linalg.lstsq(hrf_events, y, cond=None)
     beta2save[index_events_opt, 0] = coef_LSfitdebias
     fitts_out = np.squeeze(np.dot(hrf, beta2save))
+
     beta_out = beta2save.reshape(len(beta2save))
+    if group:
+        beta_out = group_betas(beta_out, index_events_opt, group_dist)
 
     return beta_out, fitts_out
 
