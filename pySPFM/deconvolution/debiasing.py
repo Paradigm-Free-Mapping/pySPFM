@@ -59,15 +59,13 @@ def group_hrf(hrf, non_zero_idxs, group_dist=3):
     return hrf_out, new_idxs
 
 
-def group_betas(betas, non_zero_idxs, group_dist=3):
+def group_betas(betas, group_dist=3):
     """Group betas based on the distance between non-zero coefficients.
 
     Parameters
     ----------
     betas : (T) ndarray
         Array containing the non-zero coefficients selected as neuronal-related.
-    non_zero_idxs : (T) ndarray
-        Array containing the indexes of the non-zero coefficients.
     group_dist : int, optional
         Maximum distance between non-zero coefficients to be considered as part of the same group,
         by default 3
@@ -77,11 +75,17 @@ def group_betas(betas, non_zero_idxs, group_dist=3):
     betas : (T) ndarray
         Array containing the non-zero coefficients selected as neuronal-related.
     """
-    for i in range(len(non_zero_idxs)):
-        if i > 0 and (non_zero_idxs[i] - non_zero_idxs[i - 1]) <= group_dist:
-            betas[non_zero_idxs[i]] = betas[non_zero_idxs[i - 1]]
+    betas_out = np.zeros(betas.shape)
 
-    return betas
+    # Non-zero coefficients
+    non_zero_idxs = np.where(betas != 0)[0]
+    for i in range(len(non_zero_idxs)):
+        if i > 0 and (non_zero_idxs[i] - non_zero_idxs[i - 1] <= group_dist):
+            betas_out[non_zero_idxs[i]] = betas[non_zero_idxs[i - 1]]
+        else:
+            betas_out[non_zero_idxs[i]] = betas[non_zero_idxs[i]]
+
+    return betas_out
 
 
 # Performs the debiasing step on an estimates_matrix timeseries obtained considering the
@@ -249,18 +253,23 @@ def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3):
         Debiased activity-inducing signal convolved with the HRF in a voxel.
     """
     index_events_opt = np.where(abs(estimates_matrix) > 10 * np.finfo(float).eps)[0]
+
     beta2save = np.zeros((estimates_matrix.shape[0], 1))
 
     if group:
-        hrf_events, index_events_opt = group_hrf(hrf, index_events_opt, group_dist)
+        hrf_events, index_events_opt_group = group_hrf(hrf, index_events_opt, group_dist)
     else:
         hrf_events = hrf[:, index_events_opt]
 
     coef_LSfitdebias, _, _, _ = sci.linalg.lstsq(hrf_events, y, cond=None)
-    beta2save[index_events_opt, 0] = coef_LSfitdebias
-    fitts_out = np.squeeze(np.dot(hrf, beta2save))
+    if group:
+        beta2save[index_events_opt_group, 0] = coef_LSfitdebias
+    else:
+        beta2save[index_events_opt, 0] = coef_LSfitdebias
 
+    fitts_out = np.squeeze(np.dot(hrf, beta2save))
     beta_out = beta2save.reshape(len(beta2save))
+
     if group:
         beta_out = group_betas(beta_out, index_events_opt, group_dist)
 
@@ -296,14 +305,14 @@ def debiasing_spike(hrf, y, estimates_matrix, n_jobs=4, group=False, group_dist=
     _, cluster = dask_scheduler(n_jobs)
     futures = []
     for voxidx in range(len(index_voxels)):
-        fut = delayed_dask(do_debias_spike, pure=False)(
+        fut = do_debias_spike(
             hrf,
             y[:, index_voxels[voxidx]],
             estimates_matrix[:, index_voxels[voxidx]],
-            group,
-            group_dist,
+            group=group,
+            group_dist=group_dist,
         )
-        futures.append(fut)
+
     debiased = compute(futures)[0]
 
     for voxidx in range(len(index_voxels)):
