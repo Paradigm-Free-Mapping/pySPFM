@@ -271,7 +271,7 @@ def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3):
     beta_out = beta2save.reshape(len(beta2save))
 
     if group:
-        beta_out = group_betas(beta_out, index_events_opt, group_dist)
+        beta_out = group_betas(beta_out, group_dist)
 
     return beta_out, fitts_out
 
