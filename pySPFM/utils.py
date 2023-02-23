@@ -1,6 +1,5 @@
 """Utils of pySPFM."""
 import logging
-from os.path import expanduser, join
 
 import yaml
 from dask import config
@@ -142,14 +141,18 @@ def get_keyword_description(keyword):
     return keyword_description
 
 
-def dask_scheduler(jobs):
+def dask_scheduler(jobs, jobqueue=None):
     """
     Checks if the user has a dask_jobqueue configuration file, and if so,
     returns the appropriate scheduler according to the file parameters
     """
-    # look if default ~ .config/dask/jobqueue.yaml exists
-    with open(join(expanduser("~"), ".config/dask/jobqueue.yaml"), "r") as stream:
-        data = yaml.load(stream, Loader=yaml.FullLoader)
+    # look if jobqueue.yaml exists
+    if jobqueue is None:
+        data = None
+    else:
+        LGR.info(f"Using jobqueue configuration file: {jobqueue}")
+        with open(jobqueue, "r") as stream:
+            data = yaml.load(stream, Loader=yaml.FullLoader)
 
     if data is None:
         LGR.warning(
