@@ -1,6 +1,5 @@
 """Utils of pySPFM."""
 import logging
-from os.path import expanduser, join
 
 import yaml
 from dask import config
