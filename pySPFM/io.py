@@ -1,5 +1,6 @@
 """I/O."""
 import json
+import logging
 import os.path as op
 from subprocess import run
 
@@ -8,6 +9,8 @@ from nilearn.image import new_img_like
 from nilearn.maskers import NiftiLabelsMasker, NiftiMasker
 
 from pySPFM.utils import get_keyword_description
+
+LGR = logging.getLogger("GENERAL")
 
 
 def read_data(data_fn, mask_fn):
@@ -36,8 +39,10 @@ def read_data(data_fn, mask_fn):
 
     # Check if mask is binary
     if mask_max > 1:
+        LGR.info("Masking data with atlas.")
         masker = NiftiLabelsMasker(labels_img=mask_img, standardize=False, strategy="mean")
     elif mask_max == 1:
+        LGR.info("Masking data with binary mask.")
         masker = NiftiMasker(mask_img=mask_img, standardize=False)
     else:
         raise ValueError("Mask is not binary or an atlas.")
