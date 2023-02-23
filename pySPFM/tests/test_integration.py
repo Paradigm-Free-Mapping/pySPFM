@@ -108,7 +108,7 @@ def test_integration_five_echo(skip_integration, script_runner, mask_five_echo):
         + ["10"]
         + ["--max_iter_fista"]
         + ["50"]
-        + ["-jobs"]
+        + ["-j"]
         + ["1"]
         + [
             "--debug",
@@ -158,7 +158,7 @@ def test_integration_lars(skip_integration, script_runner, mask_five_echo):
         + ["bic"]
         + ["--max_iter_factor"]
         + ["0.3"]
-        + ["-jobs"]
+        + ["-j"]
         + ["1"]
         + [
             "--debug",
@@ -209,7 +209,7 @@ def test_integration_stability_selection(skip_integration, script_runner, mask_f
         + ["stability"]
         + ["--max_iter_factor"]
         + ["0.3"]
-        + ["-jobs"]
+        + ["-j"]
         + ["1"]
         + [
             "--debug",
@@ -262,7 +262,7 @@ def test_integration_auc_to_estimates(
         + ["2"]
         + ["-d"]
         + [out_dir]
-        + ["-jobs"]
+        + ["-j"]
         + ["1"]
         + [
             "--debug",
@@ -299,7 +299,7 @@ def test_integration_auc_to_estimates(
         + ["2"]
         + ["-d"]
         + [out_dir]
-        + ["-jobs"]
+        + ["-j"]
         + ["1"]
         + [
             "--debug",
@@ -332,7 +332,7 @@ def test_integration_auc_to_estimates(
         + ["2"]
         + ["-d"]
         + [out_dir]
-        + ["-jobs"]
+        + ["-j"]
         + ["1"]
         + [
             "--debug",
@@ -365,7 +365,7 @@ def test_integration_auc_to_estimates(
         + ["2"]
         + ["-d"]
         + [out_dir]
-        + ["-jobs"]
+        + ["-j"]
         + ["1"]
         + [
             "--debug",
