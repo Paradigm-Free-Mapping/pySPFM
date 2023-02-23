@@ -218,7 +218,14 @@ def _get_parser():
         default=10,
     )
     optional.add_argument(
-        "-jobs",
+        "--jobqueue",
+        help="Jobqueue.yaml file to set up parallel processing (default = None).",
+        default=None,
+        type=str,
+        dest="jobqueue",
+    )
+    optional.add_argument(
+        "-j",
         "--jobs",
         dest="n_jobs",
         type=int,
@@ -336,6 +343,7 @@ def pySPFM(
     max_iter_spatial=100,
     max_iter=10,
     min_iter_fista=50,
+    jobqueue=None,
     n_jobs=4,
     spatial_weight=0,
     spatial_lambda=1,
@@ -393,6 +401,8 @@ def pySPFM(
         by default 10
     min_iter_fista : int, optional
         Minimum number of iterations for FISTA, by default 50
+    jobqueue : str, optional
+        Jobqueue to use for parallel processing, by default None
     n_jobs : int, optional
         Number of parallel jobs to use on for loops, by default 4
     spatial_weight : int, optional
@@ -502,7 +512,7 @@ def pySPFM(
     out_bids_keywords = []
 
     # Iterate between temporal and spatial regularizations
-    client, _ = dask_scheduler(n_jobs)
+    client, _ = dask_scheduler(n_jobs, jobqueue)
 
     # Scatter data to workers if client is not None
     if client is not None:
