@@ -489,6 +489,8 @@ def pySPFM(
 
     LGR.info("Data read.")
 
+    LGR.info(f"Number of voxels: {n_voxels}")
+
     # Generate design matrix with shifted versions of HRF
     LGR.info("Generating design matrix with shifted versions of HRF...")
     hrf_obj = hrf_generator.HRFMatrix(te=te, block=block_model, model=hrf_model)
