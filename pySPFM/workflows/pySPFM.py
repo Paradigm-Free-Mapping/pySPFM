@@ -489,8 +489,6 @@ def pySPFM(
 
     LGR.info("Data read.")
 
-    LGR.info(f"Number of voxels: {n_voxels}")
-
     # Generate design matrix with shifted versions of HRF
     LGR.info("Generating design matrix with shifted versions of HRF...")
     hrf_obj = hrf_generator.HRFMatrix(te=te, block=block_model, model=hrf_model)
@@ -514,13 +512,16 @@ def pySPFM(
     out_bids_keywords = []
 
     # Iterate between temporal and spatial regularizations
-    client, _ = dask_scheduler(n_jobs, jobqueue)
+    if n_jobs > 0:
+        client, _ = dask_scheduler(n_jobs, jobqueue)
+    else:
+        client = None
 
     # Scatter data to workers if client is not None
-    if client is not None:
-        hrf_fut = client.scatter(hrf)
-    else:
+    if client is None:
         hrf_fut = hrf
+    else:
+        hrf_fut = client.scatter(hrf)
 
     # Solve stability selection
     if criterion == "stability":
@@ -540,10 +541,10 @@ def pySPFM(
         ]
 
         # Gather results
-        if client is not None:
-            stability_estimates = compute(futures)[0]
-        else:
+        if client is None:
             stability_estimates = compute(futures, scheduler="single-threaded")[0]
+        else:
+            stability_estimates = compute(futures)[0]
 
         for vox_idx in range(n_voxels):
             auc[:, vox_idx] = np.squeeze(stability_estimates[vox_idx])
@@ -585,10 +586,10 @@ def pySPFM(
                     futures.append(fut)
 
                 # Gather results
-                if client is not None:
-                    lars_estimates = compute(futures)[0]
-                else:
+                if client is None:
                     lars_estimates = compute(futures, scheduler="single-threaded")[0]
+                else:
+                    lars_estimates = compute(futures)[0]
 
                 for vox_idx in range(n_voxels):
                     estimates[:, vox_idx] = np.squeeze(lars_estimates[vox_idx][0])
@@ -615,9 +616,9 @@ def pySPFM(
 
                 # Gather results
                 if client is not None:
-                    fista_estimates = compute(futures)[0]
-                else:
                     fista_estimates = compute(futures, scheduler="single-threaded")[0]
+                else:
+                    fista_estimates = compute(futures)[0]
 
                 for vox_idx in range(n_voxels):
                     estimates[:, vox_idx] = np.squeeze(fista_estimates[vox_idx][0])
