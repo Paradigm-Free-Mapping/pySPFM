@@ -143,6 +143,7 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
     # Generate surrogates and compute the regularization path
     stability_estimates = []
     for _ in range(n_surrogates):
+        LGR.info(f"Solving LARS for surrogate {_ + 1}/{n_surrogates}...")
         # Subsampling for Stability Selection
         subsample_idx = get_subsampling_indices(n_scans, n_echos)
 
@@ -159,6 +160,7 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
     # Calculate the AUC for each TR
     auc = np.zeros((n_scans))
     calculate_auc_jit = jax.jit(calculate_auc)
+    LGR.info("Calculating AUC for each TR...")
     for tr_idx in range(n_scans):
         # Get lambdas and coefficients for the TR
         estimates_tr, lambdas_tr = _get_tr_lambdas(
@@ -168,4 +170,5 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
         # Calculate AUC
         auc[tr_idx] = calculate_auc_jit(estimates_tr, lambdas_tr, n_surrogates).block_until_ready()
 
+    LGR.info("Done!")
     return auc
