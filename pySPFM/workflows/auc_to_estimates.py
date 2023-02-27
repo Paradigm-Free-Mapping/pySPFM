@@ -368,7 +368,7 @@ def auc_to_estimates(
     out_bids_keywords.append("AUC")
     output_name = get_outname(output_filename, "aucThresholded", "nii.gz", use_bids)
     write_data(
-        auc,
+        auc_thr,
         os.path.join(out_dir, output_name),
         masker,
         data_fn[0],
