@@ -298,7 +298,7 @@ def auc_to_estimates(
                     # Threshold the whole-brain AUC based on the thr percentile of the AUC values
                     # in the mask
                     auc_thr = auc - np.percentile(auc_thr_values, thr)
-                    auc_thr[auc_thr < 0] = 0
+                    auc[auc_thr < 0] = 0
                 else:
                     LGR.info(
                         f"Thresholding AUC values with a {thr}th percentile time-dependet "
@@ -311,7 +311,7 @@ def auc_to_estimates(
                         auc_thr[tr_idx, :] = auc[tr_idx, :] - np.percentile(
                             auc_thr_values[tr_idx, :], thr
                         )
-                        auc_thr[tr_idx, auc_thr[tr_idx, :] < 0] = 0
+                        auc[tr_idx, auc_thr[tr_idx, :] < 0] = 0
 
             # If the mask is a static threshold, then apply it to the AUC values
             else:
@@ -320,7 +320,7 @@ def auc_to_estimates(
 
                 # Threshold the AUC values
                 auc_thr = auc - auc_mask_data
-                auc_thr[auc_thr < 0] = 0
+                auc[auc_thr < 0] = 0
 
         # If the mask is 4D, then it is a time-dependent threshold
         elif len(auc_mask.shape) == 4:
@@ -330,7 +330,7 @@ def auc_to_estimates(
 
             # Threshold the AUC
             auc_thr = auc - auc_mask_data
-            auc_thr[auc_thr < 0] = 0
+            auc[auc_thr < 0] = 0
         else:
             raise ValueError("The mask used to threshold the AUC must be 3D or 4D.")
     # Raise error if thr is not 0 and mask_fn has only one element
@@ -339,7 +339,6 @@ def auc_to_estimates(
     # If thr is 0, then the AUC is supposed to be already thresholded
     else:
         LGR.warning("Threshold 0 selected. AUC is assumed to be already thresholded.")
-        auc_thr = auc
 
     LGR.info("AUC data thresholded.")
 
@@ -368,7 +367,7 @@ def auc_to_estimates(
     out_bids_keywords.append("AUC")
     output_name = get_outname(output_filename, "aucThresholded", "nii.gz", use_bids)
     write_data(
-        auc_thr,
+        auc,
         os.path.join(out_dir, output_name),
         masker,
         data_fn[0],
