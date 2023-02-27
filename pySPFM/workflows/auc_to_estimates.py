@@ -47,6 +47,7 @@ def _get_parser():
         "-a",
         "--auc",
         dest="auc_fn",
+        nargs="+",
         type=lambda x: is_valid_file(parser, x),
         help="The name of the file containing AUC data.",
         required=True,
