@@ -377,12 +377,8 @@ def auc_to_estimates(
     )
 
     # Save activity-inducing signal
-    if n_te == 1:
-        output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
-        out_bids_keywords.append("activityInducing")
-    elif n_te > 1:
-        output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
-        out_bids_keywords.append("activityInducing")
+    output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
+    out_bids_keywords.append("activityInducing")
     write_data(
         estimates_spike,
         os.path.join(out_dir, output_name),
