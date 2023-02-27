@@ -275,7 +275,7 @@ def auc_to_estimates(
     LGR.info("Data read.")
 
     LGR.info("Reading AUC data...")
-    auc = read_data(auc_fn, mask_fn[0])[0]
+    auc = read_data(auc_fn[0], mask_fn[0])[0]
     LGR.info("AUC data read.")
 
     # Threshold the AUC if thr is not 0 and mask_fn has two elements
@@ -287,6 +287,8 @@ def auc_to_estimates(
         if len(auc_mask.shape) == 3:
             # If the mask is binary, then read the AUC values inside of the mask
             if np.max(auc_mask.get_fdata()) == 1:
+                if len(auc_fn) == 2:
+                    auc_fn = auc_fn[1]
                 auc_thr_values = read_data(auc_fn, mask_fn[1])[0]
 
                 if thr_strategy == "static":
