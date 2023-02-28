@@ -5,6 +5,7 @@ import os
 import sys
 from os import path as op
 
+import jax
 import numpy as np
 from dask import compute
 from dask import delayed as delayed_dask
@@ -529,6 +530,8 @@ def pySPFM(
         n_lambdas = int(np.ceil(max_iter_factor * n_scans))
         auc = np.zeros((n_scans, n_voxels))
 
+        calculate_auc_jit = jax.jit(stability_selection.calculate_auc)
+
         # Solve stability regularization
         futures = [
             delayed_dask(stability_selection.stability_selection)(
@@ -536,6 +539,7 @@ def pySPFM(
                 data_masked[:, vox_idx],
                 n_lambdas,
                 n_surrogates,
+                calculate_auc_jit,
             )
             for vox_idx in range(n_voxels)
         ]

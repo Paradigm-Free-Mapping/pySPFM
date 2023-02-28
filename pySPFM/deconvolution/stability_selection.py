@@ -1,7 +1,6 @@
 import logging
 import os
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 
@@ -131,7 +130,7 @@ def _generate_shared_lambdas_space(coefs, lambdas, n_lambdas, n_surrogates):
     return coefs_sorted, lambdas_sorted
 
 
-def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
+def stability_selection(hrf_norm, data, n_lambdas, n_surrogates, calculate_auc_jit):
     # Get n_scans, n_echos, n_voxels
     n_scans = hrf_norm.shape[1]
     n_echos = int(np.ceil(hrf_norm.shape[0] / n_scans))
@@ -159,7 +158,6 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
 
     # Calculate the AUC for each TR
     auc = np.zeros((n_scans))
-    calculate_auc_jit = jax.jit(calculate_auc)
     LGR.info("Calculating AUC for each TR...")
     for tr_idx in range(n_scans):
         # Get lambdas and coefficients for the TR
