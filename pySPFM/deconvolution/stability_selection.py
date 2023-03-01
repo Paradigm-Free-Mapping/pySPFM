@@ -66,11 +66,11 @@ def calculate_auc(coefs, lambdas, n_surrogates):
     # If coefs is two-dimensional, use the first dimension to calculate the AUC
     if coefs.ndim == 2:
         probs = jnp.sum(coefs, axis=1) / n_surrogates
-        sum_ = np.sum(probs * lambdas / lambdas_sum)
+        sum_ = jnp.sum(probs * lambdas / lambdas_sum)
 
     # If coefs is one-dimensional, use the whole array to calculate the AUC
     elif coefs.ndim == 1:
-        sum_ = np.sum(coefs * lambdas / lambdas_sum)
+        sum_ = jnp.sum(coefs * lambdas / lambdas_sum)
 
     return sum_
 
