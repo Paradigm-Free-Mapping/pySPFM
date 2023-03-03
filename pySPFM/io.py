@@ -49,6 +49,8 @@ def read_data(data_fn, mask_fn):
 
     data = masker.fit_transform(data_img)
 
+    LGR.info(f"Data has {data.shape[0]} time points and {data.shape[1]} voxels/rois.")
+
     return data, masker
 
 
