@@ -296,7 +296,7 @@ def auc_to_estimates(
                     )
                     # Threshold the whole-brain AUC based on the thr percentile of the AUC values
                     # in the mask
-                    auc_thr = auc - np.percentile(auc_thr_values, thr)
+                    auc_thr = auc - np.percentile(auc_thr_values, int(thr))
                     auc_thr[auc_thr < 0] = 0
                 else:
                     LGR.info(
@@ -308,7 +308,7 @@ def auc_to_estimates(
                     auc_thr = np.zeros(auc.shape)
                     for tr_idx in range(n_scans):
                         auc_thr[tr_idx, :] = auc[tr_idx, :] - np.percentile(
-                            auc_thr_values[tr_idx, :], thr
+                            auc_thr_values[tr_idx, :], int(thr)
                         )
                         auc_thr[tr_idx, auc_thr[tr_idx, :] < 0] = 0
 
