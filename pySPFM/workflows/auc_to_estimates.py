@@ -83,13 +83,17 @@ def _get_parser():
         "--threshold",
         dest="thr",
         help=(
-            "Percentile to threshold the AUC data with. The percentile is applied to the second "
-            "mask provided with the '-m' flag if the second mask is a binary mask. If the second "
-            "mask is not binary, the values on the second mask are used as the threshold. "
+            "Percentile to threshold the AUC data with or the threshold value itself."
+            "The percentile is applied to the second mask provided with the '-m' flag if the "
+            "second mask is a binary mask. If the second mask is not binary, the values on the "
+            "second mask are used as the threshold. "
+            "When the threshold value is given, the second mask is ignored. "
+            "Percentiles are given in the range [1, 100], while threshold values are given in "
+            "the range [0, 1). "
             "Default is 95."
         ),
-        type=int,
-        default=95,
+        type=float,
+        default=95.0,
     )
     optional.add_argument(
         "--strategy",
@@ -196,7 +200,7 @@ def _get_parser():
         action="store_true",
         default=False,
     )
-    optional.add_argument("-v", "--version", action="version", version=("%(prog)s " + __version__))
+    optional.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
 
     parser._action_groups.append(optional)
 
@@ -209,7 +213,7 @@ def auc_to_estimates(
     mask_fn,
     output_filename,
     tr,
-    thr=95,
+    thr=95.0,
     thr_strategy="static",
     out_dir=".",
     te=[0],
@@ -230,12 +234,10 @@ def auc_to_estimates(
 
     # Save command into sh file, if the command-line interface was used
     if command_str is not None:
-        command_file = open(os.path.join(out_dir, "call.sh"), "w")
-        command_file.write(command_str)
-        command_file.close()
-
+        with open(os.path.join(out_dir, "call.sh"), "w") as command_file:
+            command_file.write(command_str)
     LGR = logging.getLogger("GENERAL")
-    # RefLGR = logging.getLogger("REFERENCES")
+
     # create logfile name
     basename = "auc_to_estimates_"
     extension = "tsv"
@@ -294,7 +296,7 @@ def auc_to_estimates(
                     )
                     # Threshold the whole-brain AUC based on the thr percentile of the AUC values
                     # in the mask
-                    auc_thr = auc - np.percentile(auc_thr_values, thr)
+                    auc_thr = auc - np.percentile(auc_thr_values, int(thr))
                     auc_thr[auc_thr < 0] = 0
                 else:
                     LGR.info(
@@ -306,7 +308,7 @@ def auc_to_estimates(
                     auc_thr = np.zeros(auc.shape)
                     for tr_idx in range(n_scans):
                         auc_thr[tr_idx, :] = auc[tr_idx, :] - np.percentile(
-                            auc_thr_values[tr_idx, :], thr
+                            auc_thr_values[tr_idx, :], int(thr)
                         )
                         auc_thr[tr_idx, auc_thr[tr_idx, :] < 0] = 0
 
@@ -330,9 +332,16 @@ def auc_to_estimates(
             auc_thr[auc_thr < 0] = 0
         else:
             raise ValueError("The mask used to threshold the AUC must be 3D or 4D.")
-    # Raise error if thr is not 0 and mask_fn has only one element
-    elif thr != 0 and len(mask_fn) != 1:
-        raise ValueError("If the threshold is not 0, then the 'mask' flag must have two elements.")
+    elif 0 < thr < 1:
+        LGR.info(f"Thresholding AUC values with a threshold of {thr}...")
+        # Threshold the whole-brain AUC based on the thr provided by the user
+        auc_thr = auc - thr
+        auc_thr[auc_thr < 0] = 0
+    elif thr > 1 and len(mask_fn) != 1:
+        # Raise error if thr is not 0 and mask_fn has only one element
+        raise ValueError(
+            "If the threshold is a percentile, then the 'mask' flag must have two elements."
+        )
     # If thr is 0, then the AUC is supposed to be already thresholded
     else:
         LGR.warning("Threshold 0 selected. AUC is assumed to be already thresholded.")
