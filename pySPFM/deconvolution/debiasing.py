@@ -261,7 +261,10 @@ def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3):
         hrf_events = hrf[:, index_events_opt]
 
     coef_LSfitdebias, _, _, _ = sci.linalg.lstsq(hrf_events, y.T, cond=None)
-    beta2save[index_events_opt_group, 0] = coef_LSfitdebias
+    if group:
+        beta2save[index_events_opt_group, 0] = coef_LSfitdebias
+    else:
+        beta2save[index_events_opt, 0] = coef_LSfitdebias
     fitts_out = np.squeeze(np.dot(hrf, beta2save))
 
     beta_out = beta2save.reshape(len(beta2save))
