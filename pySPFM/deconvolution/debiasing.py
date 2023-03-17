@@ -36,7 +36,7 @@ def group_hrf(hrf, non_zero_idxs, group_dist=3):
     new_idxs : (T) ndarray
         Array containing the indexes of the non-zero coefficients.
     """
-    temp = np.zeros(hrf.shape[1])
+    temp = np.zeros(hrf.shape[0])
     hrf_out = np.zeros(hrf.shape)
     non_zeros_flipped = np.flip(non_zero_idxs)
     new_idxs = []
@@ -50,7 +50,7 @@ def group_hrf(hrf, non_zero_idxs, group_dist=3):
         else:
             temp += hrf[:, non_zero_idx]
             hrf_out[:, non_zero_idx] = temp
-            temp = np.zeros(hrf.shape[1])
+            temp = np.zeros(hrf.shape[0])
             new_idxs.append(non_zero_idx)
 
     new_idxs = np.flip(new_idxs)
@@ -128,7 +128,7 @@ def innovation_to_block(hrf, y, estimates_matrix, is_ls):
         for idx in range(n_nonzero + 1):
             if idx == 0:
                 S[0 : nonzero_idxs[idx], idx] = 1
-                labels[0 : nonzero_idxs[idx]] = idx
+                labels[: nonzero_idxs[idx]] = idx
             elif idx == n_nonzero:
                 S[nonzero_idxs[idx - 1] :, idx] = 1
                 labels[nonzero_idxs[idx - 1] :] = idx
@@ -184,7 +184,7 @@ def do_debias_block(hrf, y, estimates_matrix, dist=2):
     return beta_out
 
 
-def debiasing_block(hrf, y, estimates_matrix, dist=2, n_jobs=4):
+def debiasing_block(hrf, y, estimates_matrix, n_jobs=4):
     """Voxelwise block model debiasing workflow.
 
     Parameters
@@ -196,8 +196,8 @@ def debiasing_block(hrf, y, estimates_matrix, dist=2, n_jobs=4):
         Matrix with fMRI data provided to pySPFM.
     estimates_matrix : (T x S) ndarray
         Matrix containing the non-zero coefficients selected as neuronal-related.
-    dist : int, optional
-        Minimum number of TRs in between of the peaks found, by default 2
+    n_jobs : int, optional
+        Number of jobs to run in parallel, by default 4
 
     Returns
     -------
@@ -212,7 +212,7 @@ def debiasing_block(hrf, y, estimates_matrix, dist=2, n_jobs=4):
 
     LGR.info("Starting debiasing step...")
     # Performs debiasing
-    _, cluster = dask_scheduler(n_jobs)
+    dask_scheduler(n_jobs)
     futures = []
     for voxidx in range(n_voxels):
         fut = delayed_dask(do_debias_block, pure=False)(
@@ -240,6 +240,10 @@ def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3):
         Array with fMRI data of a voxel provided to pySPFM.
     estimates_matrix : (T x 1) ndarray
         Array containing the non-zero coefficients selected as neuronal-related.
+    group : bool, optional
+        Whether to group the spikes or not, by default False
+    group_dist : int, optional
+        Minimum number of TRs in between of the peaks found, by default 3
 
     Returns
     -------
@@ -252,12 +256,15 @@ def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3):
     beta2save = np.zeros((estimates_matrix.shape[0], 1))
 
     if group:
-        hrf_events, index_events_opt = group_hrf(hrf, index_events_opt, group_dist)
+        hrf_events, index_events_opt_group = group_hrf(hrf, index_events_opt, group_dist)
     else:
         hrf_events = hrf[:, index_events_opt]
 
-    coef_LSfitdebias, _, _, _ = sci.linalg.lstsq(hrf_events, y, cond=None)
-    beta2save[index_events_opt, 0] = coef_LSfitdebias
+    coef_LSfitdebias, _, _, _ = sci.linalg.lstsq(hrf_events, y.T, cond=None)
+    if group:
+        beta2save[index_events_opt_group, 0] = coef_LSfitdebias
+    else:
+        beta2save[index_events_opt, 0] = coef_LSfitdebias
     fitts_out = np.squeeze(np.dot(hrf, beta2save))
 
     beta_out = beta2save.reshape(len(beta2save))
@@ -267,7 +274,7 @@ def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3):
     return beta_out, fitts_out
 
 
-def debiasing_spike(hrf, y, estimates_matrix, n_jobs=4, group=False, group_dist=3):
+def debiasing_spike(hrf, y, estimates_matrix, n_jobs=0, group=False, group_dist=3):
     """Perform voxelwise debiasing with spike model.
 
     Parameters
@@ -279,6 +286,12 @@ def debiasing_spike(hrf, y, estimates_matrix, n_jobs=4, group=False, group_dist=
         Matrix with fMRI data provided to pySPFM.
     estimates_matrix : (T x S) ndarray
         Matrix containing the non-zero coefficients selected as neuronal-related.
+    n_jobs : int, optional
+        Number of jobs to run in parallel, by default 0
+    group : bool, optional
+        Whether to group the spikes or not, by default False
+    group_dist : int, optional
+        Minimum number of TRs in between of the peaks found, by default 3
 
     Returns
     -------
