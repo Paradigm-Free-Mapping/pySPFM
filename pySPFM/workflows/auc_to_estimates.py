@@ -246,7 +246,7 @@ def auc_to_estimates(
     refname = op.join(out_dir, "_references.txt")
     utils.setup_loggers(logname, refname, quiet=quiet, debug=debug)
 
-    LGR.info("Using output directory: {}".format(out_dir))
+    LGR.info(f"Using output directory: {out_dir}")
 
     n_te = len(te)
 
@@ -368,10 +368,8 @@ def auc_to_estimates(
 
     # Save estimates and thresholded AUC
     LGR.info("Saving results...")
-    out_bids_keywords = []
+    out_bids_keywords = ["AUC"]
 
-    # Save thresholded AUC
-    out_bids_keywords.append("AUC")
     output_name = get_outname(output_filename, "aucThresholded", "nii.gz", use_bids)
     write_data(
         auc,
@@ -383,12 +381,8 @@ def auc_to_estimates(
     )
 
     # Save activity-inducing signal
-    if n_te == 1:
-        output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
-        out_bids_keywords.append("activityInducing")
-    elif n_te > 1:
-        output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
-        out_bids_keywords.append("activityInducing")
+    output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
+    out_bids_keywords.append("activityInducing")
     write_data(
         estimates_spike,
         os.path.join(out_dir, output_name),
