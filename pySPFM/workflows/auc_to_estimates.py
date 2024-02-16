@@ -183,6 +183,13 @@ def _get_parser():
         default=3,
     )
     optional.add_argument(
+        "--innovation-distance",
+        dest="block_dist",
+        type=int,
+        help=("Minimum number of TRs in between of the peaks found. Default = 2."),
+        default=2,
+    )
+    optional.add_argument(
         "-debug",
         "--debug",
         dest="debug",
@@ -223,6 +230,7 @@ def auc_to_estimates(
     use_bids=False,
     group=False,
     group_distance=3,
+    block_dist=2,
     debug=False,
     quiet=False,
     command_str=None,
@@ -357,7 +365,7 @@ def auc_to_estimates(
     # Solve ordinary least squares problem to calculate estimates
     LGR.info("Calculating estimates...")
     if block_model:
-        estimates_spike = debiasing.debiasing_block(hrf, data_masked, auc_thr, n_jobs)
+        estimates_spike = debiasing.debiasing_block(hrf, data_masked, auc_thr, n_jobs, block_dist)
         fitts = np.dot(hrf, estimates_spike)
     else:
         estimates_spike, fitts = debiasing.debiasing_spike(
