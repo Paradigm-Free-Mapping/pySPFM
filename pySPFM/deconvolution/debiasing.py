@@ -1,4 +1,5 @@
 """Debiasing functions for PFM."""
+
 import logging
 
 import numpy as np
@@ -184,7 +185,7 @@ def do_debias_block(hrf, y, estimates_matrix, dist=2):
     return beta_out
 
 
-def debiasing_block(hrf, y, estimates_matrix, n_jobs=4):
+def debiasing_block(hrf, y, estimates_matrix, n_jobs=4, dist=2):
     """Voxelwise block model debiasing workflow.
 
     Parameters
@@ -198,6 +199,8 @@ def debiasing_block(hrf, y, estimates_matrix, n_jobs=4):
         Matrix containing the non-zero coefficients selected as neuronal-related.
     n_jobs : int, optional
         Number of jobs to run in parallel, by default 4
+    dist : int, optional
+        Minimum number of TRs in between of the peaks found, by default 2
 
     Returns
     -------
@@ -216,7 +219,7 @@ def debiasing_block(hrf, y, estimates_matrix, n_jobs=4):
     futures = []
     for voxidx in range(n_voxels):
         fut = delayed_dask(do_debias_block, pure=False)(
-            hrf, y[:, voxidx], estimates_matrix[:, voxidx]
+            hrf, y[:, voxidx], estimates_matrix[:, voxidx], dist
         )
         futures.append(fut)
     debiased = compute(futures)[0]
