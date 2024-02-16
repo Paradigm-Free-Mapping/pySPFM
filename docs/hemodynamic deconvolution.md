@@ -1,6 +1,4 @@
-#########################
-Hemodynamic Deconvolution
-#########################
+# Hemodynamic Deconvolution
 
 Functional magnetic resonance imaging (fMRI) data analysis is often directed to identify and
 disentangle the neural processes that occur in different brain regions during task or at rest.
@@ -22,24 +20,24 @@ problem that are typically expressed as regularizers.
 If you would like to learn more about hemodynamic deconvolution, the following references may be
 useful:
 
-- Glover, G. H. (1999). `Deconvolution of impulse response in event-related BOLD fMRI`_. Neuroimage,
+- Glover, G. H. (1999). [Deconvolution of impulse response in event-related BOLD fMRI]. Neuroimage,
   9(4), 416-429.
-- Gitelman, D. R., Penny, W. D., Ashburner, J., & Friston, K. J. (2003). `Modeling regional and
-  psychophysiologic interactions in fMRI: the importance of hemodynamic deconvolution`_.
+- Gitelman, D. R., Penny, W. D., Ashburner, J., & Friston, K. J. (2003). [Modeling regional and
+  psychophysiologic interactions in fMRI: the importance of hemodynamic deconvolution][modeling regional and psychophysiologic interactions in fmri: the importance of hemodynamic deconvolution].
   Neuroimage, 19(1), 200-207.
 - Gaudes, C. C., Petridou, N., Francis, S. T., Dryden, I. L., & Gowland, P. A. (2013).
-  `Paradigm free mapping with sparse regression automatically detects single-trial functional
-  magnetic resonance imaging blood oxygenation level dependent responses`_. Human brain mapping,
+  [Paradigm free mapping with sparse regression automatically detects single-trial functional
+  magnetic resonance imaging blood oxygenation level dependent responses][paradigm free mapping with sparse regression automatically detects single-trial functional magnetic resonance imaging blood oxygenation level dependent responses]. Human brain mapping,
   34(3), 501.
 - Karahanoğlu, F. I., Caballero-Gaudes, C., Lazeyras, F., & Van De Ville, D. (2013).
-  `Total activation: fMRI deconvolution through spatio-temporal regularization`_. Neuroimage,
+  [Total activation: fMRI deconvolution through spatio-temporal regularization]. Neuroimage,
   73, 121-134.
 - Uruñuela, E., Bolton, T. A., Van De Ville, D., & Caballero-Gaudes, C. (2021).
-  `Hemodynamic Deconvolution Demystified: Sparsity-Driven Regularization at Work`_.
+  [Hemodynamic Deconvolution Demystified: Sparsity-Driven Regularization at Work].
   arXiv preprint arXiv:2107.12026.
 
-.. _Deconvolution of impulse response in event-related BOLD fMRI: https://doi.org/10.1006/nimg.1998.0419
-.. _Modeling regional and psychophysiologic interactions in fMRI\: the importance of hemodynamic deconvolution: https://doi.org/10.1016/S1053-8119(03)00058-2
-.. _Paradigm free mapping with sparse regression automatically detects single-trial functional magnetic resonance imaging blood oxygenation level dependent responses: https://doi.org/10.1002/hbm.21452
-.. _Total activation\: fMRI deconvolution through spatio-temporal regularization: https://doi.org/10.1016/j.neuroimage.2013.01.067
-.. _Hemodynamic Deconvolution Demystified\: Sparsity-Driven Regularization at Work: https://arxiv.org/abs/2107.12026
+[deconvolution of impulse response in event-related bold fmri]: https://doi.org/10.1006/nimg.1998.0419
+[hemodynamic deconvolution demystified: sparsity-driven regularization at work]: https://arxiv.org/abs/2107.12026
+[modeling regional and psychophysiologic interactions in fmri: the importance of hemodynamic deconvolution]: https://doi.org/10.1016/S1053-8119(03)00058-2
+[paradigm free mapping with sparse regression automatically detects single-trial functional magnetic resonance imaging blood oxygenation level dependent responses]: https://doi.org/10.1002/hbm.21452
+[total activation: fmri deconvolution through spatio-temporal regularization]: https://doi.org/10.1016/j.neuroimage.2013.01.067
