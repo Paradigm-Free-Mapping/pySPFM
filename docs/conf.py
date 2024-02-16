@@ -39,26 +39,32 @@ add_module_names = False
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "ipykernel",
     "matplotlib.sphinxext.plot_directive",
+    # "myst_parser",
+    "myst_nb",
+    # "nbsphinx",
+    "sphinx_design",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
     "sphinx.ext.ifconfig",
     "sphinx.ext.intersphinx",
     "sphinx.ext.linkcode",
+    # "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
-    "sphinxarg.ext",
+    "sphinx_gallery.load_style",
 ]
 
 from distutils.version import LooseVersion
 
 import sphinx
 
-if LooseVersion(sphinx.__version__) < LooseVersion("1.4"):
-    extensions.append("sphinx.ext.pngmath")
-else:
-    extensions.append("sphinx.ext.imgmath")
+# if LooseVersion(sphinx.__version__) < LooseVersion("1.4"):
+#     extensions.append("sphinx.ext.pngmath")
+# else:
+#     extensions.append("sphinx.ext.imgmath")
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -73,7 +79,7 @@ master_doc = "index"
 from datetime import datetime  # access current time and date
 
 project = "pySPFM"
-copyright = "2017-" + datetime.today().strftime("%Y") + ", Eneko Uruñuela"
+copyright = "2019-" + datetime.today().strftime("%Y") + ", Eneko Uruñuela"
 author = "Eneko Uruñuela"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -127,9 +133,9 @@ napoleon_use_rtype = False
 # a list of builtin themes.
 #
 # installing theme package
-import sphinx_rtd_theme
+# import sphinx_book_theme
 
-html_theme = "sphinx_rtd_theme"
+html_theme = "sphinx_book_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -145,7 +151,6 @@ html_theme_options = {
 html_static_path = ["_static"]
 
 
-# https://github.com/rtfd/sphinx_rtd_theme/issues/117
 def setup(app):
     app.add_css_file("theme_overrides.css")
     app.add_js_file("https://cdn.rawgit.com/chrisfilo/zenodo.js/v0.1/zenodo.js")
