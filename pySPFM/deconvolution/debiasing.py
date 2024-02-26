@@ -215,7 +215,7 @@ def debiasing_block(hrf, y, estimates_matrix, n_jobs=4, dist=2):
 
     LGR.info("Starting debiasing step...")
     # Performs debiasing
-    dask_scheduler(n_jobs)
+    client, cluster = dask_scheduler(n_jobs)
     futures = []
     for voxidx in range(n_voxels):
         fut = delayed_dask(do_debias_block, pure=False)(
@@ -223,6 +223,11 @@ def debiasing_block(hrf, y, estimates_matrix, n_jobs=4, dist=2):
         )
         futures.append(fut)
     debiased = compute(futures)[0]
+
+    # Close the client and cluster
+    if client is not None:
+        client.close()
+        cluster.close()
 
     for vox_idx in range(n_voxels):
         beta_out[:, vox_idx] = debiased[vox_idx]
@@ -309,7 +314,7 @@ def debiasing_spike(hrf, y, estimates_matrix, n_jobs=0, group=False, group_dist=
     index_voxels = np.unique(np.where(abs(estimates_matrix) > 10 * np.finfo(float).eps)[1])
 
     LGR.info("Performing debiasing step...")
-    _, cluster = dask_scheduler(n_jobs)
+    client, cluster = dask_scheduler(n_jobs)
     futures = []
     for voxidx in range(len(index_voxels)):
         fut = delayed_dask(do_debias_spike, pure=False)(
@@ -321,6 +326,11 @@ def debiasing_spike(hrf, y, estimates_matrix, n_jobs=0, group=False, group_dist=
         )
         futures.append(fut)
     debiased = compute(futures)[0]
+
+    # Close the client and cluster
+    if client is not None:
+        client.close()
+        cluster.close()
 
     for voxidx in range(len(index_voxels)):
         beta_out[:, index_voxels[voxidx]] = debiased[voxidx][0]
