@@ -512,7 +512,7 @@ def pySPFM(
     out_bids_keywords = []
 
     # Iterate between temporal and spatial regularizations
-    client, _ = dask_scheduler(n_jobs, jobqueue)
+    client, cluster = dask_scheduler(n_jobs, jobqueue)
 
     # Scatter data to workers if client is not None
     if client is not None:
@@ -542,6 +542,11 @@ def pySPFM(
             stability_estimates = compute(futures)[0]
         else:
             stability_estimates = compute(futures, scheduler="single-threaded")[0]
+
+        # Close the client and cluster
+        if client is not None:
+            client.close()
+            cluster.close()
 
         for vox_idx in range(n_voxels):
             auc[:, vox_idx] = np.squeeze(stability_estimates[vox_idx])
@@ -623,6 +628,11 @@ def pySPFM(
 
             else:
                 raise ValueError("Wrong criterion option given.")
+
+            # Close the client and cluster
+            if client is not None:
+                client.close()
+                cluster.close()
 
             # Convolve with HRF
             if block_model:
