@@ -256,7 +256,7 @@ def fista(
         )
 
         if positive_only:
-            S = jnp.maximum(np.sign(hrf) * S, 0)
+            S = jnp.maximum(np.sign(hrf[0, 0]) * S, 0)
 
     else:
         # Use FISTA with updating lambda
@@ -298,7 +298,7 @@ def fista(
                 S = proximal_operator_lasso_jit(z_ista_S, c_ist * lambda_).block_until_ready()
 
             if positive_only:
-                S = jnp.maximum(np.sign(hrf) * S, 0)
+                S = jnp.maximum(np.sign(hrf[0, 0]) * S, 0)
 
             t_fista, y_fista_S = _fista_update_jit(t_fista, S, S_old)
 

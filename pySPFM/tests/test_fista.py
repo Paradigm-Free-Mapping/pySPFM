@@ -15,7 +15,7 @@ def test_fista(sim_data, sim_hrf, fista_results):
     assert np.allclose(estimates, np.load(fista_results, allow_pickle=True), atol=1e-6)
 
 
-def test_fista_positives(sim_data, sim_hrf, fista_results):
+def test_fista_positives(sim_data, sim_hrf, fista_positives):
     y = np.load(sim_data, allow_pickle=True)
     hrf_matrix = np.load(sim_hrf, allow_pickle=True)
 
@@ -27,7 +27,7 @@ def test_fista_positives(sim_data, sim_hrf, fista_results):
     # Compare estimates
     assert np.allclose(lambda_, np.repeat(np.array([0.60157822]), y.shape[1], axis=0))
     assert np.allclose(
-        estimates, np.maximum(np.load(fista_results, allow_pickle=True), 0), atol=1e-6
+        estimates, np.maximum(np.load(fista_positives, allow_pickle=True), 0), atol=1e-6
     )
 
 
