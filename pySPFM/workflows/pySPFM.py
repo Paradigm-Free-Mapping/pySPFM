@@ -299,6 +299,13 @@ def _get_parser():
         default=50,
     )
     optional.add_argument(
+        "--positive",
+        dest="positive_only",
+        action="store_true",
+        help="Force estimated signal to be positive.",
+        default=False,
+    )
+    optional.add_argument(
         "-debug",
         "--debug",
         dest="debug",
@@ -352,6 +359,7 @@ def pySPFM(
     tolerance=1e-6,
     use_bids=False,
     n_surrogates=50,
+    positive_only=False,
     debug=False,
     quiet=False,
     command_str=None,
@@ -424,6 +432,8 @@ def pySPFM(
         header of the output."
     n_surrogates : int, optional
         Number of surrogates to generate for stability selection, by default 50
+    positive_only : bool, optional
+        If True, the estimated signal will be forced to be positive, by default False
     debug : bool, optional
         Logger option for debugging, by default False
     quiet : bool, optional
@@ -613,6 +623,7 @@ def pySPFM(
                         pcg=pcg,
                         factor=factor,
                         lambda_echo=lambda_echo,
+                        positive_only=positive_only,
                     )
                     futures.append(fut)
 
