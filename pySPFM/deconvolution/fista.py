@@ -1,4 +1,5 @@
 """FISTA solver for PFM."""
+
 import logging
 
 import jax
@@ -169,6 +170,7 @@ def fista(
     factor=10,
     lambda_echo=-1,
     use_pylops=False,
+    positive_only=False,
 ):
     """FISTA solver for PFM.
 
@@ -199,6 +201,8 @@ def fista(
         by default -1
     use_pylops : bool, optional
         Use pylops library to solve FISTA instead of using pySPFM's FISTA, by default False
+    positive_only : bool, optional
+        If True, the estimated signal will be forced to be positive, by default False
 
     Returns
     -------
@@ -250,6 +254,10 @@ def fista(
             acceleration="fista",
             show=False,
         )
+
+        if positive_only:
+            S = jnp.maximum(np.sign(hrf[0, 0]) * S, 0)
+
     else:
         # Use FISTA with updating lambda
         hrf_trans = hrf.T
@@ -288,6 +296,9 @@ def fista(
                 ).block_until_ready()
             else:
                 S = proximal_operator_lasso_jit(z_ista_S, c_ist * lambda_).block_until_ready()
+
+            if positive_only:
+                S = jnp.maximum(np.sign(hrf[0, 0]) * S, 0)
 
             t_fista, y_fista_S = _fista_update_jit(t_fista, S, S_old)
 
