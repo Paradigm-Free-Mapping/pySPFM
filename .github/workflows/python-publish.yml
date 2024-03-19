@@ -17,7 +17,7 @@ jobs:
       id-token: write  # this permission is mandatory for pypi publishing
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
           # This fetch element is only important if you are use SCM based
           # versioning (that looks at git tags to gather the version)
@@ -28,21 +28,19 @@ jobs:
         run: git fetch origin 'refs/tags/*:refs/tags/*'
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v2
         with:
           python-version: "3.10"
       - name: Install Hatch
         run: |
           pipx install hatch
           pip list
-
       - name: Build package using Hatch
         run: |
           hatch build
           echo ""
           echo "Generated files:"
           ls -lh dist/
-
       - name: Publish package on test PyPI on merge in main branch
         # Test push to test pypi on merge to main
         if: github.event_name == 'push'
