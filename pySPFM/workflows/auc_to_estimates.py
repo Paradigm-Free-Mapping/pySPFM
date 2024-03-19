@@ -1,3 +1,5 @@
+"""Workflow to estimate the activity-inducing signal from AUC data."""
+
 import argparse
 import datetime
 import logging
@@ -235,6 +237,61 @@ def auc_to_estimates(
     quiet=False,
     command_str=None,
 ):
+    """Estimate the activity-inducing signal from AUC data.
+
+    Parameters
+    ----------
+    data_fn : str
+        The name of the file containing fMRI data.
+    auc_fn : str
+        The name of the file containing AUC data.
+    mask_fn : list
+        The name of the files containing the mask for the fMRI data and the AUC thresholding mask.
+    output_filename : str
+        The name of the output file with no extension.
+    tr : float
+        TR of the fMRI data acquisition.
+    thr : float, optional
+        Percentile to threshold the AUC data with or the threshold value itself. The percentile is
+        applied to the second mask provided with the '-m' flag if the second mask is a binary mask.
+        If the second mask is not binary, the values on the second mask are used as the threshold.
+        When the threshold value is given, the second mask is ignored. Percentiles are given in the
+        range [1, 100], while threshold values are given in the range [0, 1). Default is 95.0.
+    thr_strategy : str, optional
+        Strategy to threshold the AUC data with. If the second mask is a binary mask, the can be
+        applied with a static threshold ('static') or a time-dependet threshold ('time').
+        Default is 'static'.
+    out_dir : str, optional
+        Output directory. Default is current.
+    te : list, optional
+        List with TE of the fMRI data acquisition. Default = [0].
+    hrf_model : str, optional
+        HRF model to use. Default is 'spm'. Options are 'spm', 'glover', or a custom HRF file with
+        the '.1D' or '.txt' extension.
+    block_model : bool, optional
+        Estimate innovation signals. Default = False.
+    n_jobs : int, optional
+        Number of jobs to parallelize for loops (default = 4)., by default 4.
+    use_bids : bool, optional
+        Use BIDS-style suffix on the given `output` (default = False). pySPFM assumes that `output`
+        follows the BIDS convention. Not using this option will default to using AFNI to update the
+        header of the output.
+    group : bool, optional
+        Consider consecutive coefficients as belonging to the same block activation. Default =
+        False.
+    group_distance : int, optional
+        Maximum distance between coefficients to be considered part of the same block activation.
+        Default = 3.
+    block_dist : int, optional
+        Minimum number of TRs in between of the peaks found. Default = 2.
+    debug : bool, optional
+        Logs in the terminal will have increased verbosity, and will also be written into a .tsv
+        file in the output directory, by default False
+    quiet : bool, optional
+        Log only warnings and errors, by default False.
+    command_str : _type_, optional
+        String with the command-line call to this function, by default None.
+    """
     # Generate output directory if it doesn't exist
     out_dir = op.abspath(out_dir)
     if not op.isdir(out_dir):
@@ -439,7 +496,7 @@ def auc_to_estimates(
 
 
 def _main():
-    """auc_to_estimates entry point"""
+    """Entry point for auc_to_estimates."""
     command_str = "auc_to_estimates " + " ".join(sys.argv[1:])
     options = _get_parser().parse_args()
     auc_to_estimates(**vars(options), command_str=command_str)

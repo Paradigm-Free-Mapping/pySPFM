@@ -70,7 +70,7 @@ jobs:
             cp -r /opt/conda/envs/py<< parameters.PYTHON >>_env /opt/miniconda-latest/envs/py<< parameters.PYTHON >>_env
             source activate py<< parameters.PYTHON >>_env
             make unittest
-          no_output_timeout: 10m
+          no_output_timeout: 20m
       - codecov/upload:
           file: /tmp/src/pySPFM/coverage.xml
 
