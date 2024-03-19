@@ -9,6 +9,7 @@ help:
 	@echo "  integrationtest		to run integration tests"
 
 lint:
+	@black --check --diff tedana
 	@flake8 pySPFM
 
 unittest:
