@@ -80,7 +80,7 @@ def proximal_operator_mixed_norm(y, thr, rho_val=0.8, groups="space"):
     return div * p_one * p_two
 
 
-def _fista_forward(v, hrf_cov, y_ista_S, c_ist):
+def _fista_forward(v, hrf_cov, y_ista_s, c_ist):
     """Forward step of FISTA.
 
     Parameters
@@ -89,7 +89,7 @@ def _fista_forward(v, hrf_cov, y_ista_S, c_ist):
         Covariance matrix of the data and the HRF
     hrf_cov : ndarray
         Covariance matrix of the HRF
-    y_ista_S : ndarray
+    y_ista_s : ndarray
         FISTA value of the current iteration
     c_ist : float
         ISTA parameter
@@ -99,47 +99,46 @@ def _fista_forward(v, hrf_cov, y_ista_S, c_ist):
     ndarray
         Updated estimate of the activity-inducing (spike model) or innovation (block model) signal
     """
+    s_fidelity = v - jnp.dot(hrf_cov, y_ista_s)
 
-    S_fidelity = v - jnp.dot(hrf_cov, y_ista_S)
-
-    return y_ista_S + c_ist * S_fidelity
+    return y_ista_s + c_ist * s_fidelity
 
 
-def _fista_update(t_fista, S, S_old):
+def _fista_update(t_fista, s, s_old):
     """Update FISTA parameters.
 
     Parameters
     ----------
     t_fista : float
         Current FISTA parameter
-    S : ndarray
+    s : ndarray
         Current estimate of the activity-inducing (spike model) or innovation (block model) signal
-    S_old : ndarray
+    s_old : ndarray
         Previous estimate of the activity-inducing (spike model) or innovation (block model) signal
 
     Returns
     -------
     t_fista : float
         Current FISTA parameter
-    y_fista_S : ndarray
+    y_fista_s : ndarray
         Current estimate of the activity-inducing (spike model) or innovation (block model) signal
     """
     t_fista_old = t_fista
     t_fista = 0.5 * (1 + jnp.sqrt(1 + 4 * (t_fista_old**2)))
 
-    y_fista_S = S + (S - S_old) * (t_fista_old - 1) / t_fista
+    y_fista_s = s + (s - s_old) * (t_fista_old - 1) / t_fista
 
-    return t_fista, y_fista_S
+    return t_fista, y_fista_s
 
 
-def _has_converged(S, S_old, tol=1e-6):
+def _has_converged(s, s_old, tol=1e-6):
     """Check if FISTA has converged.
 
     Parameters
     ----------
-    S : ndarray
+    s : ndarray
         Current estimate of the activity-inducing (spike model) or innovation (block model) signal
-    S_old : ndarray
+    s_old : ndarray
         Previous estimate of the activity-inducing (spike model) or innovation (block model) signal
     tol : float, optional
         Tolerance for residuals to find convergence of inverse problem, by default 1e-6
@@ -149,9 +148,8 @@ def _has_converged(S, S_old, tol=1e-6):
     bool
         True if FISTA has converged, False otherwise
     """
-
     # Calculate normalized error between current and previous estimate
-    estimate_error = jnp.abs(S - S_old) / jnp.abs(S_old)
+    estimate_error = jnp.abs(s - s_old) / jnp.abs(s_old)
 
     # Check if the error is smaller than the tolerance for all voxels
     return jnp.all(jnp.abs(estimate_error) <= tol).astype(jnp.bool_)
@@ -206,7 +204,7 @@ def fista(
 
     Returns
     -------
-    S : ndarray
+    s : ndarray
         Estimates of the activity-inducing (spike model) or innovation (block model) signal
     lambda_ : float
         Selected regularization parameter lambda
@@ -244,7 +242,7 @@ def fista(
 
         LGR.info("Performing FISTA with pylops...")
 
-        S = AcceleratedProximalGradient(
+        s = AcceleratedProximalGradient(
             l2,
             prox,
             tau=c_ist,
@@ -256,7 +254,7 @@ def fista(
         )
 
         if positive_only:
-            S = jnp.maximum(np.sign(hrf[0, 0]) * S, 0)
+            s = jnp.maximum(np.sign(hrf[0, 0]) * s, 0)
 
     else:
         # Use FISTA with updating lambda
@@ -264,8 +262,8 @@ def fista(
         hrf_cov = jnp.dot(hrf_trans, hrf)
         v = jnp.dot(hrf_trans, y)
 
-        y_fista_S = jnp.zeros((n_scans, n_voxels), dtype=jnp.float32)
-        S = y_fista_S.copy()
+        y_fista_s = jnp.zeros((n_scans, n_voxels), dtype=jnp.float32)
+        s = y_fista_s.copy()
 
         t_fista = 1
 
@@ -284,34 +282,34 @@ def fista(
         # Perform FISTA
         for num_iter in range(max_iter):
             # Save results from previous iteration
-            S_old = S.copy()
-            y_ista_S = y_fista_S.copy()
+            s_old = s.copy()
+            y_ista_s = y_fista_s.copy()
 
-            z_ista_S = _fista_forward_jit(v, hrf_cov, y_ista_S, c_ist).block_until_ready()
+            z_ista_s = _fista_forward_jit(v, hrf_cov, y_ista_s, c_ist).block_until_ready()
 
-            # Estimate S
+            # Estimate s
             if group > 0:
-                S = proximal_operator_mixed_norm_jit(
-                    z_ista_S, c_ist * lambda_, rho_val=(1 - group)
+                s = proximal_operator_mixed_norm_jit(
+                    z_ista_s, c_ist * lambda_, rho_val=(1 - group)
                 ).block_until_ready()
             else:
-                S = proximal_operator_lasso_jit(z_ista_S, c_ist * lambda_).block_until_ready()
+                s = proximal_operator_lasso_jit(z_ista_s, c_ist * lambda_).block_until_ready()
 
             if positive_only:
-                S = jnp.maximum(np.sign(hrf[0, 0]) * S, 0)
+                s = jnp.maximum(np.sign(hrf[0, 0]) * s, 0)
 
-            t_fista, y_fista_S = _fista_update_jit(t_fista, S, S_old)
+            t_fista, y_fista_s = _fista_update_jit(t_fista, s, s_old)
 
             # Convergence
-            if num_iter >= min_iter and _has_converged_jit(S_old, S, tol).block_until_ready():
+            if num_iter >= min_iter and _has_converged_jit(s_old, s, tol).block_until_ready():
                 break
 
             LGR.debug(f"Iteration: {str(num_iter)} / {str(max_iter)}")
 
             # Update lambda
             if update_lambda:
-                nv = np.sqrt(np.sum((np.dot(hrf, S) - y) ** 2, axis=0) / n_scans)
+                nv = np.sqrt(np.sum((np.dot(hrf, s) - y) ** 2, axis=0) / n_scans)
                 if abs(nv - noise_estimate) > precision:
                     lambda_ = np.nan_to_num(lambda_ * noise_estimate / nv)
 
-    return S, lambda_
+    return s, lambda_
