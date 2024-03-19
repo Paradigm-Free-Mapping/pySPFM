@@ -24,6 +24,7 @@ jobs:
           pip list
     - name: Build package using Hatch
       run: |
+          echo $(pwd)
           hatch build
           echo ""
           echo "Generated files:"
