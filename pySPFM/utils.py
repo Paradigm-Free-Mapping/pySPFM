@@ -185,6 +185,21 @@ def dask_scheduler(jobs, jobqueue=None):
 
 
 def initiate_cluster(data, jobs):
+    """
+    Initiate a dask cluster.
+
+    Parameters
+    ----------
+    data : dict
+        Dictionary with the jobqueue parameters.
+    jobs : int
+        Number of jobs.
+
+    Returns
+    -------
+    result : dask.distributed.Cluster
+        Dask cluster.
+    """
     config.set(distributed__comm__timeouts__tcp="90s")
     config.set(distributed__comm__timeouts__connect="90s")
     config.set(scheduler="single-threaded")

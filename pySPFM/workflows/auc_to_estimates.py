@@ -259,8 +259,8 @@ def auc_to_estimates(
         range [1, 100], while threshold values are given in the range [0, 1). Default is 95.0.
     thr_strategy : str, optional
         Strategy to threshold the AUC data with. If the second mask is a binary mask, the can be
-        applied with a static threshold ('static') or a time-dependet threshold ('time'). Default is
-        'static'.
+        applied with a static threshold ('static') or a time-dependet threshold ('time').
+        Default is 'static'.
     out_dir : str, optional
         Output directory. Default is current.
     te : list, optional
@@ -496,7 +496,7 @@ def auc_to_estimates(
 
 
 def _main():
-    """auc_to_estimates entry point"""
+    """Entry point for auc_to_estimates."""
     command_str = "auc_to_estimates " + " ".join(sys.argv[1:])
     options = _get_parser().parse_args()
     auc_to_estimates(**vars(options), command_str=command_str)

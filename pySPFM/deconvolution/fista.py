@@ -148,7 +148,6 @@ def _has_converged(s, s_old, tol=1e-6):
     bool
         True if FISTA has converged, False otherwise
     """
-
     # Calculate normalized error between current and previous estimate
     estimate_error = jnp.abs(s - s_old) / jnp.abs(s_old)
 
