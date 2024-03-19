@@ -169,6 +169,24 @@ def _generate_shared_lambdas_space(coefs, lambdas, n_lambdas, n_surrogates):
 
 
 def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
+    """Stability Selection for deconvolution.
+
+    Parameters
+    ----------
+    hrf_norm : np.ndarray
+        Normalized HRF.
+    data : np.ndarray
+        Data.
+    n_lambdas : int
+        Number of lambdas.
+    n_surrogates : int
+        Number of surrogates.
+
+    Returns
+    -------
+    auc : np.ndarray
+        AUC for each TR.
+    """
     # Get n_scans, n_echos, n_voxels
     n_scans = hrf_norm.shape[1]
     n_echos = int(np.ceil(hrf_norm.shape[0] / n_scans))
