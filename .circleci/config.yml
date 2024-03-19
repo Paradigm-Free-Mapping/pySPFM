@@ -44,7 +44,6 @@ jobs:
                 source activate py<< parameters.PYTHON >>_env
                 pip install -e .[tests,doc]
             fi
-            python setup.py develop
       - save_cache: # environment cache tied to requirements
           key: v1-{{ checksum "pyproject.toml" }}-{{ "<< parameters.PYTHON >>" }}
           paths:
