@@ -1,4 +1,5 @@
 """Utils of pySPFM."""
+
 import logging
 
 import yaml
@@ -96,8 +97,7 @@ def get_outname(outname, keyword, ext, use_bids=False):
 
 def get_keyword_description(keyword):
     """
-    Get the description of the keyword for BIDS sidecar
-
+    Get the description of the keyword for BIDS sidecar.
 
     Parameters
     ----------
@@ -109,7 +109,6 @@ def get_keyword_description(keyword):
     keyword_description : str
         Description of the keyword.
     """
-
     if "innovation" in keyword:
         keyword_description = (
             "Deconvolution-estimated innovation signal; i.e., the derivative"
@@ -143,8 +142,23 @@ def get_keyword_description(keyword):
 
 def dask_scheduler(jobs, jobqueue=None):
     """
-    Checks if the user has a dask_jobqueue configuration file, and if so,
-    returns the appropriate scheduler according to the file parameters
+    Check if the user has a dask_jobqueue configuration file.
+
+    If so, return the appropriate scheduler according to the file parameters.
+
+    Parameters
+    ----------
+    jobs : int
+        Number of jobs.
+    jobqueue : str, optional
+        Path to the jobqueue YAML file, by default None
+
+    Returns
+    -------
+    client : dask.distributed.Client
+        Dask client.
+    cluster : dask.distributed.Cluster
+        Dask cluster.
     """
     # look if jobqueue.yaml exists
     if jobqueue is None:

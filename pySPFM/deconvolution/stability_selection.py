@@ -1,3 +1,5 @@
+"""Stability Selection for deconvolution."""
+
 import logging
 import os
 
@@ -11,6 +13,22 @@ LGR = logging.getLogger("GENERAL")
 
 
 def get_subsampling_indices(n_scans, n_echos, mode="same"):
+    """Get subsampling indices for stability selection.
+
+    Parameters
+    ----------
+    n_scans : int
+        Number of scans.
+    n_echos : int
+        Number of echoes.
+    mode : str, optional
+        Mode of subsampling. Can be "same" or "different".
+
+    Returns
+    -------
+    subsample_idx : np.ndarray
+        Subsampling indices.
+    """
     if "mode" in os.environ.keys():  # only for testing
         np.random.seed(200)
     # Subsampling for Stability Selection
@@ -56,7 +74,6 @@ def calculate_auc(coefs, lambdas, n_surrogates):
     auc : float
         AUC for a TR.
     """
-
     # Sum of all lambdas
     lambdas_sum = jnp.sum(lambdas)
 
@@ -79,6 +96,26 @@ def calculate_auc(coefs, lambdas, n_surrogates):
 
 
 def _get_tr_lambdas(estimates, lambdas, n_lambdas, n_surrogates):
+    """Get lambdas and coefficients for a TR.
+
+    Parameters
+    ----------
+    estimates : np.ndarray
+        Matrix of coefficients of shape (n_lambdas, n_surrogates).
+    lambdas : np.ndarray
+        Array of lambdas of shape (n_lambdas, n_surrogates).
+    n_lambdas : int
+        Number of lambdas.
+    n_surrogates : int
+        Number of surrogates.
+
+    Returns
+    -------
+    estimates_tr : np.ndarray
+        Coefficients for a TR.
+    lambdas_tr : np.ndarray
+        Lambdas for a TR.
+    """
     # Check if all lambdas are the same across axis 1.
     # If they are not, merge all lambdas into single, shared space.
     if not jnp.allclose(jnp.sum(lambdas, axis=1), n_lambdas * lambdas[:, 0]):

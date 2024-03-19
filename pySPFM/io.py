@@ -1,4 +1,5 @@
-"""I/O."""
+"""Input and output functions for pySPFM."""
+
 import json
 import logging
 import os.path as op

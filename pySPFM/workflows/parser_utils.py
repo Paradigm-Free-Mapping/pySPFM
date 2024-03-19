@@ -1,14 +1,16 @@
 """
 Functions for parsers.
 """
+
 import argparse
 import os.path as op
 
 
 def check_hrf_value(string, is_parser=True):
     """
-    Check if argument is 'spm' or 'glover',
-    or is an existing '.1D' or '.txt' file.
+    Check if argument is 'spm' or 'glover'.
+
+    If it isn't, check if it is an existing '.1D' or '.txt' file.
     """
     if string == "spm" or string == "glover":
         return string
@@ -26,6 +28,6 @@ def is_valid_file(parser, arg):
     Check if argument is existing file.
     """
     if not op.isfile(arg) and arg is not None:
-        parser.error("The file {0} does not exist!".format(arg))
+        parser.error(f"The file {arg} does not exist!")
 
     return arg
