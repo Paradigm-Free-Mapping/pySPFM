@@ -1,4 +1,5 @@
-"""HRF Matrix file."""
+"""Generate HRF matrix."""
+
 import logging
 import subprocess
 
@@ -56,7 +57,6 @@ class HRFMatrix:
         self.hrf_ : array_like
             A hemodynamic response function (HRF).
         """
-
         # Read custom HRF from file if self.model ends in .1D or .txt
         if self.model.endswith(".1D") or self.model.endswith(".txt"):
             hrf = np.loadtxt(self.custom)

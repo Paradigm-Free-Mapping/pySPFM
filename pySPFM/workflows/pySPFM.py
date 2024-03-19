@@ -1,3 +1,5 @@
+"""Main pySPFM workflow."""
+
 import argparse
 import datetime
 import logging
@@ -467,7 +469,7 @@ def pySPFM(
     refname = op.join(out_dir, "_references.txt")
     utils.setup_loggers(logname, refname, quiet=quiet, debug=debug)
 
-    LGR.info("Using output directory: {}".format(out_dir))
+    LGR.info(f"Using output directory: {out_dir}")
 
     n_te = len(te)
 
@@ -563,7 +565,7 @@ def pySPFM(
 
         LGR.info("Stability selection finished.")
 
-        LGR.info("Saving AUCs to %s..." % out_dir)
+        LGR.info(f"Saving AUCs to {out_dir}...")
         out_bids_keywords.append("AUC")
         output_name = get_outname(output_filename, "AUC", "nii.gz", use_bids)
         write_data(
@@ -831,7 +833,7 @@ def pySPFM(
 
 
 def _main():
-    """pySPFM entry point"""
+    """pySPFM entry point."""
     command_str = "pySPFM " + " ".join(sys.argv[1:])
     options = _get_parser().parse_args()
     pySPFM(**vars(options), command_str=command_str)

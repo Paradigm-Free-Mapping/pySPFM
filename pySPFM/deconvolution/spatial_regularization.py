@@ -1,11 +1,11 @@
 """Spatial regularization functions as developed in Total Activation."""
+
 import numpy as np
 from nilearn.masking import apply_mask, unmask
 
 
 def spatial_tikhonov(estimates, data, masker, niter, dim, lambda_, mu):
-    """Spatial regularization technique based on the Tikhonov regularization as in
-    Total Activation.
+    r"""Spatial regularization technique with Tikhonov regularization as in Total Activation.
 
     This function computes the tikhonov regularization
 
@@ -45,7 +45,7 @@ def spatial_tikhonov(estimates, data, masker, niter, dim, lambda_, mu):
     if dim == 2:
         h = generate_delta(dim=dim)
 
-        H = np.fft.fft2(h, (estimates_vol.shape[0], estimates_vol.shape[1]))
+        h = np.fft.fft2(h, (estimates_vol.shape[0], estimates_vol.shape[1]))
 
         for iter_idx in range(niter):
             for time_idx in range(estimates_vol.shape[-1]):
@@ -56,7 +56,7 @@ def spatial_tikhonov(estimates, data, masker, niter, dim, lambda_, mu):
                         - mu
                         * lambda_
                         * np.fft.ifft2(
-                            (np.conj(H) * H)
+                            (np.conj(h) * h)
                             * np.fft.fft2(
                                 estimates_vol[:, :, slice_idx, time_idx],
                                 (estimates_vol.shape[0], estimates_vol.shape[1]),
@@ -67,7 +67,7 @@ def spatial_tikhonov(estimates, data, masker, niter, dim, lambda_, mu):
     elif dim == 3:
         h = generate_delta(dim=dim)
 
-        H = np.fft.fftn(h, estimates_vol.shape[:2])
+        h = np.fft.fftn(h, estimates_vol.shape[:2])
 
         for iter_idx in range(niter):
             for time_idx in range(estimates_vol.shape[-1]):
@@ -77,8 +77,8 @@ def spatial_tikhonov(estimates, data, masker, niter, dim, lambda_, mu):
                     - mu
                     * lambda_
                     * np.fft.ifftn(
-                        H
-                        * np.conj(H)
+                        h
+                        * np.conj(h)
                         * np.fft.fftn(estimates_vol[:, :, :, time_idx], estimates_vol.shape[:2])
                     )
                 )
@@ -89,7 +89,7 @@ def spatial_tikhonov(estimates, data, masker, niter, dim, lambda_, mu):
 
 
 def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
-    """Spatial regularization technique based on the structured sparsity as in Total Activation.
+    r"""Spatial regularization technique based on the structured sparsity as in Total Activation.
 
     This function computes the structured sparsity regularization and is another variant of fgp
     algorithm for structured sparsity
@@ -120,7 +120,6 @@ def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
     final_estimates: ndarray
         Estimates of activity-inducing or innovation signal after spatial regularization.
     """
-
     # Transform data from 2D into 4D
     estimates_vol = unmask(estimates, mask)
     data_vol = unmask(data, mask)
@@ -131,7 +130,7 @@ def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
 
     max_eig = 144
 
-    H = np.fft.fftn(h, estimates_vol.shape[:2])
+    h = np.fft.fftn(h, estimates_vol.shape[:2])
 
     # Perform structured sparsity regularization
     for time_idx in range(estimates_vol.shape[-1]):
@@ -140,13 +139,13 @@ def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
                 z[:, :, :, time_idx]
                 + 1
                 / (lambda_ * max_eig)
-                * np.fft.ifftn(H * np.fft.fftn(data_vol[:, :, :, time_idx], dims[:2]))
-                - np.fft.ifftn(H * np.conj(H) * np.fft.fftn(z[:, :, :, time_idx], dims[:2]))
+                * np.fft.ifftn(h * np.fft.fftn(data_vol[:, :, :, time_idx], dims[:2]))
+                - np.fft.ifftn(h * np.conj(h) * np.fft.fftn(z[:, :, :, time_idx], dims[:2]))
                 / max_eig,
                 mask,
             )
         estimates_vol[:, :, :, time_idx] = data_vol[:, :, :, time_idx] - lambda_ * np.fft.ifftn(
-            np.conj(H) * np.fft.fttn(z[:, :, :, time_idx], dims[:2])
+            np.conj(h) * np.fft.fttn(z[:, :, :, time_idx], dims[:2])
         )
 
     # Transform data from 4D into 2D
@@ -170,7 +169,6 @@ def clip(input, atlas):
     clipped_input: ndarray
         Clipped input.
     """
-
     clipped_input = np.zeros(input.shape)
     for region_idx in range(np.max(atlas)):
         # Find the indices of the voxels in the current region

@@ -106,7 +106,7 @@ def innovation_to_block(hrf, y, estimates_matrix, is_ls):
     -------
     beta : (T x S) ndarray
         Debiased activity-inducing signal obtained from estimated innovation signal.
-    S : (T x L) ndarray
+    s : (T x L) ndarray
         Transformation matrix used to integrate the innovation signal into activity-inducing
         signal. L stands for the number of steps to integrate.
     """
@@ -116,41 +116,41 @@ def innovation_to_block(hrf, y, estimates_matrix, is_ls):
 
     # Initiates beta
     beta = np.zeros((estimates_matrix.shape))
-    S = 0
+    s = 0
 
     if n_nonzero != 0:
-        # Initiates matrix S and array of labels
-        S = np.zeros((hrf.shape[1], n_nonzero + 1))
+        # Initiates matrix s and array of labels
+        s = np.zeros((hrf.shape[1], n_nonzero + 1))
         labels = np.zeros((estimates_matrix.shape[0]))
 
-        # Gives values to S design matrix based on nonzeros in estimates_matrix
+        # Gives values to s design matrix based on nonzeros in estimates_matrix
         # It also stores the labels of the changes in the design matrix
         # to later generate the debiased timeseries with the obtained betas
         for idx in range(n_nonzero + 1):
             if idx == 0:
-                S[0 : nonzero_idxs[idx], idx] = 1
+                s[0 : nonzero_idxs[idx], idx] = 1
                 labels[: nonzero_idxs[idx]] = idx
             elif idx == n_nonzero:
-                S[nonzero_idxs[idx - 1] :, idx] = 1
+                s[nonzero_idxs[idx - 1] :, idx] = 1
                 labels[nonzero_idxs[idx - 1] :] = idx
             else:
-                S[nonzero_idxs[idx - 1] : nonzero_idxs[idx], idx] = 1
+                s[nonzero_idxs[idx - 1] : nonzero_idxs[idx], idx] = 1
                 labels[nonzero_idxs[idx - 1] : nonzero_idxs[idx]] = idx
 
         # Performs the least squares to obtain the beta amplitudes
         if is_ls:
             beta_amplitudes, _, _, _ = np.linalg.lstsq(
-                np.dot(hrf, S), y, rcond=None
+                np.dot(hrf, s), y, rcond=None
             )  # b-ax --> returns x
         else:
-            clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1, 10]).fit(np.dot(hrf, S), y)
+            clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1, 10]).fit(np.dot(hrf, s), y)
             beta_amplitudes = clf.coef_
 
         # Positions beta amplitudes in the entire timeseries
         for amp_change in range(n_nonzero + 1):
             beta[labels == amp_change] = beta_amplitudes[amp_change]
 
-    return beta, S
+    return beta, s
 
 
 def do_debias_block(hrf, y, estimates_matrix, dist=2):
@@ -268,11 +268,11 @@ def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3):
     else:
         hrf_events = hrf[:, index_events_opt]
 
-    coef_LSfitdebias, _, _, _ = sci.linalg.lstsq(hrf_events, y.T, cond=None)
+    coef_ls_fitdebias, _, _, _ = sci.linalg.lstsq(hrf_events, y.T, cond=None)
     if group:
-        beta2save[index_events_opt_group, 0] = coef_LSfitdebias
+        beta2save[index_events_opt_group, 0] = coef_ls_fitdebias
     else:
-        beta2save[index_events_opt, 0] = coef_LSfitdebias
+        beta2save[index_events_opt, 0] = coef_ls_fitdebias
     fitts_out = np.squeeze(np.dot(hrf, beta2save))
 
     beta_out = beta2save.reshape(len(beta2save))

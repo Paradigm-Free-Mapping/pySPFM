@@ -1,4 +1,5 @@
 """Least Angle Regression (LARS) method for deconvolution."""
+
 import logging
 
 import numpy as np
@@ -8,7 +9,7 @@ LGR = logging.getLogger("GENERAL")
 
 
 def select_optimal_lambda(residuals, non_zero_count, n_scans, criterion="bic"):
-    """Select optimal lambda based on the model selection criterion (BIC and AIC)
+    """Select optimal lambda based on the model selection criterion (BIC and AIC).
 
     Parameters
     ----------
@@ -39,12 +40,12 @@ def select_optimal_lambda(residuals, non_zero_count, n_scans, criterion="bic"):
     return idx_optimal_lambda
 
 
-def solve_regularization_path(X, y, n_lambdas, criterion="bic"):
+def solve_regularization_path(x, y, n_lambdas, criterion="bic"):
     """Solve the regularization path with the LARS algorithm.
 
     Parameters
     ----------
-    X : ndarray
+    x : ndarray
         Design matrix
     y : ndarray
         Voxel time-series
@@ -60,7 +61,7 @@ def solve_regularization_path(X, y, n_lambdas, criterion="bic"):
     lambdas : ndarray
         Lambda of the optimal solution
     """
-    n_scans = X.shape[1]
+    n_scans = x.shape[1]
 
     # If y is a vector, add a dimension to make it a matrix
     if y.ndim == 1:
@@ -72,11 +73,11 @@ def solve_regularization_path(X, y, n_lambdas, criterion="bic"):
 
     # LARS path
     lambdas_temp, _, coef_path_temp = lars_path(
-        X,
+        x,
         np.squeeze(y),
         method="lasso",
-        Gram=np.dot(X.T, X),
-        Xy=np.dot(X.T, np.squeeze(y)),
+        Gram=np.dot(x.T, x),
+        xy=np.dot(x.T, np.squeeze(y)),
         max_iter=n_lambdas - 1,
         eps=1e-9,
     )
@@ -86,7 +87,7 @@ def solve_regularization_path(X, y, n_lambdas, criterion="bic"):
     lambdas[: len(lambdas_temp)] = lambdas_temp
 
     # Compute residuals for model selection criterion (BIC and AIC)
-    residuals = np.sum((np.repeat(y, n_lambdas, axis=-1) - np.dot(X, coef_path)) ** 2, axis=0)
+    residuals = np.sum((np.repeat(y, n_lambdas, axis=-1) - np.dot(x, coef_path)) ** 2, axis=0)
 
     if criterion == "stability":
         optimal_lambda = lambdas
