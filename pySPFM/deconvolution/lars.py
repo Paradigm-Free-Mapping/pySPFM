@@ -77,7 +77,7 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic"):
         np.squeeze(y),
         method="lasso",
         Gram=np.dot(x.T, x),
-        xy=np.dot(x.T, np.squeeze(y)),
+        Xy=np.dot(x.T, np.squeeze(y)),
         max_iter=n_lambdas - 1,
         eps=1e-9,
     )
