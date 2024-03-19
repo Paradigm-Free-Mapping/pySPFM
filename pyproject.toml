@@ -132,6 +132,8 @@ max-line-length = 99
 exclude = [
     "*build/",
     "pySPFM/_version.py",
+    "pySPFM/due.py",
+    "pySPFM/tests/*",
 ]
 ignore = ["E203", "E402", "W503", "N802", "N806", "D403"]
 per-file-ignores = [
