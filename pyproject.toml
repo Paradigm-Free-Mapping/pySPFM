@@ -83,7 +83,6 @@ allow-direct-references = true
 exclude = [".git_archival.txt"]  # No longer needed in sdist
 
 [tool.hatch.build.targets.wheel]
-packages = ["pySPFM"]
 exclude = [
     "pySPFM/tests/data",  # Large test data directory
 ]
