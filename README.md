@@ -6,11 +6,11 @@ The Python version of AFNI's [3dPFM](https://afni.nimh.nih.gov/pub/dist/doc/prog
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pySPFM.svg)](https://pypi.python.org/pypi/pySPFM/)
 [![DOI](https://zenodo.org/badge/492450151.svg)](https://zenodo.org/badge/latestdoi/492450151)
 [![License](https://img.shields.io/badge/License-LGPL%202.1-blue.svg)](https://opensource.org/licenses/LGPL-2.1)
-[![CircleCI](https://circleci.com/gh/eurunuela/pySPFM/tree/main.svg?style=shield)](https://circleci.com/gh/eurunuela/pySPFM/tree/main)
+[![CircleCI](https://circleci.com/gh/Paradigm-Free-Mapping/pySPFM/tree/main.svg?style=shield)](https://circleci.com/gh/Paradigm-Free-Mapping/pySPFM/tree/main)
 [![Documentation Status](https://readthedocs.org/projects/pyspfm/badge/?version=latest)](http://pyspfm.readthedocs.io/en/latest/?badge=latest)
-[![codecov](https://codecov.io/gh/eurunuela/pySPFM/branch/main/graph/badge.svg)](https://codecov.io/gh/eurunuela/pySPFM)
+[![codecov](https://codecov.io/gh/Paradigm-Free-Mapping/pySPFM/branch/main/graph/badge.svg)](https://codecov.io/gh/Paradigm-Free-Mapping/pySPFM)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/eurunuela/pySPFM/main.svg)](https://results.pre-commit.ci/latest/github/eurunuela/pySPFM/main)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/Paradigm-Free-Mapping/pySPFM/main.svg)](https://results.pre-commit.ci/latest/github/Paradigm-Free-Mapping/pySPFM/main)
 
 ## References
 
