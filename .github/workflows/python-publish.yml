@@ -20,7 +20,7 @@ jobs:
     steps:
     - name: Install Hatch
       run: |
-          pipx install hatch
+          pip install hatch
           pip list
     - name: Build package using Hatch
       run: |
