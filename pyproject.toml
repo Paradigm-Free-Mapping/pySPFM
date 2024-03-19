@@ -41,6 +41,7 @@ Documentation = "https://www.pySPFM.readthedocs.io"
 [project.optional-dependencies]
 dev = ["pre-commit"]
 doc = [
+    "matplotlib",
     "sphinx>=6.2.1",
     "sphinx_copybutton",
     "sphinx_rtd_theme>=1.2.2",
