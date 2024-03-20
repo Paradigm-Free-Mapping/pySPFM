@@ -2,9 +2,7 @@ name: Publish to PyPI
 on:
   release:
     types: [published]
-  push:
-    branches:
-      - main
+
 jobs:
   build-publish:
     runs-on: ubuntu-latest
@@ -41,16 +39,6 @@ jobs:
           echo ""
           echo "Generated files:"
           ls -lh dist/
-      # - name: Publish package on test PyPI on merge in main branch
-      #   # Test push to test pypi on merge to main
-      #   if: github.event_name == 'push'
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     repository-url: https://test.pypi.org/legacy/
-      #     # Allow existing releases on test PyPI without errors.
-      #     # NOT TO BE USED in PyPI!
-      #     skip-existing: true
-
       - name: Publish package to PyPI
         # Only publish to real PyPI on release
         if: github.event_name == 'release'
