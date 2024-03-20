@@ -40,7 +40,7 @@ jobs:
                 echo "Restoring environment from cache"
                 source activate py<< parameters.PYTHON >>_env
             else
-                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> numpy=1.21 -yq
+                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
                 source activate py<< parameters.PYTHON >>_env
                 pip install -e .[tests,doc]
             fi
@@ -133,7 +133,7 @@ jobs:
           name: Linting
           command: |
             source activate py3.9_env
-            flake8 /tmp/src/pySPFM/pySPFM
+            make lint
       - store_artifacts:
           path: /tmp/data/lint
 
