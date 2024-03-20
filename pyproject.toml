@@ -15,6 +15,8 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 license = {file = "LICENSE"}
 requires-python = ">=3.8"
@@ -26,7 +28,7 @@ dependencies = [
     "jaxlib",
     "nibabel",
     "nilearn==0.9.1",
-    "numpy<=1.22",
+    "numpy>=1.22,<=1.26",
     "pylops>=1.18.2",
     "pyproximal>=0.4.0",
     "pywavelets",

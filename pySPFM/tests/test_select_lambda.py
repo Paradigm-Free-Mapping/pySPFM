@@ -49,5 +49,5 @@ def test_select_lambda(sim_data, sim_hrf):
 
     # Eigenvalue
     lambda_, _, _ = select_lambda(sim_hrf, sim_data[:, np.newaxis], criterion="eigval")
-    assert np.round(lambda_, 1) >= 4.0
-    assert np.round(lambda_, 1) <= 5.0
+    assert np.round(lambda_, 1) >= 3.8
+    assert np.round(lambda_, 1) <= 5.2

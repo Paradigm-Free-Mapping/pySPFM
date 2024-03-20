@@ -40,7 +40,7 @@ jobs:
                 echo "Restoring environment from cache"
                 source activate py<< parameters.PYTHON >>_env
             else
-                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> numpy=1.21 -yq
+                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
                 source activate py<< parameters.PYTHON >>_env
                 pip install -e .[tests,doc]
             fi
@@ -133,7 +133,9 @@ jobs:
           name: Linting
           command: |
             source activate py3.9_env
-            flake8 /tmp/src/pySPFM/pySPFM
+            apt-get update
+            apt-get install -yqq make
+            make lint
       - store_artifacts:
           path: /tmp/data/lint
 
@@ -145,7 +147,7 @@ workflows:
           name: py_env-<< matrix.PYTHON >>
           matrix:
             parameters:
-              PYTHON: ["3.10", "3.9", "3.8"]
+              PYTHON: ["3.8", "3.9", "3.10", "3.11", "3.12"]
       - style_check:
           requires:
             - py_env-3.9
@@ -153,14 +155,14 @@ workflows:
           name: py_unittest-<< matrix.PYTHON >>
           matrix:
             parameters:
-              PYTHON: ["3.10", "3.9", "3.8"]
+              PYTHON: ["3.8", "3.9", "3.10", "3.11", "3.12"]
           requires:
             - py_env-<< matrix.PYTHON >>
       - py_integration:
           name: py_integration-<< matrix.PYTHON >>
           matrix:
             parameters:
-              PYTHON: ["3.10", "3.9", "3.8"]
+              PYTHON: ["3.8", "3.9", "3.10", "3.11", "3.12"]
           requires:
             - py_env-<< matrix.PYTHON >>
       - build_docs:
