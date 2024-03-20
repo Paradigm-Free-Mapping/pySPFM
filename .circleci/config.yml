@@ -145,7 +145,7 @@ workflows:
           name: py_env-<< matrix.PYTHON >>
           matrix:
             parameters:
-              PYTHON: ["3.10", "3.9", "3.8"]
+              PYTHON: ["3.8", "3.9", "3.10", "3.11", "3.12"]
       - style_check:
           requires:
             - py_env-3.9
@@ -153,14 +153,14 @@ workflows:
           name: py_unittest-<< matrix.PYTHON >>
           matrix:
             parameters:
-              PYTHON: ["3.10", "3.9", "3.8"]
+              PYTHON: ["3.8", "3.9", "3.10", "3.11", "3.12"]
           requires:
             - py_env-<< matrix.PYTHON >>
       - py_integration:
           name: py_integration-<< matrix.PYTHON >>
           matrix:
             parameters:
-              PYTHON: ["3.10", "3.9", "3.8"]
+              PYTHON: ["3.8", "3.9", "3.10", "3.11", "3.12"]
           requires:
             - py_env-<< matrix.PYTHON >>
       - build_docs:
