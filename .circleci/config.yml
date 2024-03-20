@@ -133,6 +133,8 @@ jobs:
           name: Linting
           command: |
             source activate py3.9_env
+            apt-get update
+            apt-get install -yqq make
             make lint
       - store_artifacts:
           path: /tmp/data/lint
