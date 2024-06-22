@@ -168,7 +168,7 @@ def _generate_shared_lambdas_space(coefs, lambdas, n_lambdas, n_surrogates):
     return coefs_sorted, lambdas_sorted
 
 
-def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
+def stability_selection(hrf_norm, data, n_lambdas, n_surrogates, use_fista=False):
     """Stability Selection for deconvolution.
 
     Parameters
@@ -181,6 +181,8 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
         Number of lambdas.
     n_surrogates : int
         Number of surrogates.
+    use_fista : bool, optional
+        Whether to use FISTA in favor of LARS to solve the regularization path.
 
     Returns
     -------
@@ -203,7 +205,7 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
 
         # Solve LARS
         fut_stability = solve_regularization_path(
-            hrf_norm[subsample_idx, :], data[subsample_idx], n_lambdas, "stability"
+            hrf_norm[subsample_idx, :], data[subsample_idx], n_lambdas, "stability", use_fista
         )
         stability_estimates.append(fut_stability)
 

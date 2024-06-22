@@ -169,6 +169,7 @@ def fista(
     lambda_echo=-1,
     use_pylops=False,
     positive_only=False,
+    regressors=None,
 ):
     """FISTA solver for PFM.
 
@@ -201,6 +202,9 @@ def fista(
         Use pylops library to solve FISTA instead of using pySPFM's FISTA, by default False
     positive_only : bool, optional
         If True, the estimated signal will be forced to be positive, by default False
+    regressors : ndarray
+        Matrix with regressors to be included in the deconvolution. Regressors are NOT
+        included in the regularization step. By default None.
 
     Returns
     -------
@@ -227,7 +231,7 @@ def fista(
 
     c_ist = 1 / (jnp.linalg.norm(hrf) ** 2)
 
-    if use_pylops:
+    if use_pylops and regressors is None:
         # Use pylops if lambda does not need to be updated
         hrf = pylops.MatrixMult(hrf)
 
@@ -256,7 +260,19 @@ def fista(
         if positive_only:
             s = np.sign(hrf[1, 0]) * jnp.maximum(np.sign(hrf[1, 0]) * s, 0)
 
+    elif use_pylops and regressors is not None:
+        raise ValueError("The regressors option is not available with pylops.")
     else:
+        # Append the regressors matrix to the HRF matrix.
+        if regressors is not None:
+            if regressors.shape[0] != n_scans and regressors.shape[1] == n_scans:
+                regressors = regressors.T
+            elif regressors.shape[0] != n_scans and regressors.shape[1] != n_scans:
+                raise ValueError("The regressors matrix doesn't have the right dimensions.")
+
+            n_regressors = regressors.shape[1]
+            hrf = np.hstack((hrf, regressors))
+
         # Use FISTA with updating lambda
         hrf_trans = hrf.T
         hrf_cov = jnp.dot(hrf_trans, hrf)
