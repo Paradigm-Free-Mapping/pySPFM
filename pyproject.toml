@@ -46,7 +46,7 @@ doc = [
     "ipykernel",
     "matplotlib",
     "myst_nb",
-    "sphinx<3",
+    "sphinx",
     "sphinx_copybutton",
     "sphinx_rtd_theme>=1.2.2",
     "sphinx-argparse",
