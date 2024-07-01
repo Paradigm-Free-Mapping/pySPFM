@@ -51,6 +51,9 @@ doc = [
     "sphinx_rtd_theme>=1.2.2",
     "sphinx-argparse",
     "sphinxcontrib-bibtex",
+    "sphinx_design",
+    "sphinx_gallery",
+    "sphinx-book-theme",
 ]
 
 tests = [
