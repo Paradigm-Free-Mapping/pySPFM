@@ -4,7 +4,7 @@
 or using the stability selection method, which avoids the selection of lambda and yields more robust
 estimates of the neuronal-related signal at the cost of higher computation time.
 
-## Fixed $\lambda$
+## Fixed regularization parameter lambda
 
 The fixed $\lambda$ method is the simplest one. It consists in choosing one of the following methods
 to automatically calculate the regularization parameter lambda:
