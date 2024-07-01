@@ -104,6 +104,11 @@ def fista_results(testpath):
 
 
 @pytest.fixture
+def fista_positives(testpath):
+    return fetch_file("9jbas", testpath, "fista_positives.npy")
+
+
+@pytest.fixture
 def coef_path_results(testpath):
     return fetch_file("nxgeq", testpath, "coef_path.npy")
 

@@ -1,3 +1,5 @@
+"""Workflow to estimate the activity-inducing signal from AUC data."""
+
 import argparse
 import datetime
 import logging
@@ -83,13 +85,17 @@ def _get_parser():
         "--threshold",
         dest="thr",
         help=(
-            "Percentile to threshold the AUC data with. The percentile is applied to the second "
-            "mask provided with the '-m' flag if the second mask is a binary mask. If the second "
-            "mask is not binary, the values on the second mask are used as the threshold. "
+            "Percentile to threshold the AUC data with or the threshold value itself."
+            "The percentile is applied to the second mask provided with the '-m' flag if the "
+            "second mask is a binary mask. If the second mask is not binary, the values on the "
+            "second mask are used as the threshold. "
+            "When the threshold value is given, the second mask is ignored. "
+            "Percentiles are given in the range [1, 100], while threshold values are given in "
+            "the range [0, 1). "
             "Default is 95."
         ),
-        type=int,
-        default=95,
+        type=float,
+        default=95.0,
     )
     optional.add_argument(
         "--strategy",
@@ -159,6 +165,33 @@ def _get_parser():
         default=False,
     )
     optional.add_argument(
+        "--group",
+        dest="group",
+        action="store_true",
+        help=(
+            "Consider consecutive coefficients as belonging to the same block activation. Default "
+            "= False."
+        ),
+        default=False,
+    )
+    optional.add_argument(
+        "--group-distance",
+        dest="group_distance",
+        type=int,
+        help=(
+            "Maximum distance between coefficients to be considered part of the same block "
+            "activation. Default = 3."
+        ),
+        default=3,
+    )
+    optional.add_argument(
+        "--innovation-distance",
+        dest="block_dist",
+        type=int,
+        help=("Minimum number of TRs in between of the peaks found. Default = 2."),
+        default=2,
+    )
+    optional.add_argument(
         "-debug",
         "--debug",
         dest="debug",
@@ -176,7 +209,7 @@ def _get_parser():
         action="store_true",
         default=False,
     )
-    optional.add_argument("-v", "--version", action="version", version=("%(prog)s " + __version__))
+    optional.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
 
     parser._action_groups.append(optional)
 
@@ -189,7 +222,7 @@ def auc_to_estimates(
     mask_fn,
     output_filename,
     tr,
-    thr=95,
+    thr=95.0,
     thr_strategy="static",
     out_dir=".",
     te=[0],
@@ -197,10 +230,68 @@ def auc_to_estimates(
     block_model=False,
     n_jobs=4,
     use_bids=False,
+    group=False,
+    group_distance=3,
+    block_dist=2,
     debug=False,
     quiet=False,
     command_str=None,
 ):
+    """Estimate the activity-inducing signal from AUC data.
+
+    Parameters
+    ----------
+    data_fn : str
+        The name of the file containing fMRI data.
+    auc_fn : str
+        The name of the file containing AUC data.
+    mask_fn : list
+        The name of the files containing the mask for the fMRI data and the AUC thresholding mask.
+    output_filename : str
+        The name of the output file with no extension.
+    tr : float
+        TR of the fMRI data acquisition.
+    thr : float, optional
+        Percentile to threshold the AUC data with or the threshold value itself. The percentile is
+        applied to the second mask provided with the '-m' flag if the second mask is a binary mask.
+        If the second mask is not binary, the values on the second mask are used as the threshold.
+        When the threshold value is given, the second mask is ignored. Percentiles are given in the
+        range [1, 100], while threshold values are given in the range [0, 1). Default is 95.0.
+    thr_strategy : str, optional
+        Strategy to threshold the AUC data with. If the second mask is a binary mask, the can be
+        applied with a static threshold ('static') or a time-dependet threshold ('time').
+        Default is 'static'.
+    out_dir : str, optional
+        Output directory. Default is current.
+    te : list, optional
+        List with TE of the fMRI data acquisition. Default = [0].
+    hrf_model : str, optional
+        HRF model to use. Default is 'spm'. Options are 'spm', 'glover', or a custom HRF file with
+        the '.1D' or '.txt' extension.
+    block_model : bool, optional
+        Estimate innovation signals. Default = False.
+    n_jobs : int, optional
+        Number of jobs to parallelize for loops (default = 4)., by default 4.
+    use_bids : bool, optional
+        Use BIDS-style suffix on the given `output` (default = False). pySPFM assumes that `output`
+        follows the BIDS convention. Not using this option will default to using AFNI to update the
+        header of the output.
+    group : bool, optional
+        Consider consecutive coefficients as belonging to the same block activation. Default =
+        False.
+    group_distance : int, optional
+        Maximum distance between coefficients to be considered part of the same block activation.
+        Default = 3.
+    block_dist : int, optional
+        Minimum number of TRs in between of the peaks found. Default = 2.
+    debug : bool, optional
+        Logs in the terminal will have increased verbosity, and will also be written into a .tsv
+        file in the output directory, by default False
+    quiet : bool, optional
+        Log only warnings and errors, by default False.
+    command_str : _type_, optional
+        String with the command-line call to this function, by default None.
+    """
     # Generate output directory if it doesn't exist
     out_dir = op.abspath(out_dir)
     if not op.isdir(out_dir):
@@ -208,12 +299,10 @@ def auc_to_estimates(
 
     # Save command into sh file, if the command-line interface was used
     if command_str is not None:
-        command_file = open(os.path.join(out_dir, "call.sh"), "w")
-        command_file.write(command_str)
-        command_file.close()
-
+        with open(os.path.join(out_dir, "call.sh"), "w") as command_file:
+            command_file.write(command_str)
     LGR = logging.getLogger("GENERAL")
-    # RefLGR = logging.getLogger("REFERENCES")
+
     # create logfile name
     basename = "auc_to_estimates_"
     extension = "tsv"
@@ -222,7 +311,7 @@ def auc_to_estimates(
     refname = op.join(out_dir, "_references.txt")
     utils.setup_loggers(logname, refname, quiet=quiet, debug=debug)
 
-    LGR.info("Using output directory: {}".format(out_dir))
+    LGR.info(f"Using output directory: {out_dir}")
 
     n_te = len(te)
 
@@ -264,7 +353,6 @@ def auc_to_estimates(
         if len(auc_mask.shape) == 3:
             # If the mask is binary, then read the AUC values inside of the mask
             if np.max(auc_mask.get_fdata()) == 1:
-
                 auc_thr_values = read_data(auc_fn, mask_fn[1])[0]
 
                 if thr_strategy == "static":
@@ -273,7 +361,7 @@ def auc_to_estimates(
                     )
                     # Threshold the whole-brain AUC based on the thr percentile of the AUC values
                     # in the mask
-                    auc_thr = auc - np.percentile(auc_thr_values, thr)
+                    auc_thr = auc - np.percentile(auc_thr_values, int(thr))
                     auc_thr[auc_thr < 0] = 0
                 else:
                     LGR.info(
@@ -285,7 +373,7 @@ def auc_to_estimates(
                     auc_thr = np.zeros(auc.shape)
                     for tr_idx in range(n_scans):
                         auc_thr[tr_idx, :] = auc[tr_idx, :] - np.percentile(
-                            auc_thr_values[tr_idx, :], thr
+                            auc_thr_values[tr_idx, :], int(thr)
                         )
                         auc_thr[tr_idx, auc_thr[tr_idx, :] < 0] = 0
 
@@ -309,9 +397,16 @@ def auc_to_estimates(
             auc_thr[auc_thr < 0] = 0
         else:
             raise ValueError("The mask used to threshold the AUC must be 3D or 4D.")
-    # Raise error if thr is not 0 and mask_fn has only one element
-    elif thr != 0 and len(mask_fn) != 1:
-        raise ValueError("If the threshold is not 0, then the 'mask' flag must have two elements.")
+    elif 0 < thr < 1:
+        LGR.info(f"Thresholding AUC values with a threshold of {thr}...")
+        # Threshold the whole-brain AUC based on the thr provided by the user
+        auc_thr = auc - thr
+        auc_thr[auc_thr < 0] = 0
+    elif thr > 1 and len(mask_fn) != 1:
+        # Raise error if thr is not 0 and mask_fn has only one element
+        raise ValueError(
+            "If the threshold is a percentile, then the 'mask' flag must have two elements."
+        )
     # If thr is 0, then the AUC is supposed to be already thresholded
     else:
         LGR.warning("Threshold 0 selected. AUC is assumed to be already thresholded.")
@@ -327,19 +422,19 @@ def auc_to_estimates(
     # Solve ordinary least squares problem to calculate estimates
     LGR.info("Calculating estimates...")
     if block_model:
-        estimates_spike = debiasing.debiasing_block(hrf, data_masked, auc_thr, n_jobs)
+        estimates_spike = debiasing.debiasing_block(hrf, data_masked, auc_thr, n_jobs, block_dist)
         fitts = np.dot(hrf, estimates_spike)
     else:
-        estimates_spike, fitts = debiasing.debiasing_spike(hrf, data_masked, auc_thr, n_jobs)
+        estimates_spike, fitts = debiasing.debiasing_spike(
+            hrf, data_masked, auc_thr, n_jobs, group=group, group_dist=group_distance
+        )
 
     LGR.info("Estimates calculated.")
 
     # Save estimates and thresholded AUC
     LGR.info("Saving results...")
-    out_bids_keywords = []
+    out_bids_keywords = ["AUC"]
 
-    # Save thresholded AUC
-    out_bids_keywords.append("AUC")
     output_name = get_outname(output_filename, "aucThresholded", "nii.gz", use_bids)
     write_data(
         auc,
@@ -351,12 +446,8 @@ def auc_to_estimates(
     )
 
     # Save activity-inducing signal
-    if n_te == 1:
-        output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
-        out_bids_keywords.append("activityInducing")
-    elif n_te > 1:
-        output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
-        out_bids_keywords.append("activityInducing")
+    output_name = get_outname(output_filename, "activityInducing", "nii.gz", use_bids)
+    out_bids_keywords.append("activityInducing")
     write_data(
         estimates_spike,
         os.path.join(out_dir, output_name),
@@ -405,7 +496,7 @@ def auc_to_estimates(
 
 
 def _main():
-    """auc_to_estimates entry point"""
+    """Entry point for auc_to_estimates."""
     command_str = "auc_to_estimates " + " ".join(sys.argv[1:])
     options = _get_parser().parse_args()
     auc_to_estimates(**vars(options), command_str=command_str)

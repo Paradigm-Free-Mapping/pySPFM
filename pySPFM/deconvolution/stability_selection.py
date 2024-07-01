@@ -1,7 +1,10 @@
-"""Stability selection functions for the deconvolution module."""
+"""Stability Selection for deconvolution."""
+
 import logging
 import os
 
+import jax
+import jax.numpy as jnp
 import numpy as np
 
 from pySPFM.deconvolution.lars import solve_regularization_path
@@ -56,21 +59,98 @@ def get_subsampling_indices(n_scans, n_echos, mode="same"):
     return subsample_idx
 
 
-def calculate_auc(coefs, lambdas, n_lambdas, n_surrogates):
-    """
-    Calculate the AUC from the stability paths.
+def calculate_auc(coefs, lambdas, n_surrogates):
+    """Calculate the AUC for a TR.
 
     Parameters
     ----------
     coefs : np.ndarray
-        Estimates of the regularization path for different values of lambda and surrogates.
+        Matrix of coefficients of shape (n_lambdas, n_surrogates).
     lambdas : np.ndarray
-        Values of lambda for the regularization path.
+        Array of lambdas of shape (n_lambdas).
+    n_surrogates : int
+        Number of surrogates.
 
     Returns
     -------
     auc : float
-        AUC at the TR level.
+        AUC for a TR.
+    """
+    # Sum of all lambdas
+    lambdas_sum = jnp.sum(lambdas)
+
+    # Binarize coefficients
+    coefs = jnp.where(coefs != 0, 1, 0)
+    sum_ = 0
+
+    # If coefs is two-dimensional, use the first dimension to calculate the AUC
+    if coefs.ndim == 2:
+        probs = jnp.sum(coefs, axis=1) / n_surrogates
+        for i in range(len(lambdas)):
+            sum_ += probs[i] * lambdas[i] / lambdas_sum
+
+    # If coefs is one-dimensional, use the whole array to calculate the AUC
+    elif coefs.ndim == 1:
+        for i in range(len(lambdas)):
+            sum_ += coefs[i] * lambdas[i] / lambdas_sum
+
+    return sum_
+
+
+def _get_tr_lambdas(estimates, lambdas, n_lambdas, n_surrogates):
+    """Get lambdas and coefficients for a TR.
+
+    Parameters
+    ----------
+    estimates : np.ndarray
+        Matrix of coefficients of shape (n_lambdas, n_surrogates).
+    lambdas : np.ndarray
+        Array of lambdas of shape (n_lambdas, n_surrogates).
+    n_lambdas : int
+        Number of lambdas.
+    n_surrogates : int
+        Number of surrogates.
+
+    Returns
+    -------
+    estimates_tr : np.ndarray
+        Coefficients for a TR.
+    lambdas_tr : np.ndarray
+        Lambdas for a TR.
+    """
+    # Check if all lambdas are the same across axis 1.
+    # If they are not, merge all lambdas into single, shared space.
+    if not jnp.allclose(jnp.sum(lambdas, axis=1), n_lambdas * lambdas[:, 0]):
+        estimates_tr, lambdas_tr = _generate_shared_lambdas_space(
+            estimates, lambdas, n_lambdas, n_surrogates
+        )
+    else:
+        estimates_tr = estimates
+        lambdas_tr = lambdas[:, 0]
+
+    return estimates_tr, lambdas_tr
+
+
+def _generate_shared_lambdas_space(coefs, lambdas, n_lambdas, n_surrogates):
+    """Generate shared space of lambdas and coefficients.
+
+    Parameters
+    ----------
+    coefs : np.ndarray
+        Coefficients of shape (n_lambdas, n_surrogates).
+    lambdas : np.ndarray
+        Lambdas of shape (n_lambdas, n_surrogates).
+    n_lambdas : int
+        Number of lambdas.
+    n_surrogates : int
+        Number of surrogates.
+
+    Returns
+    -------
+    coefs_sorted : np.ndarray
+        Sorted coefficients.
+    lambdas_sorted : np.ndarray
+        Sorted lambdas.
     """
     # Create shared space of lambdas and coefficients
     lambdas_shared = lambdas.reshape((n_lambdas * n_surrogates))
@@ -78,51 +158,36 @@ def calculate_auc(coefs, lambdas, n_lambdas, n_surrogates):
 
     # Project lambdas and coefficients into shared space
     for i in range(lambdas.shape[0]):
-        # lambdas_shared[i * lambdas.shape[1] : (i + 1) * lambdas.shape[1]] = np.squeeze(
-        #     lambdas[i, :]
-        # )
         coefs_shared[i * coefs.shape[1] : (i + 1) * coefs.shape[1]] = np.squeeze(coefs[i, :])
 
     # Sort lambdas and get the indices
     lambdas_sorted_idx = np.argsort(-lambdas_shared)
     lambdas_sorted = -np.sort(-lambdas_shared)
 
-    # Sum of all lambdas
-    sum_lambdas = np.sum(lambdas_sorted)
-
     # Sort coefficients
     coefs_sorted = coefs_shared[lambdas_sorted_idx]
 
-    # Make coefs_sorted binary
-    coefs_sorted[coefs_sorted != 0] = 1
-
-    # Calculate the AUC
-    auc = 0
-    for i in range(lambdas_shared.shape[0]):
-        auc += coefs_sorted[i] * lambdas_sorted[i] / sum_lambdas
-
-    return auc
+    return coefs_sorted, lambdas_sorted
 
 
-def stability_selection(hrf, data, n_lambdas, n_surrogates):
-    """
-    Main stability selection workflow at the voxel level.
+def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
+    """Stability Selection for deconvolution.
 
     Parameters
     ----------
-    hrf : np.ndarray
+    hrf_norm : np.ndarray
         Normalized HRF.
     data : np.ndarray
-        Data to be deconvolved.
+        Data.
     n_lambdas : int
-        Number of lambdas for the regularization path.
+        Number of lambdas.
     n_surrogates : int
         Number of surrogates.
 
     Returns
     -------
     auc : np.ndarray
-        Time series of AUC values.
+        AUC for each TR.
     """
     # Get n_scans, n_echos, n_voxels
     n_scans = hrf.shape[1]
@@ -134,7 +199,7 @@ def stability_selection(hrf, data, n_lambdas, n_surrogates):
 
     # Generate surrogates and compute the regularization path
     stability_estimates = []
-    for surr_idx in range(n_surrogates):
+    for _ in range(n_surrogates):
         # Subsampling for Stability Selection
         subsample_idx = get_subsampling_indices(n_scans, n_echos)
 
@@ -150,7 +215,14 @@ def stability_selection(hrf, data, n_lambdas, n_surrogates):
 
     # Calculate the AUC for each TR
     auc = np.zeros((n_scans))
+    calculate_auc_jit = jax.jit(calculate_auc)
     for tr_idx in range(n_scans):
-        auc[tr_idx] = calculate_auc(estimates[tr_idx, :, :], lambdas, n_lambdas, n_surrogates)
+        # Get lambdas and coefficients for the TR
+        estimates_tr, lambdas_tr = _get_tr_lambdas(
+            estimates[tr_idx, :, :], lambdas, n_lambdas, n_surrogates
+        )
+
+        # Calculate AUC
+        auc[tr_idx] = calculate_auc_jit(estimates_tr, lambdas_tr, n_surrogates).block_until_ready()
 
     return auc

@@ -1,6 +1,6 @@
 """Utils of pySPFM."""
+
 import logging
-from os.path import expanduser, join
 
 import yaml
 from dask import config
@@ -97,8 +97,7 @@ def get_outname(outname, keyword, ext, use_bids=False):
 
 def get_keyword_description(keyword):
     """
-    Get the description of the keyword for BIDS sidecar
-
+    Get the description of the keyword for BIDS sidecar.
 
     Parameters
     ----------
@@ -110,7 +109,6 @@ def get_keyword_description(keyword):
     keyword_description : str
         Description of the keyword.
     """
-
     if "innovation" in keyword:
         keyword_description = (
             "Deconvolution-estimated innovation signal; i.e., the derivative"
@@ -142,14 +140,33 @@ def get_keyword_description(keyword):
     return keyword_description
 
 
-def dask_scheduler(jobs):
+def dask_scheduler(jobs, jobqueue=None):
     """
-    Checks if the user has a dask_jobqueue configuration file, and if so,
-    returns the appropriate scheduler according to the file parameters
+    Check if the user has a dask_jobqueue configuration file.
+
+    If so, return the appropriate scheduler according to the file parameters.
+
+    Parameters
+    ----------
+    jobs : int
+        Number of jobs.
+    jobqueue : str, optional
+        Path to the jobqueue YAML file, by default None
+
+    Returns
+    -------
+    client : dask.distributed.Client
+        Dask client.
+    cluster : dask.distributed.Cluster
+        Dask cluster.
     """
-    # look if default ~ .config/dask/jobqueue.yaml exists
-    with open(join(expanduser("~"), ".config/dask/jobqueue.yaml"), "r") as stream:
-        data = yaml.load(stream, Loader=yaml.FullLoader)
+    # look if jobqueue.yaml exists
+    if jobqueue is None:
+        data = None
+    else:
+        LGR.info(f"Using jobqueue configuration file: {jobqueue}")
+        with open(jobqueue, "r") as stream:
+            data = yaml.load(stream, Loader=yaml.FullLoader)
 
     if data is None:
         LGR.warning(
@@ -162,32 +179,49 @@ def dask_scheduler(jobs):
         )
         cluster = None
     else:
-        config.set(distributed__comm__timeouts__tcp="90s")
-        config.set(distributed__comm__timeouts__connect="90s")
-        config.set(scheduler="single-threaded")
-        config.set({"distributed.scheduler.allowed-failures": 50})
-        config.set(admin__tick__limit="3h")
-        if "sge" in data["jobqueue"]:
-            cluster = SGECluster()
-            cluster.scale(jobs)
-        elif "pbs" in data["jobqueue"]:
-            cluster = PBSCluster()
-            cluster.scale(jobs)
-        elif "slurm" in data["jobqueue"]:
-            cluster = SLURMCluster()
-            cluster.scale(jobs)
-        else:
-            LGR.warning(
-                "dask configuration wasn't detected, "
-                "if you are using a cluster please look at "
-                "the jobqueue YAML example, modify it so it works in your cluster "
-                "and add it to ~/.config/dask "
-                "local configuration will be used."
-                "You can find a jobqueue YAML example in the pySPFM/jobqueue.yaml file."
-            )
-            cluster = None
-    if cluster is None:
-        client = None
-    else:
-        client = Client(cluster)
+        cluster = initiate_cluster(data, jobs)
+    client = None if cluster is None else Client(cluster)
     return client, cluster
+
+
+def initiate_cluster(data, jobs):
+    """
+    Initiate a dask cluster.
+
+    Parameters
+    ----------
+    data : dict
+        Dictionary with the jobqueue parameters.
+    jobs : int
+        Number of jobs.
+
+    Returns
+    -------
+    result : dask.distributed.Cluster
+        Dask cluster.
+    """
+    config.set(distributed__comm__timeouts__tcp="90s")
+    config.set(distributed__comm__timeouts__connect="90s")
+    config.set(scheduler="single-threaded")
+    config.set({"distributed.scheduler.allowed-failures": 50})
+    config.set(admin__tick__limit="3h")
+    if "sge" in data["jobqueue"]:
+        result = SGECluster()
+        result.scale(jobs)
+    elif "pbs" in data["jobqueue"]:
+        result = PBSCluster()
+        result.scale(jobs)
+    elif "slurm" in data["jobqueue"]:
+        result = SLURMCluster()
+        result.scale(jobs)
+    else:
+        LGR.warning(
+            "dask configuration wasn't detected, "
+            "if you are using a cluster please look at "
+            "the jobqueue YAML example, modify it so it works in your cluster "
+            "and add it to ~/.config/dask "
+            "local configuration will be used."
+            "You can find a jobqueue YAML example in the pySPFM/jobqueue.yaml file."
+        )
+        result = None
+    return result
