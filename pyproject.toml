@@ -43,6 +43,7 @@ Documentation = "https://www.pySPFM.readthedocs.io"
 [project.optional-dependencies]
 dev = ["pre-commit"]
 doc = [
+    "ipykernel",
     "matplotlib",
     "sphinx>=6.2.1",
     "sphinx_copybutton",
