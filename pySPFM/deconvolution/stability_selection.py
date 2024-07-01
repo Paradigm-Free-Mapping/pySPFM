@@ -13,16 +13,18 @@ LGR = logging.getLogger("GENERAL")
 
 
 def get_subsampling_indices(n_scans, n_echos, mode="same"):
-    """Get subsampling indices for stability selection.
+    """
+    Get subsampling indices to generate surrogate data for stability selection.
 
     Parameters
     ----------
     n_scans : int
         Number of scans.
     n_echos : int
-        Number of echoes.
+        Number of echos.
     mode : str, optional
-        Mode of subsampling. Can be "same" or "different".
+        Mode of subsampling. For multi-echo data you can choose between "same" and "different"
+        subsampling indices across echos. The default is "same".
 
     Returns
     -------
@@ -168,7 +170,7 @@ def _generate_shared_lambdas_space(coefs, lambdas, n_lambdas, n_surrogates):
     return coefs_sorted, lambdas_sorted
 
 
-def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
+def stability_selection(hrf, data, n_lambdas, n_surrogates):
     """Stability Selection for deconvolution.
 
     Parameters
@@ -188,8 +190,8 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
         AUC for each TR.
     """
     # Get n_scans, n_echos, n_voxels
-    n_scans = hrf_norm.shape[1]
-    n_echos = int(np.ceil(hrf_norm.shape[0] / n_scans))
+    n_scans = hrf.shape[1]
+    n_echos = int(np.ceil(hrf.shape[0] / n_scans))
 
     # Initialize variables to store the results
     estimates = np.zeros((n_scans, n_lambdas, n_surrogates))
@@ -203,7 +205,7 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
 
         # Solve LARS
         fut_stability = solve_regularization_path(
-            hrf_norm[subsample_idx, :], data[subsample_idx], n_lambdas, "stability"
+            hrf[subsample_idx, :], data[subsample_idx], n_lambdas, "stability"
         )
         stability_estimates.append(fut_stability)
 

@@ -10,7 +10,7 @@ def test_solve_regularization_path(sim_data, sim_hrf, coef_path_results):
     sim_hrf = np.load(sim_hrf, allow_pickle=True)
 
     # BIC
-    coef_path, lambda_ = lars.solve_regularization_path(
+    coef_path, lambda_, _, _ = lars.solve_regularization_path(
         sim_hrf, sim_data, n_lambdas=50, criterion="bic"
     )
 
@@ -19,7 +19,7 @@ def test_solve_regularization_path(sim_data, sim_hrf, coef_path_results):
     assert np.allclose(coef_path, true_path[:, 0])
 
     # AIC
-    coef_path, lambda_ = lars.solve_regularization_path(
+    coef_path, lambda_, _, _ = lars.solve_regularization_path(
         sim_hrf, sim_data, n_lambdas=50, criterion="aic"
     )
 
