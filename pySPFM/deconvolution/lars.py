@@ -99,4 +99,4 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic"):
         optimal_lambda = lambdas[optimal_lambda_idx]
         coefs = coef_path[:, optimal_lambda_idx]
 
-    return coefs, optimal_lambda
+    return coefs, optimal_lambda, coef_path, lambdas
