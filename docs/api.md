@@ -1,45 +1,52 @@
-.. _api_ref:
+(api-ref)=
 
+```{eval-rst}
 .. currentmodule:: pySPFM
+```
 
-###
-API
-###
+# API
 
+(api-pyspfm-ref)=
 
-.. _api_pySPFM_ref:
+## {mod}`pySPFM.workflows`: The main pySPFM workflow
 
-**************************************************
-:mod:`pySPFM.workflows`: The pySPFM workflows
-**************************************************
-
+```{eval-rst}
 .. automodule:: pySPFM.workflows
    :no-members:
    :no-inherited-members:
+```
 
+```{eval-rst}
 .. currentmodule:: pySPFM.workflows
+```
 
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   pySPFM.workflows.pySPFM
-
-.. _api_deconvolution_ref:
-
-**************************************************
-:mod:`pySPFM.deconvolution`: Deconvolution methods
-**************************************************
-
-.. automodule:: pySPFM.deconvolution
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: pySPFM.deconvolution
-
+```{eval-rst}
 .. autosummary::
    :toctree: generated/
    :template: module.rst
+
+   pySPFM.workflows.pySPFM
+   pySPFM.workflows.auc_to_estimates
+```
+
+(api-deconvolution-ref)=
+
+## {mod}`pySPFM.deconvolution`: Deconvolution methods
+
+```{eval-rst}
+.. automodule:: pySPFM.deconvolution
+   :no-members:
+   :no-inherited-members:
+```
+
+```{eval-rst}
+.. currentmodule:: pySPFM.deconvolution
+```
+
+```{eval-rst}
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
 
    pySPFM.deconvolution.debiasing
    pySPFM.deconvolution.fista
@@ -47,45 +54,55 @@ API
    pySPFM.deconvolution.lars
    pySPFM.deconvolution.select_lambda
    pySPFM.deconvolution.spatial_regularization
+   pySPFM.deconvolution.stability_selection
 
+```
 
-.. _api_io_ref:
+(api-io-ref)=
 
-**************************************************
-:mod:`pySPFM.io`: Input/Output methods
-**************************************************
+## {mod}`pySPFM.io`: Input/Output methods
 
+```{eval-rst}
 .. automodule:: pySPFM.io
    :no-members:
    :no-inherited-members:
+```
 
+```{eval-rst}
 .. currentmodule:: pySPFM.io
+```
 
+```{eval-rst}
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
    pySPFM.io.read_data
-   pySPFM.io.reshape_data
    pySPFM.io.update_header
    pySPFM.io.write_data
+   pySPFM.io.write_json
 
+```
 
-.. _api_utils_ref:
+(api-utils-ref)=
 
-**************************************************
-:mod:`pySPFM.utils`: Miscellaneous utility methods
-**************************************************
+## {mod}`pySPFM.utils`: Miscellaneous utility methods
 
+```{eval-rst}
 .. automodule:: pySPFM.utils
    :no-members:
    :no-inherited-members:
+```
 
+```{eval-rst}
 .. currentmodule:: pySPFM.utils
+```
 
+```{eval-rst}
 .. autosummary::
    :toctree: generated/
    :template: module.rst
 
    pySPFM.utils.setup_loggers
    pySPFM.utils.teardown_loggers
+```
