@@ -45,6 +45,7 @@ dev = ["pre-commit"]
 doc = [
     "ipykernel",
     "matplotlib",
+    "myst_nb",
     "sphinx>=6.2.1",
     "sphinx_copybutton",
     "sphinx_rtd_theme>=1.2.2",
