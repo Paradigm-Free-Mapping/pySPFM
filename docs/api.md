@@ -23,9 +23,10 @@
 ```{eval-rst}
 .. autosummary::
    :toctree: generated/
-   :template: function.rst
+   :template: module.rst
 
    pySPFM.workflows.pySPFM
+   pySPFM.workflows.auc_to_estimates
 ```
 
 (api-deconvolution-ref)=
@@ -45,7 +46,7 @@
 ```{eval-rst}
 .. autosummary::
    :toctree: generated/
-   :template: module.rst
+   :template: function.rst
 
    pySPFM.deconvolution.debiasing
    pySPFM.deconvolution.fista

@@ -89,7 +89,7 @@ When using pySPFM, please include the following citations:
 > <p>
 > 3. Caballero-Gaudes, C., Moia, S., Panwar, P., Bandettini, P. A., & Gonzalez-Castillo, J. (2019).
 > <a href="https://doi.org/10.1016/j.neuroimage.2019.116081" target="_blank">A deconvolution algorithm for multi-echo functional MRI: Multi-echo Sparse Paradigm Free Mapping.</a>
-> <i>NeuroImage</i>, <i>202</i>, 116081–116081.
+> <i>NeuroImage</i>, <i>202</i>, 116081–116081.o
 > </p>
 >
 > <p>
@@ -110,10 +110,8 @@ pySPFM is licensed under GNU Lesser General Public License version 2.1.
 installation
 hemodynamic deconvolution
 usage
-examples
 outputs
 api
-cli
 ```
 
 ## Indices and tables
