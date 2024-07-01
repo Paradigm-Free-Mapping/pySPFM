@@ -1,11 +1,13 @@
 """FISTA solver for PFM."""
+
 import logging
 
+import jax
+import jax.numpy as jnp
 import numpy as np
 import pylops
 from pyproximal.optimization.primal import AcceleratedProximalGradient
 from pyproximal.proximal import L1, L2, L21_plus_L1
-from scipy import linalg
 
 from pySPFM.deconvolution.select_lambda import select_lambda
 
@@ -27,8 +29,10 @@ def proximal_operator_lasso(y, thr):
     x : ndarray
         Soft-thresholded data.
     """
-    x = y * np.maximum(np.zeros(y.shape), 1 - (thr / abs(y)))
-    x[np.abs(x) < np.finfo(float).eps] = 0
+    x = y * jnp.maximum(jnp.zeros(y.shape), 1 - (thr / jnp.abs(y)))
+
+    # Set values to zero if they are smaller than 1e-10
+    x = jnp.where(jnp.abs(x) < 1e-10, jnp.zeros(x.shape), x)
 
     return x
 
@@ -53,31 +57,102 @@ def proximal_operator_mixed_norm(y, thr, rho_val=0.8, groups="space"):
         Data thresholded with L2,1 + L1 mixed-norm proximal operator.
     """
     # Division parameter of proximal operator
-    div = np.nan_to_num(y / np.abs(y))
+    div = jnp.nan_to_num(y / jnp.abs(y))
 
     # First parameter of proximal operator
-    p_one = np.maximum(np.zeros(y.shape), (np.abs(y) - thr * rho_val))
+    p_one = jnp.maximum(jnp.zeros(y.shape), (jnp.abs(y) - thr * rho_val))
 
     # Second parameter of proximal operator
     if groups == "space":
-        foo = np.sum(np.maximum(np.zeros(y.shape), np.abs(y) - thr * rho_val) ** 2, axis=1)
+        foo = jnp.sum(jnp.maximum(jnp.zeros(y.shape), jnp.abs(y) - thr * rho_val) ** 2, axis=1)
         foo = foo.reshape(len(foo), 1)
-        foo = np.dot(foo, np.ones((1, y.shape[1])))
+        foo = jnp.dot(foo, jnp.ones((1, y.shape[1])))
     else:
-        foo = np.sum(np.maximum(np.zeros(y.shape), np.abs(y) - thr * rho_val) ** 2, axis=0)
+        foo = jnp.sum(jnp.maximum(np.zeros(y.shape), jnp.abs(y) - thr * rho_val) ** 2, axis=0)
         foo = foo.reshape(1, len(foo))
-        foo = np.dot(np.ones((y.shape[0], 1)), foo)
+        foo = jnp.dot(jnp.ones((y.shape[0], 1)), foo)
 
-    p_two = np.maximum(
-        np.zeros(y.shape),
-        np.ones(y.shape) - np.nan_to_num(thr * (1 - rho_val) / np.sqrt(foo)),
+    p_two = jnp.maximum(
+        jnp.zeros(y.shape),
+        jnp.ones(y.shape) - jnp.nan_to_num(thr * (1 - rho_val) / jnp.sqrt(foo)),
     )
 
-    # Proximal operation
-    x = div * p_one * p_two
+    return div * p_one * p_two
 
-    # Return result
-    return x
+
+def _fista_forward(v, hrf_cov, y_ista_s, c_ist):
+    """Forward step of FISTA.
+
+    Parameters
+    ----------
+    v : ndarray
+        Covariance matrix of the data and the HRF
+    hrf_cov : ndarray
+        Covariance matrix of the HRF
+    y_ista_s : ndarray
+        FISTA value of the current iteration
+    c_ist : float
+        ISTA parameter
+
+    Returns
+    -------
+    ndarray
+        Updated estimate of the activity-inducing (spike model) or innovation (block model) signal
+    """
+    s_fidelity = v - jnp.dot(hrf_cov, y_ista_s)
+
+    return y_ista_s + c_ist * s_fidelity
+
+
+def _fista_update(t_fista, s, s_old):
+    """Update FISTA parameters.
+
+    Parameters
+    ----------
+    t_fista : float
+        Current FISTA parameter
+    s : ndarray
+        Current estimate of the activity-inducing (spike model) or innovation (block model) signal
+    s_old : ndarray
+        Previous estimate of the activity-inducing (spike model) or innovation (block model) signal
+
+    Returns
+    -------
+    t_fista : float
+        Current FISTA parameter
+    y_fista_s : ndarray
+        Current estimate of the activity-inducing (spike model) or innovation (block model) signal
+    """
+    t_fista_old = t_fista
+    t_fista = 0.5 * (1 + jnp.sqrt(1 + 4 * (t_fista_old**2)))
+
+    y_fista_s = s + (s - s_old) * (t_fista_old - 1) / t_fista
+
+    return t_fista, y_fista_s
+
+
+def _has_converged(s, s_old, tol=1e-6):
+    """Check if FISTA has converged.
+
+    Parameters
+    ----------
+    s : ndarray
+        Current estimate of the activity-inducing (spike model) or innovation (block model) signal
+    s_old : ndarray
+        Previous estimate of the activity-inducing (spike model) or innovation (block model) signal
+    tol : float, optional
+        Tolerance for residuals to find convergence of inverse problem, by default 1e-6
+
+    Returns
+    -------
+    bool
+        True if FISTA has converged, False otherwise
+    """
+    # Calculate normalized error between current and previous estimate
+    estimate_error = jnp.abs(s - s_old) / jnp.abs(s_old)
+
+    # Check if the error is smaller than the tolerance for all voxels
+    return jnp.all(jnp.abs(estimate_error) <= tol).astype(jnp.bool_)
 
 
 def fista(
@@ -93,6 +168,7 @@ def fista(
     factor=10,
     lambda_echo=-1,
     use_pylops=False,
+    positive_only=False,
 ):
     """FISTA solver for PFM.
 
@@ -123,10 +199,12 @@ def fista(
         by default -1
     use_pylops : bool, optional
         Use pylops library to solve FISTA instead of using pySPFM's FISTA, by default False
+    positive_only : bool, optional
+        If True, the estimated signal will be forced to be positive, by default False
 
     Returns
     -------
-    S : ndarray
+    s : ndarray
         Estimates of the activity-inducing (spike model) or innovation (block model) signal
     lambda_ : float
         Selected regularization parameter lambda
@@ -147,7 +225,7 @@ def fista(
         update_lambda = False
         noise_estimate = 0
 
-    c_ist = 1 / (linalg.norm(hrf) ** 2)
+    c_ist = 1 / (jnp.linalg.norm(hrf) ** 2)
 
     if use_pylops:
         # Use pylops if lambda does not need to be updated
@@ -164,7 +242,7 @@ def fista(
 
         LGR.info("Performing FISTA with pylops...")
 
-        S = AcceleratedProximalGradient(
+        s = AcceleratedProximalGradient(
             l2,
             prox,
             tau=c_ist,
@@ -174,62 +252,64 @@ def fista(
             acceleration="fista",
             show=False,
         )
+
+        if positive_only:
+            s = np.sign(hrf[1, 0]) * jnp.maximum(np.sign(hrf[1, 0]) * s, 0)
+
     else:
         # Use FISTA with updating lambda
         hrf_trans = hrf.T
-        hrf_cov = np.dot(hrf_trans, hrf)
-        v = np.dot(hrf_trans, y)
+        hrf_cov = jnp.dot(hrf_trans, hrf)
+        v = jnp.dot(hrf_trans, y)
 
-        y_fista_S = np.zeros((n_scans, n_voxels), dtype=np.float32)
-        S = y_fista_S.copy()
+        y_fista_s = jnp.zeros((n_scans, n_voxels), dtype=jnp.float32)
+        s = y_fista_s.copy()
 
         t_fista = 1
 
         precision = noise_estimate / 100000
 
+        # Compile jit functions
+        if group > 0:
+            proximal_operator_mixed_norm_jit = jax.jit(proximal_operator_mixed_norm)
+        else:
+            proximal_operator_lasso_jit = jax.jit(proximal_operator_lasso)
+
+        _fista_forward_jit = jax.jit(_fista_forward)
+        _fista_update_jit = jax.jit(_fista_update)
+        _has_converged_jit = jax.jit(_has_converged)
+
         # Perform FISTA
         for num_iter in range(max_iter):
-
             # Save results from previous iteration
-            S_old = S.copy()
-            y_ista_S = y_fista_S.copy()
+            s_old = s.copy()
+            y_ista_s = y_fista_s.copy()
 
-            S_fidelity = v - np.dot(hrf_cov, y_ista_S)
+            z_ista_s = _fista_forward_jit(v, hrf_cov, y_ista_s, c_ist).block_until_ready()
 
-            # Forward-Backward step
-            z_ista_S = y_ista_S + c_ist * S_fidelity
-
-            # Estimate S
+            # Estimate s
             if group > 0:
-                S = proximal_operator_mixed_norm(z_ista_S, c_ist * lambda_, rho_val=(1 - group))
+                s = proximal_operator_mixed_norm_jit(
+                    z_ista_s, c_ist * lambda_, rho_val=(1 - group)
+                ).block_until_ready()
             else:
-                S = proximal_operator_lasso(z_ista_S, c_ist * lambda_)
+                s = proximal_operator_lasso_jit(z_ista_s, c_ist * lambda_).block_until_ready()
 
-            t_fista_old = t_fista
-            t_fista = 0.5 * (1 + np.sqrt(1 + 4 * (t_fista_old**2)))
+            if positive_only:
+                s = np.sign(hrf[1, 0]) * jnp.maximum(np.sign(hrf[1, 0]) * s, 0)
 
-            y_fista_S = S + (S - S_old) * (t_fista_old - 1) / t_fista
+            t_fista, y_fista_s = _fista_update_jit(t_fista, s, s_old)
 
             # Convergence
-            if num_iter >= min_iter:
-                nonzero_idxs_rows, nonzero_idxs_cols = np.where(
-                    np.abs(S) > 10 * np.finfo(float).eps
-                )
-                diff = np.abs(
-                    S[nonzero_idxs_rows, nonzero_idxs_cols]
-                    - S_old[nonzero_idxs_rows, nonzero_idxs_cols]
-                )
-                convergence_criteria = np.abs(diff / S_old[nonzero_idxs_rows, nonzero_idxs_cols])
-
-                if np.all(convergence_criteria <= tol):
-                    break
+            if num_iter >= min_iter and _has_converged_jit(s_old, s, tol).block_until_ready():
+                break
 
             LGR.debug(f"Iteration: {str(num_iter)} / {str(max_iter)}")
 
             # Update lambda
             if update_lambda:
-                nv = np.sqrt(np.sum((np.dot(hrf, S) - y) ** 2, axis=0) / n_scans)
+                nv = np.sqrt(np.sum((np.dot(hrf, s) - y) ** 2, axis=0) / n_scans)
                 if abs(nv - noise_estimate) > precision:
                     lambda_ = np.nan_to_num(lambda_ * noise_estimate / nv)
 
-    return S, lambda_
+    return s, lambda_

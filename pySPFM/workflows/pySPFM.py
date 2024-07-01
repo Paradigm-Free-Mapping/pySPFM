@@ -1,4 +1,5 @@
-"""Main pySPFM workflow"""
+"""Main pySPFM workflow."""
+
 import argparse
 import datetime
 import logging
@@ -219,7 +220,14 @@ def _get_parser():
         default=10,
     )
     optional.add_argument(
-        "-jobs",
+        "--jobqueue",
+        help="Jobqueue.yaml file to set up parallel processing (default = None).",
+        default=None,
+        type=str,
+        dest="jobqueue",
+    )
+    optional.add_argument(
+        "-j",
         "--jobs",
         dest="n_jobs",
         type=int,
@@ -293,6 +301,13 @@ def _get_parser():
         default=50,
     )
     optional.add_argument(
+        "--positive",
+        dest="positive_only",
+        action="store_true",
+        help="Force estimated signal to be positive.",
+        default=False,
+    )
+    optional.add_argument(
         "-debug",
         "--debug",
         dest="debug",
@@ -337,6 +352,7 @@ def pySPFM(
     max_iter_spatial=100,
     max_iter=10,
     min_iter_fista=50,
+    jobqueue=None,
     n_jobs=4,
     spatial_weight=0,
     spatial_lambda=1,
@@ -345,6 +361,7 @@ def pySPFM(
     tolerance=1e-6,
     use_bids=False,
     n_surrogates=50,
+    positive_only=False,
     debug=False,
     quiet=False,
     command_str=None,
@@ -394,6 +411,8 @@ def pySPFM(
         by default 10
     min_iter_fista : int, optional
         Minimum number of iterations for FISTA, by default 50
+    jobqueue : str, optional
+        Jobqueue to use for parallel processing, by default None
     n_jobs : int, optional
         Number of parallel jobs to use on for loops, by default 4
     spatial_weight : int, optional
@@ -415,6 +434,8 @@ def pySPFM(
         header of the output."
     n_surrogates : int, optional
         Number of surrogates to generate for stability selection, by default 50
+    positive_only : bool, optional
+        If True, the estimated signal will be forced to be positive, by default False
     debug : bool, optional
         Logger option for debugging, by default False
     quiet : bool, optional
@@ -448,7 +469,7 @@ def pySPFM(
     refname = op.join(out_dir, "_references.txt")
     utils.setup_loggers(logname, refname, quiet=quiet, debug=debug)
 
-    LGR.info("Using output directory: {}".format(out_dir))
+    LGR.info(f"Using output directory: {out_dir}")
 
     n_te = len(te)
 
@@ -503,7 +524,7 @@ def pySPFM(
     out_bids_keywords = []
 
     # Iterate between temporal and spatial regularizations
-    client, _ = dask_scheduler(n_jobs)
+    client, cluster = dask_scheduler(n_jobs, jobqueue)
 
     # Scatter data to workers if client is not None
     if client is not None:
@@ -534,12 +555,17 @@ def pySPFM(
         else:
             stability_estimates = compute(futures, scheduler="single-threaded")[0]
 
+        # Close the client and cluster
+        if client is not None:
+            client.close()
+            cluster.close()
+
         for vox_idx in range(n_voxels):
             auc[:, vox_idx] = np.squeeze(stability_estimates[vox_idx])
 
         LGR.info("Stability selection finished.")
 
-        LGR.info("Saving AUCs to %s..." % out_dir)
+        LGR.info(f"Saving AUCs to {out_dir}...")
         out_bids_keywords.append("AUC")
         output_name = get_outname(output_filename, "AUC", "nii.gz", use_bids)
         write_data(
@@ -599,6 +625,7 @@ def pySPFM(
                         pcg=pcg,
                         factor=factor,
                         lambda_echo=lambda_echo,
+                        positive_only=positive_only,
                     )
                     futures.append(fut)
 
@@ -614,6 +641,11 @@ def pySPFM(
 
             else:
                 raise ValueError("Wrong criterion option given.")
+
+            # Close the client and cluster
+            if client is not None:
+                client.close()
+                cluster.close()
 
             # Convolve with HRF
             if block_model:
@@ -801,7 +833,7 @@ def pySPFM(
 
 
 def _main():
-    """pySPFM entry point"""
+    """pySPFM entry point."""
     command_str = "pySPFM " + " ".join(sys.argv[1:])
     options = _get_parser().parse_args()
     pySPFM(**vars(options), command_str=command_str)
