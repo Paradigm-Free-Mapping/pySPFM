@@ -170,7 +170,7 @@ def _generate_shared_lambdas_space(coefs, lambdas, n_lambdas, n_surrogates):
     return coefs_sorted, lambdas_sorted
 
 
-def stability_selection(hrf_norm, data, n_lambdas, n_surrogates):
+def stability_selection(hrf, data, n_lambdas, n_surrogates):
     """Stability Selection for deconvolution.
 
     Parameters
