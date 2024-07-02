@@ -19,3 +19,9 @@ def test_HRF_matrix(spm_single_echo, spm_single_echo_block, glover_multi_echo):
     hrf = hrf_object.generate_hrf(tr=1, n_scans=168).hrf_
     hrf_loaded = np.load(glover_multi_echo)
     assert np.allclose(hrf, hrf_loaded)
+
+
+def test_no_te():
+    hrf_object = hrf_generator.HRFMatrix(block=False)
+    hrf = hrf_object.generate_hrf(tr=1, n_scans=168).hrf_
+    assert hrf.shape == (168, 168)
