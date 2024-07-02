@@ -33,11 +33,12 @@ class HRFMatrix:
     ):
         # If te values are higher than 1, then assume they are in ms and convert to s
         # If te values are lower than 1, then assume they are in s
-
         if te is not None:
             if max(te) > 1:
                 te = [i / 1000 for i in te]
             self.te = te
+        else:
+            self.te = [0]
 
         self.model = model
         self.block = block
