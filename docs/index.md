@@ -93,9 +93,9 @@ When using pySPFM, please include the following citations:
 > </p>
 >
 > <p>
-> 4. Uruñuela, E., Bolton, T. A. W., Van De Ville, D., & Caballero-Gaudes, C. (2021).
+> 4. Uruñuela, E., Bolton, T. A. W., Van De Ville, D., & Caballero-Gaudes, C. (2023).
 > <a href="https://doi.org/10.52294/001c.87574" target="_blank">Hemodynamic Deconvolution Demystified: Sparsity-Driven Regularization at Work.</a>
-> <i>Aperture Neuro</i>, <i>vol. 3, Aug. 2023, pp. 1–25,</i>.
+> <i>Aperture Neuro</i>, <i>vol. 3, Aug. 2023, pp. 1–25</i>.
 > </p>
 > ```
 
