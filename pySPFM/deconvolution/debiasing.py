@@ -271,7 +271,15 @@ def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3, non_neg
         hrf_events = hrf[:, index_events_opt]
 
     if non_negative:
+        # If the first value of the hrf is negative, then it's multi-echo data
+        if hrf_events[0, 0] < 0:
+            multi_echo = True
+            hrf_events = -hrf_events
         coef_ls_fitdebias, _, _, _ = sci.optimize.nnls(hrf_events, y.T, cond=None)
+        # Flip the sign back on the coefficients if multi-echo
+        if multi_echo:
+            coef_ls_fitdebias = -coef_ls_fitdebias
+
     else:
         coef_ls_fitdebias, _, _, _ = sci.linalg.lstsq(hrf_events, y.T, cond=None)
 
