@@ -236,7 +236,7 @@ def debiasing_block(hrf, y, estimates_matrix, n_jobs=4, dist=2):
     return beta_out
 
 
-def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3):
+def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3, non_negative=False):
     """Perform debiasing with the spike model.
 
     Parameters
@@ -252,6 +252,8 @@ def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3):
         Whether to group the spikes or not, by default False
     group_dist : int, optional
         Minimum number of TRs in between of the peaks found, by default 3
+    non_negative : bool, optional
+        Whether to perform non-negative least squares or not, by default False
 
     Returns
     -------
@@ -268,7 +270,11 @@ def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3):
     else:
         hrf_events = hrf[:, index_events_opt]
 
-    coef_ls_fitdebias, _, _, _ = sci.linalg.lstsq(hrf_events, y.T, cond=None)
+    if non_negative:
+        coef_ls_fitdebias, _, _, _ = sci.optimize.nnls(hrf_events, y.T, cond=None)
+    else:
+        coef_ls_fitdebias, _, _, _ = sci.linalg.lstsq(hrf_events, y.T, cond=None)
+
     if group:
         beta2save[index_events_opt_group, 0] = coef_ls_fitdebias
     else:
@@ -282,7 +288,9 @@ def do_debias_spike(hrf, y, estimates_matrix, group=False, group_dist=3):
     return beta_out, fitts_out
 
 
-def debiasing_spike(hrf, y, estimates_matrix, n_jobs=0, group=False, group_dist=3):
+def debiasing_spike(
+    hrf, y, estimates_matrix, n_jobs=0, group=False, group_dist=3, non_negative=False
+):
     """Perform voxelwise debiasing with spike model.
 
     Parameters
@@ -300,6 +308,8 @@ def debiasing_spike(hrf, y, estimates_matrix, n_jobs=0, group=False, group_dist=
         Whether to group the spikes or not, by default False
     group_dist : int, optional
         Minimum number of TRs in between of the peaks found, by default 3
+    non_negative : bool, optional
+        Whether to perform non-negative least squares or not, by default False
 
     Returns
     -------
@@ -323,6 +333,7 @@ def debiasing_spike(hrf, y, estimates_matrix, n_jobs=0, group=False, group_dist=
             estimates_matrix[:, index_voxels[voxidx]],
             group,
             group_dist,
+            non_negative,
         )
         futures.append(fut)
     debiased = compute(futures)[0]
