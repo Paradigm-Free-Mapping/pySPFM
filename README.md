@@ -7,7 +7,7 @@ The Python version of AFNI's [3dPFM](https://afni.nimh.nih.gov/pub/dist/doc/prog
 [![DOI](https://zenodo.org/badge/492450151.svg)](https://zenodo.org/badge/latestdoi/492450151)
 [![License](https://img.shields.io/badge/License-LGPL%202.1-blue.svg)](https://opensource.org/licenses/LGPL-2.1)
 [![CircleCI](https://circleci.com/gh/Paradigm-Free-Mapping/pySPFM/tree/main.svg?style=shield)](https://circleci.com/gh/Paradigm-Free-Mapping/pySPFM/tree/main)
-[![Documentation Status](https://readthedocs.org/projects/pyspfm/badge/?version=latest)](http://pyspfm.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/pyspfm/badge/?version=stable)](http://pyspfm.readthedocs.io/en/stable/?badge=stable)
 [![codecov](https://codecov.io/gh/Paradigm-Free-Mapping/pySPFM/branch/main/graph/badge.svg)](https://codecov.io/gh/Paradigm-Free-Mapping/pySPFM)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
