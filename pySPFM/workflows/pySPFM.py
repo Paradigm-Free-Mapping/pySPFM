@@ -325,7 +325,7 @@ def _get_parser():
         action="store_true",
         default=False,
     )
-    optional.add_argument("-v", "--version", action="version", version=("%(prog)s " + __version__))
+    optional.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
 
     parser._action_groups.append(optional)
 
@@ -701,7 +701,7 @@ def pySPFM(
                 fitts = np.dot(hrf, estimates_spike)
             else:
                 estimates_spike, fitts = debiasing.debiasing_spike(
-                    hrf, data_masked, final_estimates
+                    hrf, data_masked, final_estimates, non_negative=positive_only
                 )
         elif block_model:
             estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)
