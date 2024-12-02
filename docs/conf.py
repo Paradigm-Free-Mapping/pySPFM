@@ -39,7 +39,7 @@ add_module_names = False
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "ipykernel",
+    # "ipykernel",
     "matplotlib.sphinxext.plot_directive",
     # "myst_parser",
     "myst_nb",
@@ -51,11 +51,32 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.intersphinx",
     "sphinx.ext.linkcode",
-    # "sphinx.ext.mathjax",
+    "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
+    # "sphinx_gallery",
     "sphinx_gallery.load_style",
 ]
+
+myst_enable_extensions = [
+    "colon_fence",
+    "dollarmath",
+]
+
+
+# Update mime priority configuration with integer priorities
+nb_mime_priority_overrides = [
+    ("html", "application/vnd.plotly.v1+json", 10),  # Format: (format, mimetype, priority)
+    ("html", "text/html", 5),
+    ("html", "image/svg+xml", 4),
+    ("html", "image/png", 3),
+    ("html", "image/jpeg", 2),
+    ("html", "text/plain", 1),
+]
+
+# Keep plotly plugin configuration
+# nb_render_plugin = "plotly"
+
 
 from distutils.version import LooseVersion
 
@@ -137,18 +158,31 @@ napoleon_use_rtype = False
 
 html_theme = "sphinx_book_theme"
 
+# Configure TOC settings
+toc_object_entries_show_parents = "hide"
+
+# Add autosummary settings to control display names
+autosummary_member_order = "groupwise"
+add_module_names = False  # Don't prefix module names
+modindex_common_prefix = ["pySPFM."]  # Remove common prefix from module index
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 
+
 html_theme_options = {
-    "includehidden": False,
+    "show_nav_level": 2,
+    "collapse_navigation": True,
+    "navigation_depth": 4,
+    "show_toc_level": 2,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_css_files = ["theme_overrides.css"]
 
 
 def setup(app):
@@ -178,5 +212,7 @@ intersphinx_mapping = {
     "matplotlib": ("https://matplotlib.org/", None),
     "nibabel": ("https://nipy.org/nibabel/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
-    "nilearn": ("http://nilearn.github.io/", None),
+    "nilearn": ("http://nilearn.github.io/stable/", None),
 }
+
+html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"]

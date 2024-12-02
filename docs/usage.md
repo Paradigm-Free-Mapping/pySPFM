@@ -10,26 +10,26 @@ The fixed $\lambda$ method is the simplest one. It consists in choosing one of t
 to automatically calculate the regularization parameter lambda:
 
 - `universal threshold`:
-  : $\lambda = \sigma * \sqrt{2 * \log(T)}$, where $\sigma$ is the median absolute
-    deviation of the estimated level of noise and T is the number of TRs.
+  $\lambda = \sigma * \sqrt{2 * \log(T)}$, where $\sigma$ is the median absolute
+  deviation of the estimated level of noise and T is the number of TRs.
 - `lower universal threshold`:
-  : $\lambda = \sigma * \sqrt{2 * \log(T) - \log(1 + 4 * \log(T))}$, where $\sigma$
-    is the median absolute deviation of the estimated level of noise and T is the number of TRs.
+  $\lambda = \sigma * \sqrt{2 * \log(T) - \log(1 + 4 * \log(T))}$, where $\sigma$
+  is the median absolute deviation of the estimated level of noise and T is the number of TRs.
 - `median absolute deviation`:
-  : Calculate lambda as the median absolute deviation of fine-scale wavelet coefficients
-    (Daubechies, order 3). For more information, see [Karahanoglu et al. (2013)].
+  Calculate lambda as the median absolute deviation of fine-scale wavelet coefficients
+  (Daubechies, order 3). For more information, see [Karahanoglu et al. (2013)].
 - `updating median absolute deviation`:
-  : Median absolute deviation of the estimated level of the noise that gets updated on each
-    iteration (see [Karahanoglu et al. (2013)]):
-    $\lambda_{n+1} = {\frac{N \sigma}{\frac{1}{2} \| \mathbf{y} - \mathbf{Hs} \|_2^2 \lambda_n}}$.
+  Median absolute deviation of the estimated level of the noise that gets updated on each
+  iteration (see [Karahanoglu et al. (2013)]):
+  $\lambda_{n+1} = {\frac{N \sigma}{\frac{1}{2} \| \mathbf{y} - \mathbf{Hs} \|_2^2 \lambda_n}}$.
 - `percentage of maximum lambda`:
-  : percentage of the maximum lambda possible to use as lambda.
-    $\lambda = \textrm{pcg} * \lambda_{max}$,
-    where $\lambda_{max}= \| \mathbf{H}^T \mathbf{y} \|$ and
-    $0 \leq \textrm{pcg} \leq 1$
+  percentage of the maximum lambda possible to use as lambda.
+  $\lambda = \textrm{pcg} * \lambda_{max}$,
+  where $\lambda_{max}= \| \mathbf{H}^T \mathbf{y} \|$ and
+  $0 \leq \textrm{pcg} \leq 1$
 - `factor of median absolute deviation`:
-  : factor of the estimate of the level of noise to use as lambda.
-    $\lambda = \textrm{factor} * \sigma, with 0 \leq \textrm{factor} \leq 1$
+  factor of the estimate of the level of noise to use as lambda.
+  $\lambda = \textrm{factor} * \sigma, with 0 \leq \textrm{factor} \leq 1$
 
 ```bash
 pySPFM -i my_echo_1.nii.gz my_echo_3.nii.gz my_echo_3.nii.gz -m my_mask.nii.gz
