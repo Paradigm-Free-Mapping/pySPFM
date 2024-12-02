@@ -1,20 +1,28 @@
 /* override table width restrictions */
 @media screen and (min-width: 767px) {
-
-   .wy-table-responsive table td {
-      /* !important prevents the common CSS stylesheets from overriding
+  .wy-table-responsive table td {
+    /* !important prevents the common CSS stylesheets from overriding
          this as on RTD they are loaded after this stylesheet */
-      white-space: normal !important;
-   }
+    white-space: normal !important;
+  }
 
-   .wy-table-responsive {
-      overflow: visible !important;
-   }
+  .wy-table-responsive {
+    overflow: visible !important;
+  }
 }
 
 div.admonition.caution {
-  background: #FFC3C3
+  background: #ffc3c3;
 }
 .rst-content .caution .admonition-title {
-  background: #FF6F6F
+  background: #ff6f6f;
+}
+
+:root {
+  --pst-color-primary: #b672da !important;
+  --pst-color-link: #b672da !important;
+  --pst-color-link-hover: #8c41af !important;
+  --bs-link-color: #b672da !important;
+  --bs-link-hover-color: #8c41af !important;
+  --pst-color-inline-code-links: #46594f !important;
 }
