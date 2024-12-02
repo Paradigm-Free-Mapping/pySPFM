@@ -1,6 +1,7 @@
 # Examples
 
-```{nbgallery}
-notebooks/examples.ipynb
+This is an example.
 
-```
+<!-- ```{glue:} regularization_figure
+:doc: notebooks/examples.ipynb
+``` -->
