@@ -57,6 +57,7 @@ extensions = [
     "sphinx_charts.charts",
     # "sphinx_gallery",
     "sphinx_gallery.load_style",
+    "sphinxcontrib.jquery",
 ]
 
 myst_enable_extensions = [
