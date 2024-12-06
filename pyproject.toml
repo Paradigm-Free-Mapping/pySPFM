@@ -54,6 +54,7 @@ doc = [
     "sphinx_design",
     "sphinx_gallery",
     "sphinx-book-theme",
+    "sphinx_charts",
 ]
 
 tests = [
