@@ -112,6 +112,7 @@ hemodynamic deconvolution
 usage
 outputs
 api
+examples
 ```
 
 ## Indices and tables

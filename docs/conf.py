@@ -41,8 +41,8 @@ add_module_names = False
 extensions = [
     # "ipykernel",
     "matplotlib.sphinxext.plot_directive",
-    # "myst_parser",
-    "myst_nb",
+    "myst_parser",
+    # "myst_nb",
     # "nbsphinx",
     "sphinx_design",
     "sphinx.ext.autodoc",
@@ -54,6 +54,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
+    "sphinx_charts.charts",
     # "sphinx_gallery",
     "sphinx_gallery.load_style",
 ]
@@ -64,15 +65,15 @@ myst_enable_extensions = [
 ]
 
 
-# Update mime priority configuration with integer priorities
-nb_mime_priority_overrides = [
-    ("html", "application/vnd.plotly.v1+json", 10),  # Format: (format, mimetype, priority)
-    ("html", "text/html", 5),
-    ("html", "image/svg+xml", 4),
-    ("html", "image/png", 3),
-    ("html", "image/jpeg", 2),
-    ("html", "text/plain", 1),
-]
+# # Update mime priority configuration with integer priorities
+# nb_mime_priority_overrides = [
+#     ("html", "application/vnd.plotly.v1+json", 10),  # Format: (format, mimetype, priority)
+#     ("html", "text/html", 5),
+#     ("html", "image/svg+xml", 4),
+#     ("html", "image/png", 3),
+#     ("html", "image/jpeg", 2),
+#     ("html", "text/plain", 1),
+# ]
 
 # Keep plotly plugin configuration
 # nb_render_plugin = "plotly"
@@ -201,7 +202,9 @@ htmlhelp_basename = "pySPFMdoc"
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
     "pySPFM",
-    "https://github.com/eurunuela/" "pySPFM/blob/{revision}/" "{package}/{path}#L{lineno}",
+    "https://github.com/ParadigmFreeMapping/"
+    "pySPFM/blob/{revision}/"
+    "{package}/{path}#L{lineno}",
 )
 
 # Example configuration for intersphinx: refer to the Python standard library.
