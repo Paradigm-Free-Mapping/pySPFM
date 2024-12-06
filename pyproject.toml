@@ -55,6 +55,7 @@ doc = [
     "sphinx_gallery",
     "sphinx-book-theme",
     "sphinx_charts",
+    "sphinxcontrib-jquery",
 ]
 
 tests = [
