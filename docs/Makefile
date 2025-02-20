@@ -21,7 +21,7 @@ clean:
 html: Makefile
 	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	mkdir -p _build/html/_charts _build/html/_static
-	cp -r charts/* _build/html/_charts/
+	cp -r charts/* _build/html/_static/
 	cp -r _static/* _build/html/_static/
 
 # Catch-all target: route all unknown targets to Sphinx using the new
