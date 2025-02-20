@@ -108,3 +108,5 @@ venv.bak/
 .mypy_cache/
 .vscode/
 3dDeconvolve.err
+
+docs/notebooks

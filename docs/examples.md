@@ -29,6 +29,45 @@
 
 The following example shows the effects of the selection of the regularization parameter on the estimated coefficients. A simulated signal was generated using a variety of block and spike activation patterns, and adding gaussian noise. The regularization path was solved using the LARS algorithm for both the spike and block models.
 
+```python
+import numpy as np
+from pySPFM.deconvolution.hrf_generator import HRFMatrix
+
+n_scans = 760
+tr = 1
+
+noise_level = 1.5
+
+onsets = np.zeros(n_scans)
+
+hrf_generator = HRFMatrix(te=[0], block=False)
+hrf = hrf_generator.generate_hrf(tr=tr, n_scans=n_scans).hrf_
+
+onsets = np.zeros(n_scans)
+onsets[20:24] = 1
+onsets[50:64] = 1
+onsets[67:72] = 1
+onsets[101:124] = 1
+onsets[133:140] = 1
+onsets[311:324] = 1
+onsets[372:374] = 1
+onsets[420:424] = 1
+onsets[450:464] = 1
+onsets[467:472] = 1
+onsets[501:524] = 1
+onsets[550:564] = 1
+onsets[567:572] = 1
+onsets[601:624] = 1
+onsets[660:664] = 1
+onsets[701:714] = 1
+onsets[730:744] = 1
+
+data_clean = np.dot(hrf, onsets)
+data = data_clean + np.random.normal(0, noise_level, data_clean.shape)
+data_spc = (data - np.mean(data))/np.mean(data)
+data_spc = data_spc/np.sqrt(np.sum(data_spc**2, axis=0))
+```
+
 Here is a look at the simulated signal:
 
 <div class="image-container">
