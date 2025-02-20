@@ -109,9 +109,10 @@ pySPFM is licensed under GNU Lesser General Public License version 2.1.
 
 installation
 hemodynamic deconvolution
-usage
-outputs
 api
+usage
+examples
+outputs
 ```
 
 ## Indices and tables

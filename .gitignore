@@ -108,3 +108,6 @@ venv.bak/
 .mypy_cache/
 .vscode/
 3dDeconvolve.err
+
+# Jupyter Notebook files
+docs/notebooks/*.ipynb
