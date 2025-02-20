@@ -109,4 +109,5 @@ venv.bak/
 .vscode/
 3dDeconvolve.err
 
-docs/notebooks
+# Jupyter Notebook files
+docs/notebooks/*.ipynb
