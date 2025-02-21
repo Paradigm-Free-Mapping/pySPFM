@@ -1,6 +1,6 @@
 # Examples
 
-## The effects of the selection of the regularization parameter
+## Understanding the Impact of Regularization Parameter Selection
 
 The following example shows the effects of the selection of the regularization parameter on the estimated coefficients. A simulated signal was generated using a variety of block and spike activation patterns, and adding gaussian noise. The regularization path was solved using the LARS algorithm for both the spike and block models.
 
