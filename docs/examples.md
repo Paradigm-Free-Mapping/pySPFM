@@ -85,7 +85,7 @@ window.addEventListener('load', function() {
 });
 </script>
 
-You can see how the maximum value of $\lambda$ returns no estimates, while the lowest value overfits the data. The estimated spikes capture the moment the BOLD response starts. Remember that the value of $\lambda$ has to be selected carefully to obtain a good balance between bias and variance.
+You can see how the maximum value of $\lambda$ returns no estimates, while the lowest value overfits the data. The estimated spikes capture the moment the BOLD response starts. Remember that the value of $\lambda$ has to be selected carefully to obtain a good balance between bias and variance. You can do so by selecting the estimates that minimize the Bayesian Information Criterion (BIC) or the Akaike Information Criterion (AIC) for example.
 
 ### Block model
 
