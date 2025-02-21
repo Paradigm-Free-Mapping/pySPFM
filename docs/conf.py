@@ -39,11 +39,8 @@ add_module_names = False
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    # "ipykernel",
     "matplotlib.sphinxext.plot_directive",
     "myst_parser",
-    # "myst_nb",
-    # "nbsphinx",
     "sphinx_design",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
@@ -55,7 +52,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx_charts.charts",
-    # "sphinx_gallery",
     "sphinx_gallery.load_style",
     "sphinxcontrib.jquery",
 ]
@@ -152,33 +148,21 @@ napoleon_use_rtype = False
 
 # -- Options for HTML output ----------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-# installing theme package
-# import sphinx_book_theme
-
+# The theme to use for HTML and HTML Help pages.
 html_theme = "sphinx_book_theme"
 
-# Configure TOC settings
-toc_object_entries_show_parents = "hide"
+html_theme_options = {
+    "navigation_depth": 4,
+    "collapse_navigation": False,
+    "sticky_navigation": True,
+    "includehidden": True,
+    "titles_only": False,
+}
 
 # Add autosummary settings to control display names
 autosummary_member_order = "groupwise"
 add_module_names = False  # Don't prefix module names
 modindex_common_prefix = ["pySPFM."]  # Remove common prefix from module index
-
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
-
-
-html_theme_options = {
-    "show_nav_level": 2,
-    "collapse_navigation": True,
-    "navigation_depth": 4,
-    "show_toc_level": 2,
-}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -186,10 +170,17 @@ html_theme_options = {
 html_static_path = ["_static"]
 html_css_files = ["theme_overrides.css"]
 
+# Add plotly.js and other required JavaScript files
+html_js_files = [
+    "https://cdn.plot.ly/plotly-2.20.0.min.js",  # Use specific version
+    "https://d3js.org/d3.v7.min.js",
+]
+
 
 def setup(app):
     app.add_css_file("theme_overrides.css")
     app.add_js_file("https://cdn.rawgit.com/chrisfilo/zenodo.js/v0.1/zenodo.js")
+    app.add_css_file("custom.css")
 
 
 html_favicon = "_static/pySPFM_favicon.png"
@@ -218,5 +209,3 @@ intersphinx_mapping = {
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "nilearn": ("http://nilearn.github.io/stable/", None),
 }
-
-html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"]
