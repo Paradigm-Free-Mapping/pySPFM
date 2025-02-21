@@ -1,6 +1,6 @@
 # Examples
 
-## The effects of the selection of the regularization parameter
+## Understanding the Impact of Regularization Parameter Selection
 
 The following example shows the effects of the selection of the regularization parameter on the estimated coefficients. A simulated signal was generated using a variety of block and spike activation patterns, and adding gaussian noise. The regularization path was solved using the LARS algorithm for both the spike and block models.
 
@@ -39,8 +39,8 @@ onsets[730:744] = 1
 
 data_clean = np.dot(hrf, onsets)
 data = data_clean + np.random.normal(0, noise_level, data_clean.shape)
-data_spc = (data - np.mean(data))/np.mean(data)
-data_spc = data_spc/np.sqrt(np.sum(data_spc**2, axis=0))
+data = (data - np.mean(data))/np.mean(data)
+data = data/np.sqrt(np.sum(data**2, axis=0))
 ```
 
 Here is a look at the simulated signal:
@@ -85,7 +85,7 @@ window.addEventListener('load', function() {
 });
 </script>
 
-You can see how the maximum value of $\lambda$ returns no estimates, while the lowest value overfits the data. The estimated spikes capture the moment the BOLD response starts. Remember that the value of $\lambda$ has to be selected carefully to obtain a good balance between bias and variance.
+You can see how the maximum value of $\lambda$ returns no estimates, while the lowest value overfits the data. The estimated spikes capture the moment the BOLD response starts. Remember that the value of $\lambda$ has to be selected carefully to obtain a good balance between bias and variance. You can do so by selecting the estimates that minimize the Bayesian Information Criterion (BIC) or the Akaike Information Criterion (AIC) for example.
 
 ### Block model
 
@@ -100,7 +100,7 @@ tr = 1
 hrf_generator = HRFMatrix(te=[0], block=True)
 hrf = hrf_generator.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
-_, lambda_opt, coef_path, lambdas = solve_regularization_path(hrf, data_spc, n_scans)
+_, lambda_opt, coef_path, lambdas = solve_regularization_path(hrf, data, n_scans)
 ```
 
 Remember that with the block model, the sparsity constraint is applied to the derivative of the activity-inducing signal, which allows us to obtain the innovation signal. These estimates of the innovation signal are visible on the plot below. Move the slider to see the effect of the regularization parameter on the estimated coefficients.
@@ -138,7 +138,7 @@ n_surrogates = 100
 hrf_generator = HRFMatrix(te=[0], block=False)
 hrf = hrf_generator.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
-auc = stability_selection(hrf, data_spc, n_lambdas, n_surrogates)
+auc = stability_selection(hrf, data, n_lambdas, n_surrogates)
 ```
 
 The AUC time series for the spike model is shown below:
