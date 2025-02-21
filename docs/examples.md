@@ -1,30 +1,5 @@
 # Examples
 
-<style>
-    main {
-        min-width: 1000px !important;
-    }
-    .iframe-container {
-        width: 100%;
-        height: 450px;
-        overflow: hidden;
-    }
-    .iframe-container iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-    }
-    .image-container {
-        width: 100%;
-        text-align: center;
-        margin: 20px 0;
-    }
-    .image-container img {
-        max-width: 100%;
-        height: auto;
-    }
-</style>
-
 ## The effects of the selection of the regularization parameter
 
 The following example shows the effects of the selection of the regularization parameter on the estimated coefficients. A simulated signal was generated using a variety of block and spike activation patterns, and adding gaussian noise. The regularization path was solved using the LARS algorithm for both the spike and block models.
@@ -71,7 +46,7 @@ data_spc = data_spc/np.sqrt(np.sum(data_spc**2, axis=0))
 Here is a look at the simulated signal:
 
 <div class="image-container">
-    <img src="_static/simulated_signal.png" alt="Simulated signal">
+    <img src="https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/simulated_signal.png" alt="Simulated signal">
 </div>
 
 ### Spike model
@@ -93,8 +68,22 @@ _, lambda_opt, coef_path, lambdas = solve_regularization_path(hrf, data, n_scans
 The estimates of activity-inducing signal for each value of $\lambda$ in the regularization path are shown on the plot below[^1]. Move the slider to see the effect of the regularization parameter on the estimated coefficients.
 
 <div class="iframe-container">
-    <iframe src="_static/regularization_figure_spike.html" id="plotly-figure-spike"></iframe>
+    <div id="plotly-figure-spike" style="width:100%;height:600px;"></div>
 </div>
+
+<script type="text/javascript">
+window.addEventListener('load', function() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/regularization_figure_spike.json', true);
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            var data = JSON.parse(xhr.responseText);
+            Plotly.newPlot('plotly-figure-spike', data.data, data.layout);
+        }
+    };
+    xhr.send();
+});
+</script>
 
 You can see how the maximum value of $\lambda$ returns no estimates, while the lowest value overfits the data. The estimated spikes capture the moment the BOLD response starts. Remember that the value of $\lambda$ has to be selected carefully to obtain a good balance between bias and variance.
 
@@ -117,8 +106,22 @@ _, lambda_opt, coef_path, lambdas = solve_regularization_path(hrf, data_spc, n_s
 Remember that with the block model, the sparsity constraint is applied to the derivative of the activity-inducing signal, which allows us to obtain the innovation signal. These estimates of the innovation signal are visible on the plot below. Move the slider to see the effect of the regularization parameter on the estimated coefficients.
 
 <div class="iframe-container">
-    <iframe src="_static/regularization_figure_block.html" id="plotly-figure-block"></iframe>
+    <div id="plotly-figure-block" style="width:100%;height:600px;"></div>
 </div>
+
+<script type="text/javascript">
+window.addEventListener('load', function() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/regularization_figure_block.json', true);
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            var data = JSON.parse(xhr.responseText);
+            Plotly.newPlot('plotly-figure-block', data.data, data.layout);
+        }
+    };
+    xhr.send();
+});
+</script>
 
 You can see that the innovation signal captures the instances where the BOLD response starts and ends. Once again, the value of $\lambda$ has to be selected carefully to obtain a good balance between bias and variance.
 
@@ -141,7 +144,7 @@ auc = stability_selection(hrf, data_spc, n_lambdas, n_surrogates)
 The AUC time series for the spike model is shown below:
 
 <div class="image-container">
-    <img src="_static/stability_selection.png" alt="Stability Selection results">
+    <img src="https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/stability_selection.png" alt="Stability Selection results">
 </div>
 
 By definition, the AUC time series cannot have zero values. However, that will only happen if the entire space of the regularization path is explored; i.e., if all the regularization parameters are considered. This means that we still have to apply a threshold to the AUC time series to obtain the final estimates. One way to do this is to select a region of the brain where you do not expect to see any activity, like the deep white matter. You can then use the 95th percentile of the AUC time series in that region as a threshold.
@@ -149,7 +152,7 @@ By definition, the AUC time series cannot have zero values. However, that will o
 Here is what the thresholded AUC time series would look like if we thresholded the AUC time series above with a 0.15 threshold:
 
 <div class="image-container">
-    <img src="_static/stability_selection_thresholded.png" alt="Thresholded Stability Selection results">
+    <img src="https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/stability_selection_thresholded.png" alt="Thresholded Stability Selection results">
 </div>
 
 [^1]: To help visualize the results, the clean (noiseless) simulation of the BOLD data is shown in all figures.
