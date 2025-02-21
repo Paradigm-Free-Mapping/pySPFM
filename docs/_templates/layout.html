@@ -1,0 +1,6 @@
+{% extends "!layout.html" %} {% block extrahead %} {{ super() }}
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src *; style-src 'self' 'unsafe-inline' https://cdn.plot.ly; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.plot.ly https://raw.githubusercontent.com"
+/>
+{% endblock %}

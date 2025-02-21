@@ -71,12 +71,18 @@ The estimates of activity-inducing signal for each value of $\lambda$ in the reg
     <div id="plotly-figure-spike" style="width:100%;height:600px;"></div>
 </div>
 
-<script>
-fetch("https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/regularization_figure_spike.json")
-    .then(response => response.json())
-    .then(data => {
-        Plotly.newPlot('plotly-figure-spike', data.data, data.layout);
-    });
+<script type="text/javascript">
+window.addEventListener('load', function() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/regularization_figure_spike.json', true);
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            var data = JSON.parse(xhr.responseText);
+            Plotly.newPlot('plotly-figure-spike', data.data, data.layout);
+        }
+    };
+    xhr.send();
+});
 </script>
 
 You can see how the maximum value of $\lambda$ returns no estimates, while the lowest value overfits the data. The estimated spikes capture the moment the BOLD response starts. Remember that the value of $\lambda$ has to be selected carefully to obtain a good balance between bias and variance.
@@ -103,12 +109,18 @@ Remember that with the block model, the sparsity constraint is applied to the de
     <div id="plotly-figure-block" style="width:100%;height:600px;"></div>
 </div>
 
-<script>
-fetch("https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/regularization_figure_block.json")
-    .then(response => response.json())
-    .then(data => {
-        Plotly.newPlot('plotly-figure-block', data.data, data.layout);
-    });
+<script type="text/javascript">
+window.addEventListener('load', function() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/regularization_figure_block.json', true);
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            var data = JSON.parse(xhr.responseText);
+            Plotly.newPlot('plotly-figure-block', data.data, data.layout);
+        }
+    };
+    xhr.send();
+});
 </script>
 
 You can see that the innovation signal captures the instances where the BOLD response starts and ends. Once again, the value of $\lambda$ has to be selected carefully to obtain a good balance between bias and variance.

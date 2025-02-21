@@ -172,8 +172,7 @@ html_css_files = ["theme_overrides.css"]
 
 # Add plotly.js and other required JavaScript files
 html_js_files = [
-    "https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js",
-    "https://cdn.plot.ly/plotly-latest.min.js",
+    "https://cdn.plot.ly/plotly-2.20.0.min.js",  # Use specific version
     "https://d3js.org/d3.v7.min.js",
 ]
 
