@@ -149,7 +149,7 @@ napoleon_use_rtype = False
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.
-html_theme = "sphinx_rtd_theme"
+html_theme = "sphinx_book_theme"
 
 html_theme_options = {
     "navigation_depth": 4,
@@ -174,6 +174,7 @@ html_css_files = ["theme_overrides.css"]
 html_js_files = [
     "https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js",
     "https://cdn.plot.ly/plotly-latest.min.js",
+    "https://d3js.org/d3.v7.min.js",
 ]
 
 
