@@ -1,30 +1,5 @@
 # Examples
 
-<style>
-    main {
-        min-width: 1000px !important;
-    }
-    .iframe-container {
-        width: 100%;
-        height: 450px;
-        overflow: hidden;
-    }
-    .iframe-container iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-    }
-    .image-container {
-        width: 100%;
-        text-align: center;
-        margin: 20px 0;
-    }
-    .image-container img {
-        max-width: 100%;
-        height: auto;
-    }
-</style>
-
 ## The effects of the selection of the regularization parameter
 
 The following example shows the effects of the selection of the regularization parameter on the estimated coefficients. A simulated signal was generated using a variety of block and spike activation patterns, and adding gaussian noise. The regularization path was solved using the LARS algorithm for both the spike and block models.
@@ -93,8 +68,14 @@ _, lambda_opt, coef_path, lambdas = solve_regularization_path(hrf, data, n_scans
 The estimates of activity-inducing signal for each value of $\lambda$ in the regularization path are shown on the plot below[^1]. Move the slider to see the effect of the regularization parameter on the estimated coefficients.
 
 <div class="iframe-container">
-    <iframe src="https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/regularization_figure_spike.html" id="plotly-figure-spike"></iframe>
+    <div id="plotly-figure-spike" style="width:100%;height:600px;"></div>
 </div>
+
+<script>
+d3.json("https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/regularization_figure_spike.json", function(data) {
+    Plotly.newPlot('plotly-figure-spike', data.data, data.layout);
+});
+</script>
 
 You can see how the maximum value of $\lambda$ returns no estimates, while the lowest value overfits the data. The estimated spikes capture the moment the BOLD response starts. Remember that the value of $\lambda$ has to be selected carefully to obtain a good balance between bias and variance.
 
@@ -117,8 +98,14 @@ _, lambda_opt, coef_path, lambdas = solve_regularization_path(hrf, data_spc, n_s
 Remember that with the block model, the sparsity constraint is applied to the derivative of the activity-inducing signal, which allows us to obtain the innovation signal. These estimates of the innovation signal are visible on the plot below. Move the slider to see the effect of the regularization parameter on the estimated coefficients.
 
 <div class="iframe-container">
-    <iframe src="https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/regularization_figure_block.html" id="plotly-figure-block"></iframe>
+    <div id="plotly-figure-block" style="width:100%;height:600px;"></div>
 </div>
+
+<script>
+d3.json("https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/regularization_figure_block.json", function(data) {
+    Plotly.newPlot('plotly-figure-block', data.data, data.layout);
+});
+</script>
 
 You can see that the innovation signal captures the instances where the BOLD response starts and ends. Once again, the value of $\lambda$ has to be selected carefully to obtain a good balance between bias and variance.
 
