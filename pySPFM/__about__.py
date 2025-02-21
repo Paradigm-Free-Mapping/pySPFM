@@ -5,7 +5,7 @@
 try:
     from pySPFM._version import __version__
 except ImportError:
-    __version__ = "0.0.6"  # Ensure the version number is correctly set
+    __version__ = "0+unknown"
 
 __packagename__ = "pySPFM"
 __copyright__ = "Copyright 2025, Paradigm Free Mapping"
