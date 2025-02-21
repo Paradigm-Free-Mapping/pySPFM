@@ -20,7 +20,7 @@ clean:
 # Single html target that handles both HTML build and chart copying
 html: Makefile
 	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
-	mkdir -p _build/html/_charts _build/html/_static
+	mkdir -p _build/html/_static
 	cp -r charts/* _build/html/_static/
 	cp -r _static/* _build/html/_static/
 
