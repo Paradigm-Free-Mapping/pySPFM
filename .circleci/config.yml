@@ -69,10 +69,20 @@ jobs:
             apt-get install -yqq curl
             # Initialize conda for bash shell
             eval "$(conda shell.bash hook)"
+            # Check what environments conda knows about
+            echo "Available conda environments:"
+            conda info --envs
             # Ensure the environment exists and activate it properly
-            if [[ -d "/opt/conda/envs/py<< parameters.PYTHON >>_env" ]]; then
-                echo "Environment found in /opt/conda/envs/"
+            if conda env list | grep -q "py<< parameters.PYTHON >>_env"; then
+                echo "Environment py<< parameters.PYTHON >>_env found in conda list"
                 conda activate py<< parameters.PYTHON >>_env
+            elif [[ -d "/opt/conda/envs/py<< parameters.PYTHON >>_env" ]]; then
+                echo "Environment directory found but not registered, re-creating conda environment"
+                # Remove the directory and recreate properly
+                rm -rf "/opt/conda/envs/py<< parameters.PYTHON >>_env"
+                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
+                conda activate py<< parameters.PYTHON >>_env
+                pip install -e .[tests,doc]
             else
                 echo "Environment not found, creating new one"
                 conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
@@ -107,10 +117,20 @@ jobs:
             apt-get install -yqq curl
             # Initialize conda for bash shell
             eval "$(conda shell.bash hook)"
+            # Check what environments conda knows about
+            echo "Available conda environments:"
+            conda info --envs
             # Ensure the environment exists and activate it properly
-            if [[ -d "/opt/conda/envs/py<< parameters.PYTHON >>_env" ]]; then
-                echo "Environment found in /opt/conda/envs/"
+            if conda env list | grep -q "py<< parameters.PYTHON >>_env"; then
+                echo "Environment py<< parameters.PYTHON >>_env found in conda list"
                 conda activate py<< parameters.PYTHON >>_env
+            elif [[ -d "/opt/conda/envs/py<< parameters.PYTHON >>_env" ]]; then
+                echo "Environment directory found but not registered, re-creating conda environment"
+                # Remove the directory and recreate properly
+                rm -rf "/opt/conda/envs/py<< parameters.PYTHON >>_env"
+                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
+                conda activate py<< parameters.PYTHON >>_env
+                pip install -e .[tests,doc]
             else
                 echo "Environment not found, creating new one"
                 conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
@@ -138,10 +158,20 @@ jobs:
           command: |
             # Initialize conda for bash shell
             eval "$(conda shell.bash hook)"
+            # Check what environments conda knows about
+            echo "Available conda environments:"
+            conda info --envs
             # Ensure the environment exists and activate it properly
-            if [[ -d "/opt/conda/envs/py3.9_env" ]]; then
-                echo "Environment found in /opt/conda/envs/"
+            if conda env list | grep -q "py3.9_env"; then
+                echo "Environment py3.9_env found in conda list"
                 conda activate py3.9_env
+            elif [[ -d "/opt/conda/envs/py3.9_env" ]]; then
+                echo "Environment directory found but not registered, re-creating conda environment"
+                # Remove the directory and recreate properly
+                rm -rf "/opt/conda/envs/py3.9_env"
+                conda create -n py3.9_env python=3.9 -yq
+                conda activate py3.9_env
+                pip install -e .[tests,doc]
             else
                 echo "Environment not found, creating new one"
                 conda create -n py3.9_env python=3.9 -yq
@@ -171,10 +201,20 @@ jobs:
           command: |
             # Initialize conda for bash shell
             eval "$(conda shell.bash hook)"
+            # Check what environments conda knows about
+            echo "Available conda environments:"
+            conda info --envs
             # Ensure the environment exists and activate it properly
-            if [[ -d "/opt/conda/envs/py3.9_env" ]]; then
-                echo "Environment found in /opt/conda/envs/"
+            if conda env list | grep -q "py3.9_env"; then
+                echo "Environment py3.9_env found in conda list"
                 conda activate py3.9_env
+            elif [[ -d "/opt/conda/envs/py3.9_env" ]]; then
+                echo "Environment directory found but not registered, re-creating conda environment"
+                # Remove the directory and recreate properly
+                rm -rf "/opt/conda/envs/py3.9_env"
+                conda create -n py3.9_env python=3.9 -yq
+                conda activate py3.9_env
+                pip install -e .[tests,doc]
             else
                 echo "Environment not found, creating new one"
                 conda create -n py3.9_env python=3.9 -yq
