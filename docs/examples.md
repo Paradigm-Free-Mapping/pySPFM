@@ -127,7 +127,7 @@ You can see that the innovation signal captures the instances where the BOLD res
 
 ## What do AUC time series look like?
 
-To avoid the selection of the regularization parameter, we can use the Stability Selection method. This method is based on subsampling the data and solving the regularization path for each subsample a number of times. You can think of it as a cross-validation approach. The method then calculates the probability of every time point having a non-zero coefficient. The following code snippet shows how to use the Stability Selection method:
+To avoid the selection of the regularization parameter, we can use the Stability Selection method. This method is based on subsampling the data and solving the regularization path for each subsample a number of times. You can think of it as a cross-validation approach. This gives you a snapshot of what time points in particular tend to be picked more often. With that, the method then calculates the probability of every time point having a non-zero coefficient (because you have run this 100 times) for each value of lambda. From those probability curves (one per time point) we calculate the area under the curve, which is a proxy of the time point having a non-zero coefficient across all possible lambdas, and therefore being truly non-zero. The following code snippet shows how to use the Stability Selection method:
 
 ```python
 from pySPFM.deconvolution.hrf_generator import HRFMatrix
@@ -147,7 +147,7 @@ The AUC time series for the spike model is shown below:
     <img src="https://raw.githubusercontent.com/Paradigm-Free-Mapping/pySPFM/main/docs/charts/stability_selection.png" alt="Stability Selection results">
 </div>
 
-By definition, the AUC time series cannot have zero values. However, that will only happen if the entire space of the regularization path is explored; i.e., if all the regularization parameters are considered. This means that we still have to apply a threshold to the AUC time series to obtain the final estimates. One way to do this is to select a region of the brain where you do not expect to see any activity, like the deep white matter. You can then use the 95th percentile of the AUC time series in that region as a threshold.
+By definition, the AUC time series cannot have zero values. However, that will only happen if the entire space of the regularization path is explored; i.e., if all the regularization parameters are considered. This means that we still have to apply a threshold to the AUC time series to obtain the final estimates. One way to do this is to select a region of the brain where you do not expect to see any activity, like the deep white matter. Assuming you have run stability selection in the entire brain, you can calculate the histogram of AUC values in the deep white matter (you can just erode the white matter mask to make it deep enough). Then, you can use the 95th percentile (or 99th, depending on how strict/sparse you want your estimates to be) of this histogram as a threshold in all the brain.
 
 Here is what the thresholded AUC time series would look like if we thresholded the AUC time series above with a 0.15 threshold:
 
