@@ -67,8 +67,18 @@ jobs:
             apt-get update
             apt-get install -yqq make
             apt-get install -yqq curl
-            cp -r /opt/conda/envs/py<< parameters.PYTHON >>_env /opt/miniconda-latest/envs/py<< parameters.PYTHON >>_env
-            source activate py<< parameters.PYTHON >>_env
+            # Ensure the environment exists and activate it properly
+            if [[ -d "/opt/conda/envs/py<< parameters.PYTHON >>_env" ]]; then
+                echo "Environment found in /opt/conda/envs/"
+                source /opt/conda/bin/activate py<< parameters.PYTHON >>_env
+            else
+                echo "Environment not found, creating new one"
+                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
+                source /opt/conda/bin/activate py<< parameters.PYTHON >>_env
+                pip install -e .[tests,doc]
+            fi
+            python --version
+            which python
             make unittest
           no_output_timeout: 20m
       - codecov/upload:
@@ -93,8 +103,18 @@ jobs:
             apt-get update
             apt-get install -yqq make
             apt-get install -yqq curl
-            cp -r /opt/conda/envs/py<< parameters.PYTHON >>_env /opt/miniconda-latest/envs/py<< parameters.PYTHON >>_env
-            source activate py<< parameters.PYTHON >>_env
+            # Ensure the environment exists and activate it properly
+            if [[ -d "/opt/conda/envs/py<< parameters.PYTHON >>_env" ]]; then
+                echo "Environment found in /opt/conda/envs/"
+                source /opt/conda/bin/activate py<< parameters.PYTHON >>_env
+            else
+                echo "Environment not found, creating new one"
+                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
+                source /opt/conda/bin/activate py<< parameters.PYTHON >>_env
+                pip install -e .[tests,doc]
+            fi
+            python --version
+            which python
             make integrationtest
           no_output_timeout: 30m
       - codecov/upload:
@@ -112,7 +132,18 @@ jobs:
       - run:
           name: Build documentation
           command: |
-            source activate py3.9_env
+            # Ensure the environment exists and activate it properly
+            if [[ -d "/opt/conda/envs/py3.9_env" ]]; then
+                echo "Environment found in /opt/conda/envs/"
+                source /opt/conda/bin/activate py3.9_env
+            else
+                echo "Environment not found, creating new one"
+                conda create -n py3.9_env python=3.9 -yq
+                source /opt/conda/bin/activate py3.9_env
+                pip install -e .[tests,doc]
+            fi
+            python --version
+            which python
             apt-get update
             apt-get install -yqq make pandoc
             make -C docs html
@@ -132,7 +163,18 @@ jobs:
       - run:
           name: Linting
           command: |
-            source activate py3.9_env
+            # Ensure the environment exists and activate it properly
+            if [[ -d "/opt/conda/envs/py3.9_env" ]]; then
+                echo "Environment found in /opt/conda/envs/"
+                source /opt/conda/bin/activate py3.9_env
+            else
+                echo "Environment not found, creating new one"
+                conda create -n py3.9_env python=3.9 -yq
+                source /opt/conda/bin/activate py3.9_env
+                pip install -e .[tests,doc]
+            fi
+            python --version
+            which python
             apt-get update
             apt-get install -yqq make
             make lint
