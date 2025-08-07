@@ -67,14 +67,16 @@ jobs:
             apt-get update
             apt-get install -yqq make
             apt-get install -yqq curl
+            # Initialize conda for bash shell
+            eval "$(conda shell.bash hook)"
             # Ensure the environment exists and activate it properly
             if [[ -d "/opt/conda/envs/py<< parameters.PYTHON >>_env" ]]; then
                 echo "Environment found in /opt/conda/envs/"
-                source /opt/conda/bin/activate py<< parameters.PYTHON >>_env
+                conda activate py<< parameters.PYTHON >>_env
             else
                 echo "Environment not found, creating new one"
                 conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
-                source /opt/conda/bin/activate py<< parameters.PYTHON >>_env
+                conda activate py<< parameters.PYTHON >>_env
                 pip install -e .[tests,doc]
             fi
             python --version
@@ -103,14 +105,16 @@ jobs:
             apt-get update
             apt-get install -yqq make
             apt-get install -yqq curl
+            # Initialize conda for bash shell
+            eval "$(conda shell.bash hook)"
             # Ensure the environment exists and activate it properly
             if [[ -d "/opt/conda/envs/py<< parameters.PYTHON >>_env" ]]; then
                 echo "Environment found in /opt/conda/envs/"
-                source /opt/conda/bin/activate py<< parameters.PYTHON >>_env
+                conda activate py<< parameters.PYTHON >>_env
             else
                 echo "Environment not found, creating new one"
                 conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
-                source /opt/conda/bin/activate py<< parameters.PYTHON >>_env
+                conda activate py<< parameters.PYTHON >>_env
                 pip install -e .[tests,doc]
             fi
             python --version
@@ -132,14 +136,16 @@ jobs:
       - run:
           name: Build documentation
           command: |
+            # Initialize conda for bash shell
+            eval "$(conda shell.bash hook)"
             # Ensure the environment exists and activate it properly
             if [[ -d "/opt/conda/envs/py3.9_env" ]]; then
                 echo "Environment found in /opt/conda/envs/"
-                source /opt/conda/bin/activate py3.9_env
+                conda activate py3.9_env
             else
                 echo "Environment not found, creating new one"
                 conda create -n py3.9_env python=3.9 -yq
-                source /opt/conda/bin/activate py3.9_env
+                conda activate py3.9_env
                 pip install -e .[tests,doc]
             fi
             python --version
@@ -163,14 +169,16 @@ jobs:
       - run:
           name: Linting
           command: |
+            # Initialize conda for bash shell
+            eval "$(conda shell.bash hook)"
             # Ensure the environment exists and activate it properly
             if [[ -d "/opt/conda/envs/py3.9_env" ]]; then
                 echo "Environment found in /opt/conda/envs/"
-                source /opt/conda/bin/activate py3.9_env
+                conda activate py3.9_env
             else
                 echo "Environment not found, creating new one"
                 conda create -n py3.9_env python=3.9 -yq
-                source /opt/conda/bin/activate py3.9_env
+                conda activate py3.9_env
                 pip install -e .[tests,doc]
             fi
             python --version
