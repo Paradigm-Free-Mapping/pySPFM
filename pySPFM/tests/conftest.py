@@ -1,6 +1,6 @@
 import os
-from urllib.request import urlopen, urlretrieve
 import json
+from urllib.request import urlopen, urlretrieve
 
 import pytest
 
