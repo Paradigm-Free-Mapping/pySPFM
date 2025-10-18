@@ -67,11 +67,15 @@ def read_data(data_fn, mask_fn):
         Masker.
     """
     # Read data
-    data_img = nib.load(data_fn)
-
-    # Load mask and calculate maximum value
-    mask_img = nib.load(mask_fn)
-    mask_max = mask_img.get_fdata().max()
+    try:
+        data_img = nib.load(data_fn)
+    except nib.filebasedimages.ImageFileError:
+        data_img, mask_img = txt_to_nifti(data_fn)
+        mask_max = 1
+    else:
+        # Load mask and calculate maximum value
+        mask_img = nib.load(mask_fn)
+        mask_max = mask_img.get_fdata().max()
 
     # Check if mask is binary
     if mask_max > 1:
@@ -127,7 +131,10 @@ def write_data(data, filename, masker, orig_img, command, use_bids=False):
 
     # If orig_img is a string, load it
     if isinstance(orig_img, str):
-        orig_img = nib.load(orig_img)
+        try:
+            orig_img = nib.load(orig_img)
+        except nib.filebasedimages.ImageFileError:
+            orig_img, _ = txt_to_nifti(orig_img)
 
     # Transform data back to 4D, generate new image and save it
     out_img = masker.inverse_transform(data)
