@@ -6,12 +6,47 @@ import os.path as op
 from subprocess import run
 
 import nibabel as nib
+import numpy as np
 from nilearn.image import new_img_like
 from nilearn.maskers import NiftiLabelsMasker, NiftiMasker
 
 from pySPFM.utils import get_keyword_description
 
 LGR = logging.getLogger("GENERAL")
+
+
+def txt_to_nifti(data_fn):
+    """Load txt file and create a nifti image and a mask from that.
+    
+    Parameters
+    ----------
+    data_fn : str or path
+        Path to txt data to be read. Assumes columns are "voxels" and rows are "timepoints"
+    
+    Returns
+    -------
+    data_img : nibabel.nifti1.Nifti1Image
+        Nifti image equivalent to input txt.
+    mask_img : nibabel.nifti1.Nifti1Image
+        Nifti image with data mask.
+    
+    """
+    # Assume data always has time as first dimension, so transpose for nifti 4D
+    data = np.genfromtxt(data_fn).transpose()
+
+    # Make data a 4D nifti img file (time is last dimension)
+    while data.ndim < 4:
+        data = data[np.newaxis, :]
+    LGR.info(
+        f"Loading txt file with {data.shape[2]} \"voxels\" and {data.shape[3]} timepoints."
+    )
+
+    data_img = nib.Nifti1Image(data, np.eye(4))
+
+    # Create mask image
+    mask_img = nib.Nifti1Image(np.ones((1, 1, data.size[2])), np.eye(4))
+
+    return data_img, mask_img
 
 
 def read_data(data_fn, mask_fn):
