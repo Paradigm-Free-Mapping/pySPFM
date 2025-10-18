@@ -1,6 +1,6 @@
 import os
-import ssl
-from urllib.request import urlretrieve
+from urllib.request import urlopen, urlretrieve
+import json
 
 import pytest
 
@@ -35,20 +35,19 @@ def fetch_file(osf_id, path, filename):
     full_path : str
         Full path to downloaded `filename`
     """
-    # This restores the same behavior as before.
-    # this three lines make tests dowloads work in windows
-    if os.name == "nt":
-        orig_sslsocket_init = ssl.SSLSocket.__init__
-        ssl.SSLSocket.__init__ = (
-            lambda *args, cert_reqs=ssl.CERT_NONE, **kwargs: orig_sslsocket_init(
-                *args, cert_reqs=ssl.CERT_NONE, **kwargs
-            )
-        )
-        ssl._create_default_https_context = ssl._create_unverified_context
-    url = "https://osf.io/{}/download".format(osf_id)
+    # Use OSF API v2 to get the download URL
+    api_url = f"https://api.osf.io/v2/files/{osf_id}/"
     full_path = os.path.join(path, filename)
+
     if not os.path.isfile(full_path):
-        urlretrieve(url, full_path)
+        # Fetch metadata to get download link
+        with urlopen(api_url) as response:
+            metadata = json.load(response)
+            download_url = metadata["data"]["links"]["download"]
+
+        # Download the actual file
+        urlretrieve(download_url, full_path)
+
     return full_path
 
 
