@@ -16,7 +16,7 @@ from pkg_resources import resource_filename
 def extract_test_data(tarball_path, outpath):
     """
     Extracts tar.gz data stored at `tarball_path` into `outpath`
-    
+
     Parameters
     ----------
     tarball_path : str
@@ -24,7 +24,7 @@ def extract_test_data(tarball_path, outpath):
     outpath : str
         Path to directory where data should be extracted
     """
-    with open(tarball_path, 'rb') as f:
+    with open(tarball_path, "rb") as f:
         t = tarfile.open(fileobj=GzipFile(fileobj=f))
         os.makedirs(outpath, exist_ok=True)
         t.extractall(outpath)
@@ -67,7 +67,9 @@ def check_integration_outputs(fname, outpath, workflow="pySPFM"):
     assert sorted(tocheck) == sorted(existing)
 
 
-def test_integration_five_echo(skip_integration, script_runner, mask_five_echo, five_echo_data_tarball):
+def test_integration_five_echo(
+    skip_integration, script_runner, mask_five_echo, five_echo_data_tarball
+):
     """Integration test of the full pySPFM workflow using five-echo test data."""
 
     if skip_integration:
@@ -170,7 +172,9 @@ def test_integration_lars(skip_integration, script_runner, mask_five_echo, five_
     check_integration_outputs(fn, out_dir)
 
 
-def test_integration_stability_selection(skip_integration, script_runner, mask_five_echo, five_echo_data_tarball):
+def test_integration_stability_selection(
+    skip_integration, script_runner, mask_five_echo, five_echo_data_tarball
+):
     """Integration test of the pySPFM stability selection workflow using five-echo test data."""
 
     if skip_integration:
