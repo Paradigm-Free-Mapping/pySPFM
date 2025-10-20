@@ -1,5 +1,5 @@
-import os
 import json
+import os
 from urllib.request import urlopen, urlretrieve
 
 import pytest
@@ -125,3 +125,28 @@ def mean_AUC(testpath):
 @pytest.fixture
 def auc_4D_thr(testpath):
     return fetch_file("2pqmy", testpath, "test_AUC_4D_thr.nii.gz")
+
+
+@pytest.fixture
+def five_echo_e1(testpath):
+    return fetch_file("u7bej", testpath, "p06.SBJ01_S09_Task11_e1.psc.nii.gz")
+
+
+@pytest.fixture
+def five_echo_e2(testpath):
+    return fetch_file("a652w", testpath, "p06.SBJ01_S09_Task11_e2.psc.nii.gz")
+
+
+@pytest.fixture
+def five_echo_e3(testpath):
+    return fetch_file("tjq4c", testpath, "p06.SBJ01_S09_Task11_e3.psc.nii.gz")
+
+
+@pytest.fixture
+def five_echo_e4(testpath):
+    return fetch_file("ukmsp", testpath, "p06.SBJ01_S09_Task11_e4.psc.nii.gz")
+
+
+@pytest.fixture
+def five_echo_e5(testpath):
+    return fetch_file("cqk2m", testpath, "p06.SBJ01_S09_Task11_e5.psc.nii.gz")
