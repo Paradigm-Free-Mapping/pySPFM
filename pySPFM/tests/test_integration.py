@@ -6,9 +6,28 @@ import glob
 import os
 import re
 import shutil
+import tarfile
+from gzip import GzipFile
 
 import pytest
 from pkg_resources import resource_filename
+
+
+def extract_test_data(tarball_path, outpath):
+    """
+    Extracts tar.gz data stored at `tarball_path` into `outpath`
+    
+    Parameters
+    ----------
+    tarball_path : str
+        Path to the tar.gz file to extract
+    outpath : str
+        Path to directory where data should be extracted
+    """
+    with open(tarball_path, 'rb') as f:
+        t = tarfile.open(fileobj=GzipFile(fileobj=f))
+        os.makedirs(outpath, exist_ok=True)
+        t.extractall(outpath)
 
 
 def check_integration_outputs(fname, outpath, workflow="pySPFM"):
@@ -48,16 +67,7 @@ def check_integration_outputs(fname, outpath, workflow="pySPFM"):
     assert sorted(tocheck) == sorted(existing)
 
 
-def test_integration_five_echo(
-    skip_integration,
-    script_runner,
-    mask_five_echo,
-    five_echo_e1,
-    five_echo_e2,
-    five_echo_e3,
-    five_echo_e4,
-    five_echo_e5,
-):
+def test_integration_five_echo(skip_integration, script_runner, mask_five_echo, five_echo_data_tarball):
     """Integration test of the full pySPFM workflow using five-echo test data."""
 
     if skip_integration:
@@ -68,8 +78,11 @@ def test_integration_five_echo(
     if os.path.exists(out_dir):
         shutil.rmtree(out_dir)
 
-    # Use the downloaded echo files
-    datalist = [five_echo_e1, five_echo_e2, five_echo_e3, five_echo_e4, five_echo_e5]
+    # Extract the downloaded tarball
+    extract_test_data(five_echo_data_tarball, os.path.dirname(out_dir))
+    prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
+    suffix = ".psc.nii.gz"
+    datalist = [prepend + str(i + 1) + suffix for i in range(5)]
     echo_times = [15.4, 29.7, 44.0, 58.3, 72.6]
 
     # CLI args
@@ -109,7 +122,7 @@ def test_integration_five_echo(
     check_integration_outputs(fn, out_dir)
 
 
-def test_integration_lars(skip_integration, script_runner, mask_five_echo, five_echo_e2):
+def test_integration_lars(skip_integration, script_runner, mask_five_echo, five_echo_data_tarball):
     """Integration test of the full pySPFM workflow using five-echo test data."""
 
     if skip_integration:
@@ -120,8 +133,11 @@ def test_integration_lars(skip_integration, script_runner, mask_five_echo, five_
     if os.path.exists(out_dir):
         shutil.rmtree(out_dir)
 
-    # Use the downloaded second echo file
-    data = five_echo_e2
+    # Extract the downloaded tarball and use the second echo
+    extract_test_data(five_echo_data_tarball, os.path.dirname(out_dir))
+    prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
+    suffix = ".psc.nii.gz"
+    data = f"{prepend}2{suffix}"
 
     # CLI args
     args = (
@@ -154,16 +170,7 @@ def test_integration_lars(skip_integration, script_runner, mask_five_echo, five_
     check_integration_outputs(fn, out_dir)
 
 
-def test_integration_stability_selection(
-    skip_integration,
-    script_runner,
-    mask_five_echo,
-    five_echo_e1,
-    five_echo_e2,
-    five_echo_e3,
-    five_echo_e4,
-    five_echo_e5,
-):
+def test_integration_stability_selection(skip_integration, script_runner, mask_five_echo, five_echo_data_tarball):
     """Integration test of the pySPFM stability selection workflow using five-echo test data."""
 
     if skip_integration:
@@ -174,8 +181,11 @@ def test_integration_stability_selection(
     if os.path.exists(out_dir):
         shutil.rmtree(out_dir)
 
-    # Use the downloaded echo files
-    datalist = [five_echo_e1, five_echo_e2, five_echo_e3, five_echo_e4, five_echo_e5]
+    # Extract the downloaded tarball
+    extract_test_data(five_echo_data_tarball, os.path.dirname(out_dir))
+    prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
+    suffix = ".psc.nii.gz"
+    datalist = [prepend + str(i + 1) + suffix for i in range(5)]
     echo_times = [15.4, 29.7, 44.0, 58.3, 72.6]
 
     # CLI args
@@ -219,11 +229,7 @@ def test_integration_auc_to_estimates(
     test_AUC,
     mean_AUC,
     auc_4D_thr,
-    five_echo_e1,
-    five_echo_e2,
-    five_echo_e3,
-    five_echo_e4,
-    five_echo_e5,
+    five_echo_data_tarball,
 ):
     if skip_integration:
         pytest.skip("Skipping five-echo integration test")
@@ -233,8 +239,11 @@ def test_integration_auc_to_estimates(
     if os.path.exists(out_dir):
         shutil.rmtree(out_dir)
 
-    # Use the downloaded echo files
-    datalist = [five_echo_e1, five_echo_e2, five_echo_e3, five_echo_e4, five_echo_e5]
+    # Extract the downloaded tarball
+    extract_test_data(five_echo_data_tarball, os.path.dirname(out_dir))
+    prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
+    suffix = ".psc.nii.gz"
+    datalist = [prepend + str(i + 1) + suffix for i in range(5)]
     echo_times = [15.4, 29.7, 44.0, 58.3, 72.6]
 
     ############################
