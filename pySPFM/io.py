@@ -76,12 +76,12 @@ def read_data(data_fn, mask_fn):
         Masker.
     """
     # Read data
-    try:
-        data_img = nib.load(data_fn)
-    except nib.filebasedimages.ImageFileError:
+    # Checking suffix 0 in case of compressed types that are handled np by genfromtxt
+    if Path(data_fn).suffixes[0] in [".txt", ".1d", ".par", ".csv", ".tsv"]:
         data_img, mask_img = txt_to_nifti(data_fn)
         mask_max = 1
     else:
+        data_img = nib.load(data_fn)
         # Load mask and calculate maximum value
         mask_img = nib.load(mask_fn)
         mask_max = mask_img.get_fdata().max()
@@ -140,10 +140,11 @@ def write_data(data, filename, masker, orig_img, command, use_bids=False):
 
     # If orig_img is a string, load it
     if isinstance(orig_img, str):
-        try:
-            orig_img = nib.load(orig_img)
-        except nib.filebasedimages.ImageFileError:
+        # Checking suffix 0 in case of compressed types that are handled np by genfromtxt
+        if Path(orig_img).suffixes[0] in [".txt", ".1d", ".par", ".csv", ".tsv"]:
             orig_img, _ = txt_to_nifti(orig_img)
+        else:
+            orig_img = nib.load(orig_img)
 
     # Transform data back to 4D, generate new image and save it
     out_img = masker.inverse_transform(data)
