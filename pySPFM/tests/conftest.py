@@ -1,5 +1,5 @@
-import os
 import json
+import os
 from urllib.request import urlopen, urlretrieve
 
 import pytest
@@ -125,3 +125,9 @@ def mean_AUC(testpath):
 @pytest.fixture
 def auc_4D_thr(testpath):
     return fetch_file("2pqmy", testpath, "test_AUC_4D_thr.nii.gz")
+
+
+@pytest.fixture
+def five_echo_data_tarball(testpath):
+    """Download the five-echo tar.gz file from OSF."""
+    return fetch_file("vg4wy", testpath, "five_echo.tar.gz")

@@ -8,29 +8,26 @@ import re
 import shutil
 import tarfile
 from gzip import GzipFile
-from io import BytesIO
 
 import pytest
-import requests
 from pkg_resources import resource_filename
 
 
-def download_test_data(osf, outpath):
+def extract_test_data(tarball_path, outpath):
     """
-    Downloads tar.gz data stored at `osf` and unpacks into `outpath` (taken from tedana)
+    Extracts tar.gz data stored at `tarball_path` into `outpath`
+
     Parameters
     ----------
-    osf : str
-        URL to OSF file that contains data to be downloaded
+    tarball_path : str
+        Path to the tar.gz file to extract
     outpath : str
-        Path to directory where OSF data should be extracted
+        Path to directory where data should be extracted
     """
-
-    req = requests.get(osf)
-    req.raise_for_status()
-    t = tarfile.open(fileobj=GzipFile(fileobj=BytesIO(req.content)))
-    os.makedirs(outpath, exist_ok=True)
-    t.extractall(outpath)
+    with open(tarball_path, "rb") as f:
+        t = tarfile.open(fileobj=GzipFile(fileobj=f))
+        os.makedirs(outpath, exist_ok=True)
+        t.extractall(outpath)
 
 
 def check_integration_outputs(fname, outpath, workflow="pySPFM"):
@@ -70,7 +67,9 @@ def check_integration_outputs(fname, outpath, workflow="pySPFM"):
     assert sorted(tocheck) == sorted(existing)
 
 
-def test_integration_five_echo(skip_integration, script_runner, mask_five_echo):
+def test_integration_five_echo(
+    skip_integration, script_runner, mask_five_echo, five_echo_data_tarball
+):
     """Integration test of the full pySPFM workflow using five-echo test data."""
 
     if skip_integration:
@@ -81,8 +80,8 @@ def test_integration_five_echo(skip_integration, script_runner, mask_five_echo):
     if os.path.exists(out_dir):
         shutil.rmtree(out_dir)
 
-    # download data and run the test
-    download_test_data("https://osf.io/vg4wy/download", os.path.dirname(out_dir))
+    # Extract the downloaded tarball
+    extract_test_data(five_echo_data_tarball, os.path.dirname(out_dir))
     prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
     suffix = ".psc.nii.gz"
     datalist = [prepend + str(i + 1) + suffix for i in range(5)]
@@ -125,7 +124,7 @@ def test_integration_five_echo(skip_integration, script_runner, mask_five_echo):
     check_integration_outputs(fn, out_dir)
 
 
-def test_integration_lars(skip_integration, script_runner, mask_five_echo):
+def test_integration_lars(skip_integration, script_runner, mask_five_echo, five_echo_data_tarball):
     """Integration test of the full pySPFM workflow using five-echo test data."""
 
     if skip_integration:
@@ -136,8 +135,8 @@ def test_integration_lars(skip_integration, script_runner, mask_five_echo):
     if os.path.exists(out_dir):
         shutil.rmtree(out_dir)
 
-    # download data and run the test using the second echo time
-    download_test_data("https://osf.io/vg4wy/download", os.path.dirname(out_dir))
+    # Extract the downloaded tarball and use the second echo
+    extract_test_data(five_echo_data_tarball, os.path.dirname(out_dir))
     prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
     suffix = ".psc.nii.gz"
     data = f"{prepend}2{suffix}"
@@ -173,7 +172,9 @@ def test_integration_lars(skip_integration, script_runner, mask_five_echo):
     check_integration_outputs(fn, out_dir)
 
 
-def test_integration_stability_selection(skip_integration, script_runner, mask_five_echo):
+def test_integration_stability_selection(
+    skip_integration, script_runner, mask_five_echo, five_echo_data_tarball
+):
     """Integration test of the pySPFM stability selection workflow using five-echo test data."""
 
     if skip_integration:
@@ -184,8 +185,8 @@ def test_integration_stability_selection(skip_integration, script_runner, mask_f
     if os.path.exists(out_dir):
         shutil.rmtree(out_dir)
 
-    # download data and run the test using the second echo time
-    download_test_data("https://osf.io/vg4wy/download", os.path.dirname(out_dir))
+    # Extract the downloaded tarball
+    extract_test_data(five_echo_data_tarball, os.path.dirname(out_dir))
     prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
     suffix = ".psc.nii.gz"
     datalist = [prepend + str(i + 1) + suffix for i in range(5)]
@@ -226,7 +227,13 @@ def test_integration_stability_selection(skip_integration, script_runner, mask_f
 
 
 def test_integration_auc_to_estimates(
-    skip_integration, script_runner, mask_five_echo, test_AUC, mean_AUC, auc_4D_thr
+    skip_integration,
+    script_runner,
+    mask_five_echo,
+    test_AUC,
+    mean_AUC,
+    auc_4D_thr,
+    five_echo_data_tarball,
 ):
     if skip_integration:
         pytest.skip("Skipping five-echo integration test")
@@ -236,8 +243,8 @@ def test_integration_auc_to_estimates(
     if os.path.exists(out_dir):
         shutil.rmtree(out_dir)
 
-    # download data and run the test using the second echo time
-    download_test_data("https://osf.io/vg4wy/download", os.path.dirname(out_dir))
+    # Extract the downloaded tarball
+    extract_test_data(five_echo_data_tarball, os.path.dirname(out_dir))
     prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
     suffix = ".psc.nii.gz"
     datalist = [prepend + str(i + 1) + suffix for i in range(5)]
