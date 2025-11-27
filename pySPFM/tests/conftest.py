@@ -1,3 +1,4 @@
+import json
 import os
 
 import pytest
@@ -37,6 +38,7 @@ def fetch_file(osf_id, path, filename):
     
     url = "https://osf.io/{}/download".format(osf_id)
     full_path = os.path.join(path, filename)
+
     if not os.path.isfile(full_path):
         # Use requests instead of urlretrieve to handle HTTP 308 redirects
         response = requests.get(url, allow_redirects=True)
@@ -120,3 +122,9 @@ def mean_AUC(testpath):
 @pytest.fixture
 def auc_4D_thr(testpath):
     return fetch_file("2pqmy", testpath, "test_AUC_4D_thr.nii.gz")
+
+
+@pytest.fixture
+def five_echo_data_tarball(testpath):
+    """Download the five-echo tar.gz file from OSF."""
+    return fetch_file("vg4wy", testpath, "five_echo.tar.gz")
