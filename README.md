@@ -35,7 +35,7 @@ Run tests for your current Python version:
 pytest pySPFM/tests/
 ```
 
-Run tests across all supported Python versions (3.8-3.12) using tox:
+Run tests across all supported Python versions (3.9-3.12) using tox:
 ```bash
 tox
 ```
