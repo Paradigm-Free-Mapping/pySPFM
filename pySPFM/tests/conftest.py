@@ -1,4 +1,3 @@
-import json
 import os
 
 import pytest
@@ -35,15 +34,14 @@ def fetch_file(osf_id, path, filename):
         Full path to downloaded `filename`
     """
     import requests
-    
+
     url = "https://osf.io/{}/download".format(osf_id)
     full_path = os.path.join(path, filename)
-
     if not os.path.isfile(full_path):
         # Use requests instead of urlretrieve to handle HTTP 308 redirects
         response = requests.get(url, allow_redirects=True)
         response.raise_for_status()
-        with open(full_path, 'wb') as f:
+        with open(full_path, "wb") as f:
             f.write(response.content)
     return full_path
 

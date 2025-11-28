@@ -12,6 +12,45 @@ The Python version of AFNI's [3dPFM](https://afni.nimh.nih.gov/pub/dist/doc/prog
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
+## Development
+
+This project uses [uv](https://github.com/astral-sh/uv) for fast, reliable dependency management and [tox](https://tox.wiki/) for testing across multiple Python versions.
+
+### Setting up a development environment
+
+1. Create a virtual environment and install dependencies (including tests) in editable mode:
+   ```bash
+   uv sync --extra tests
+   ```
+
+### Running tests
+
+Run tests for your current Python version:
+```bash
+pytest pySPFM/tests/
+```
+
+Run tests across all supported Python versions (3.10, 3.11, 3.12) using tox:
+```bash
+tox
+```
+
+Run tests for a specific Python version:
+```bash
+tox -e py310  # For Python 3.10
+```
+
+Run linting checks:
+```bash
+tox -e lint
+```
+
+### Benefits of uv
+
+- **Fast**: 10-100x faster than pip for dependency resolution and installation
+- **Deterministic**: `uv.lock` ensures reproducible installations across all environments
+- **Reliable**: Resolves dependencies consistently
+
 ## References
 
 - Caballero-Gaudes, C., Moia, S., Panwar, P., Bandettini, P. A., & Gonzalez-Castillo, J. (2019). A deconvolution algorithm for multi-echo functional MRI: Multi-echo Sparse Paradigm Free Mapping. NeuroImage, 202, 116081–116081. https://doi.org/10.1016/j.neuroimage.2019.116081
