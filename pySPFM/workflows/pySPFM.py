@@ -631,9 +631,15 @@ def pySPFM(
                 n_lambdas = int(np.ceil(max_iter_factor * n_scans))
                 # Solve LARS for each voxel with parallelization
                 futures = []
+                use_fista = regressors is not None
                 for vox_idx in range(n_voxels):
                     fut = delayed_dask(lars.solve_regularization_path, pure=False)(
-                        hrf_fut, data_temp_reg[:, vox_idx], n_lambdas, criterion, False, regressors
+                        hrf_fut,
+                        data_temp_reg[:, vox_idx],
+                        n_lambdas,
+                        criterion,
+                        use_fista,
+                        regressors,
                     )
                     futures.append(fut)
 
