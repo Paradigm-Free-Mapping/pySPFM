@@ -264,7 +264,10 @@ def fista(
         raise ValueError("The regressors option is not available with pylops.")
     else:
         # Append the regressors matrix to the HRF matrix.
+        n_regressors = 0
         if regressors is not None:
+            if regressors.ndim == 1:
+                regressors = regressors.reshape(-1, 1)
             if regressors.shape[0] != n_scans and regressors.shape[1] == n_scans:
                 regressors = regressors.T
             elif regressors.shape[0] != n_scans and regressors.shape[1] != n_scans:
@@ -278,7 +281,8 @@ def fista(
         hrf_cov = jnp.dot(hrf_trans, hrf)
         v = jnp.dot(hrf_trans, y)
 
-        y_fista_s = jnp.zeros((n_scans, n_voxels), dtype=jnp.float32)
+        # Initialize with correct dimensions (n_scans + n_regressors if regressors are used)
+        y_fista_s = jnp.zeros((hrf.shape[1], n_voxels), dtype=jnp.float32)
         s = y_fista_s.copy()
 
         t_fista = 1
@@ -327,5 +331,9 @@ def fista(
                 nv = np.sqrt(np.sum((np.dot(hrf, s) - y) ** 2, axis=0) / n_scans)
                 if abs(nv - noise_estimate) > precision:
                     lambda_ = np.nan_to_num(lambda_ * noise_estimate / nv)
+
+        # Extract only HRF estimates (exclude regressor coefficients)
+        if n_regressors > 0:
+            s = s[:n_scans, :]
 
     return s, lambda_
