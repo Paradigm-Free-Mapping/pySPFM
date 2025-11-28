@@ -91,7 +91,8 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False,
         lambdas = np.geomspace(0.05 * max_lambda, 0.95 * max_lambda, n_lambdas)
 
         for lambda_id, lambda_val in enumerate(lambdas):
-            coef_path[:, lambda_id] = fista(x, y, lambda_=lambda_val, regressors=regressors)
+            coef_temp, _ = fista(x, y, lambda_=lambda_val, regressors=regressors)
+            coef_path[:, lambda_id] = np.squeeze(coef_temp)
     else:
         lambdas_temp, _, coef_path_temp = lars_path(
             x,
