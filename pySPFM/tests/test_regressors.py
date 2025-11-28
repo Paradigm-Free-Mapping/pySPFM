@@ -261,3 +261,28 @@ def test_regressors_improve_fit(setup_data):
 
     # The estimates should be different (regressors affect the solution)
     assert not np.allclose(estimates_no_reg, estimates_with_reg)
+
+
+def test_fista_lasso_with_regressors(setup_data):
+    """Test FISTA with Lasso (group=0) and regressors."""
+    hrf = setup_data["hrf"]
+    data = setup_data["data"]
+    regressors = setup_data["regressors"]
+
+    # Run FISTA with regressors and group=0 (Lasso)
+    estimates, _ = fista.fista(
+        hrf,
+        data,
+        criterion="mad",
+        max_iter=100,
+        min_iter=10,
+        tol=1e-6,
+        group=0.0,
+        regressors=regressors,
+    )
+
+    # Check that estimates have the correct shape
+    assert estimates.shape[0] == setup_data["n_scans"]
+
+    # Check that estimates are not all zeros
+    assert np.sum(np.abs(estimates)) > 0

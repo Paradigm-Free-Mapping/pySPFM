@@ -9,6 +9,7 @@ from pySPFM.deconvolution.fista import fista
 
 LGR = logging.getLogger("GENERAL")
 
+
 def select_optimal_lambda(residuals, non_zero_count, n_scans, criterion="bic"):
     """Select optimal lambda based on the model selection criterion (BIC and AIC).
 
@@ -40,6 +41,7 @@ def select_optimal_lambda(residuals, non_zero_count, n_scans, criterion="bic"):
 
     return idx_optimal_lambda
 
+
 def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False, regressors=None):
     """Solve the regularization path with the LARS algorithm.
 
@@ -55,10 +57,9 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False,
         Criterion to find the optimal solution, by default "bic"
     use_fista : bool, optional
         Whether to use FISTA in favor of LARS to solve the regularization path.
-    regressors : ndarray, optional
+    regressors : ndarray
         Matrix with regressors to be included in the deconvolution. Regressors are NOT
-        included in the regularization step. Only supported when use_fista=True.
-        By default None.
+        included in the regularization step. By default None.
 
     Returns
     -------
@@ -67,7 +68,6 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False,
     lambdas : ndarray
         Lambda of the optimal solution
     """
-    # Validate that regressors are only used with FISTA
     if regressors is not None and not use_fista:
         raise ValueError("Regressors are only supported when use_fista=True")
 
@@ -86,13 +86,12 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False,
         # Calculate the maximum lambda possible
         max_lambda = abs(np.dot(x.T, y)).max()
 
-        # Calculate the lambda values in a log scale from 5% to 95% (i.e., from 0.05 to 0.95 times)
+        # Calculate the lambda values in a log scale from 0.05 to 0.95 percent
         # of the maximum lambda if the maximum lambda is not zero.
         lambdas = np.geomspace(0.05 * max_lambda, 0.95 * max_lambda, n_lambdas)
 
         for lambda_id, lambda_val in enumerate(lambdas):
-            coef_temp, _ = fista(x, y, lambda_=lambda_val, regressors=regressors)
-            coef_path[:, lambda_id] = np.squeeze(coef_temp)
+            coef_path[:, lambda_id] = fista(x, y, lambda_=lambda_val, regressors=regressors)
     else:
         lambdas_temp, _, coef_path_temp = lars_path(
             x,
@@ -104,9 +103,9 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False,
             eps=1e-9,
         )
 
-        # Store the results
-        coef_path[:, : len(lambdas_temp)] = coef_path_temp
-        lambdas[: len(lambdas_temp)] = lambdas_temp
+    # Store the results
+    coef_path[:, : len(lambdas_temp)] = coef_path_temp
+    lambdas[: len(lambdas_temp)] = lambdas_temp
 
     # Compute residuals for model selection criterion (BIC and AIC)
     residuals = np.sum((np.repeat(y, n_lambdas, axis=-1) - np.dot(x, coef_path)) ** 2, axis=0)

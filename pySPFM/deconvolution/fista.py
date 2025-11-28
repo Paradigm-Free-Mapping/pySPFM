@@ -308,12 +308,25 @@ def fista(
             z_ista_s = _fista_forward_jit(v, hrf_cov, y_ista_s, c_ist).block_until_ready()
 
             # Estimate s
-            if group > 0:
-                s = proximal_operator_mixed_norm_jit(
-                    z_ista_s, c_ist * lambda_, rho_val=(1 - group)
-                ).block_until_ready()
+            if n_regressors > 0:
+                z_hrf = z_ista_s[:n_scans]
+                z_regs = z_ista_s[n_scans:]
+
+                if group > 0:
+                    s_hrf = proximal_operator_mixed_norm_jit(
+                        z_hrf, c_ist * lambda_, rho_val=(1 - group)
+                    ).block_until_ready()
+                else:
+                    s_hrf = proximal_operator_lasso_jit(z_hrf, c_ist * lambda_).block_until_ready()
+
+                s = jnp.vstack((s_hrf, z_regs))
             else:
-                s = proximal_operator_lasso_jit(z_ista_s, c_ist * lambda_).block_until_ready()
+                if group > 0:
+                    s = proximal_operator_mixed_norm_jit(
+                        z_ista_s, c_ist * lambda_, rho_val=(1 - group)
+                    ).block_until_ready()
+                else:
+                    s = proximal_operator_lasso_jit(z_ista_s, c_ist * lambda_).block_until_ready()
 
             if positive_only:
                 s = np.sign(hrf[1, 0]) * jnp.maximum(np.sign(hrf[1, 0]) * s, 0)
