@@ -318,7 +318,8 @@ def _get_parser():
         help=(
             "Path to a file containing regressors to include in deconvolution (not regularized). "
             "Should be a .txt or .1D file with shape (n_timepoints, n_regressors), "
-            "where n_timepoints = n_scans for single-echo or n_scans * n_echoes for multi-echo data."
+            "where n_timepoints = n_scans for single-echo or n_scans * n_echoes for "
+            "multi-echo data."
         ),
         default=None,
     )
