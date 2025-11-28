@@ -385,3 +385,72 @@ def test_integration_auc_to_estimates(
     # compare the generated output files
     fn = resource_filename("pySPFM", "tests/data/auc_to_estimates_outputs.txt")
     check_integration_outputs(fn, out_dir, "auc_to_estimates")
+
+
+def test_integration_regressors(
+    skip_integration, script_runner, mask_five_echo, five_echo_data_tarball
+):
+    """Integration test of the full pySPFM workflow using five-echo test data and regressors."""
+
+    if skip_integration:
+        pytest.skip("Skipping five-echo integration test")
+
+    out_dir = "/tmp/data/five-echo/pySPFM.five-echo-regressors"
+
+    if os.path.exists(out_dir):
+        shutil.rmtree(out_dir)
+
+    # Extract the downloaded tarball and use the second echo
+    extract_test_data(five_echo_data_tarball, os.path.dirname(out_dir))
+    prepend = "/tmp/data/five-echo/p06.SBJ01_S09_Task11_e"
+    suffix = ".psc.nii.gz"
+    data = f"{prepend}2{suffix}"
+
+    # Create regressors file
+    regressors_fn = "/tmp/test_regressors.txt"
+    import numpy as np
+
+    np.random.seed(42)
+    # The test data has 75 timepoints
+    regs = np.random.randn(75, 3) * 0.1
+    np.savetxt(regressors_fn, regs, fmt="%.6f")
+
+    # CLI args
+    args = (
+        ["pySPFM", "-i"]
+        + [data]
+        + ["-m"]
+        + [mask_five_echo]
+        + ["-o"]
+        + ["test-regressors"]
+        + ["-tr"]
+        + ["2"]
+        + ["-d"]
+        + [out_dir]
+        + ["-crit"]
+        + ["bic"]
+        + ["--regressors"]
+        + [regressors_fn]
+        + ["-j"]
+        + ["1"]
+        + [
+            "--debug",
+            "--debias",
+        ]
+    )
+    ret = script_runner.run(args)
+    if not ret.success:
+        print(f"Return code: {ret.returncode}")
+        print(f"Stdout: {ret.stdout}")
+        print(f"Stderr: {ret.stderr}")
+    assert ret.success
+
+    # Check that output files exist
+    expected_files = [
+        "test-regressors_pySPFM_activityInducing.nii.gz",
+        "test-regressors_pySPFM_denoised_bold.nii.gz",
+        "test-regressors_pySPFM_lambda.nii.gz",
+        "test-regressors_pySPFM_MAD.nii.gz",
+    ]
+    for f in expected_files:
+        assert os.path.exists(os.path.join(out_dir, f))

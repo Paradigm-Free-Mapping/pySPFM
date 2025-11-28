@@ -5,6 +5,8 @@ import logging
 import numpy as np
 from sklearn.linear_model import lars_path
 
+from pySPFM.deconvolution.fista import fista
+
 LGR = logging.getLogger("GENERAL")
 
 
@@ -40,7 +42,7 @@ def select_optimal_lambda(residuals, non_zero_count, n_scans, criterion="bic"):
     return idx_optimal_lambda
 
 
-def solve_regularization_path(x, y, n_lambdas, criterion="bic"):
+def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False, regressors=None):
     """Solve the regularization path with the LARS algorithm.
 
     Parameters
@@ -53,6 +55,11 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic"):
         Number of lambdas to be tested
     criterion : str, optional
         Criterion to find the optimal solution, by default "bic"
+    use_fista : bool, optional
+        Whether to use FISTA in favor of LARS to solve the regularization path.
+    regressors : ndarray
+        Matrix with regressors to be included in the deconvolution. Regressors are NOT
+        included in the regularization step. By default None.
 
     Returns
     -------
@@ -61,6 +68,9 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic"):
     lambdas : ndarray
         Lambda of the optimal solution
     """
+    if regressors is not None and not use_fista:
+        raise ValueError("Regressors are only supported when use_fista=True")
+
     n_scans = x.shape[1]
 
     # If y is a vector, add a dimension to make it a matrix
@@ -72,19 +82,31 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic"):
     lambdas = np.zeros((n_lambdas,))
 
     # LARS path
-    lambdas_temp, _, coef_path_temp = lars_path(
-        x,
-        np.squeeze(y),
-        method="lasso",
-        Gram=np.dot(x.T, x),
-        Xy=np.dot(x.T, np.squeeze(y)),
-        max_iter=n_lambdas - 1,
-        eps=1e-9,
-    )
+    if use_fista:
+        # Calculate the maximum lambda possible
+        max_lambda = abs(np.dot(x.T, y)).max()
 
-    # Store the results
-    coef_path[:, : len(lambdas_temp)] = coef_path_temp
-    lambdas[: len(lambdas_temp)] = lambdas_temp
+        # Calculate the lambda values in a log scale from 0.05 to 0.95 percent
+        # of the maximum lambda if the maximum lambda is not zero.
+        lambdas = np.geomspace(0.05 * max_lambda, 0.95 * max_lambda, n_lambdas)
+
+        for lambda_id, lambda_val in enumerate(lambdas):
+            coef_temp, _ = fista(x, y, lambda_=lambda_val, regressors=regressors)
+            coef_path[:, lambda_id] = np.squeeze(coef_temp)
+    else:
+        lambdas_temp, _, coef_path_temp = lars_path(
+            x,
+            np.squeeze(y),
+            method="lasso",
+            Gram=np.dot(x.T, x),
+            Xy=np.dot(x.T, np.squeeze(y)),
+            max_iter=n_lambdas - 1,
+            eps=1e-9,
+        )
+
+        # Store the results
+        coef_path[:, : len(lambdas_temp)] = coef_path_temp
+        lambdas[: len(lambdas_temp)] = lambdas_temp
 
     # Compute residuals for model selection criterion (BIC and AIC)
     residuals = np.sum((np.repeat(y, n_lambdas, axis=-1) - np.dot(x, coef_path)) ** 2, axis=0)
