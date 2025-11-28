@@ -536,10 +536,12 @@ def pySPFM(
         )
 
         # Validate dimensions
-        if regressors.shape[0] != n_scans:
+        expected_timepoints = n_scans * n_te
+        if regressors.shape[0] != expected_timepoints:
             raise ValueError(
                 f"Regressors file has {regressors.shape[0]} timepoints "
-                f"but data has {n_scans} scans."
+                f"but data has {expected_timepoints} scans (n_scans={n_scans}, "
+                f"n_echoes={n_te})."
             )
 
     # Run LARS if bic or aic on given.
