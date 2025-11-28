@@ -18,14 +18,9 @@ This project uses [uv](https://github.com/astral-sh/uv) for fast, reliable depen
 
 ### Setting up a development environment
 
-1. Install dependencies using uv:
+1. Create a virtual environment and install dependencies (including tests) in editable mode:
    ```bash
-   uv sync
-   ```
-
-2. Install the package in editable mode with test dependencies:
-   ```bash
-   uv pip install -e .[tests]
+   uv sync --extra tests
    ```
 
 ### Running tests
