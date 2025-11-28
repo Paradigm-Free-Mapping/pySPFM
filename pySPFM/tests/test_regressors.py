@@ -286,3 +286,119 @@ def test_fista_lasso_with_regressors(setup_data):
 
     # Check that estimates are not all zeros
     assert np.sum(np.abs(estimates)) > 0
+
+
+def test_fista_multi_echo_with_regressors():
+    """Test FISTA with multi-echo data and regressors."""
+    n_scans = 100
+    tr = 2.0
+    te = [13.7, 29.9, 46.1]  # Multi-echo TEs in ms
+    n_te = len(te)
+
+    # Generate multi-echo HRF
+    hrf_obj = hrf_generator.HRFMatrix(te=te, block=False)
+    hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
+
+    # HRF should have shape (n_scans * n_te, n_scans)
+    assert hrf.shape == (n_scans * n_te, n_scans)
+
+    # Generate synthetic signal with some activity
+    true_signal = np.zeros(n_scans)
+    true_signal[20] = 1.0
+    true_signal[50] = 0.8
+    true_signal[80] = 0.6
+
+    # Generate regressors with correct shape for multi-echo: (n_scans * n_te, n_regressors)
+    n_regressors = 3
+    regressors = np.random.randn(n_scans * n_te, n_regressors) * 0.1
+
+    # Generate multi-echo data
+    regressor_betas = np.array([0.5, -0.3, 0.2])
+    data = (
+        np.dot(hrf, true_signal)
+        + np.dot(regressors, regressor_betas)
+        + np.random.randn(n_scans * n_te) * 0.05
+    )
+
+    # Run FISTA with regressors
+    estimates, lambda_val = fista.fista(
+        hrf,
+        data,
+        criterion="mad",
+        max_iter=100,
+        min_iter=10,
+        tol=1e-6,
+        regressors=regressors,
+    )
+
+    # Check that estimates have the correct shape (n_scans, not n_scans * n_te)
+    assert estimates.shape[0] == n_scans
+
+    # Check that lambda is positive
+    assert lambda_val > 0
+
+    # Check that estimates are not all zeros
+    assert np.sum(np.abs(estimates)) > 0
+
+
+def test_fista_multi_echo_regressors_dimension_validation():
+    """Test that FISTA correctly validates regressor dimensions for multi-echo data."""
+    n_scans = 100
+    tr = 2.0
+    te = [13.7, 29.9, 46.1]  # Multi-echo TEs
+    n_te = len(te)
+
+    # Generate multi-echo HRF
+    hrf_obj = hrf_generator.HRFMatrix(te=te, block=False)
+    hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
+
+    # Generate data
+    data = np.random.randn(n_scans * n_te)
+
+    # Create regressors with wrong shape (n_scans instead of n_scans * n_te)
+    wrong_regressors = np.random.randn(n_scans, 2)
+
+    # This should raise a ValueError due to dimension mismatch
+    with pytest.raises(ValueError, match="doesn't have the right dimensions"):
+        fista.fista(
+            hrf,
+            data,
+            criterion="mad",
+            max_iter=100,
+            regressors=wrong_regressors,
+        )
+
+
+def test_fista_multi_echo_regressors_transpose():
+    """Test that FISTA handles transposed regressors correctly for multi-echo data."""
+    n_scans = 100
+    tr = 2.0
+    te = [13.7, 29.9, 46.1]  # Multi-echo TEs
+    n_te = len(te)
+
+    # Generate multi-echo HRF
+    hrf_obj = hrf_generator.HRFMatrix(te=te, block=False)
+    hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
+
+    # Generate data
+    true_signal = np.zeros(n_scans)
+    true_signal[20] = 1.0
+    data = np.dot(hrf, true_signal) + np.random.randn(n_scans * n_te) * 0.05
+
+    # Create regressors with shape (n_regressors, n_scans * n_te) - transposed
+    n_regressors = 2
+    regressors_transposed = np.random.randn(n_regressors, n_scans * n_te) * 0.1
+
+    # Run FISTA - should auto-transpose
+    estimates, lambda_val = fista.fista(
+        hrf,
+        data,
+        criterion="mad",
+        max_iter=100,
+        min_iter=10,
+        tol=1e-6,
+        regressors=regressors_transposed,
+    )
+
+    # Should work without error
+    assert estimates.shape[0] == n_scans

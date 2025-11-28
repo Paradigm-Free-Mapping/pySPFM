@@ -317,7 +317,8 @@ def _get_parser():
         type=lambda x: is_valid_file(parser, x),
         help=(
             "Path to a file containing regressors to include in deconvolution (not regularized). "
-            "Should be a .txt or .1D file with shape (n_scans, n_regressors)."
+            "Should be a .txt or .1D file with shape (n_timepoints, n_regressors), "
+            "where n_timepoints = n_scans for single-echo or n_scans * n_echoes for multi-echo data."
         ),
         default=None,
     )
@@ -452,8 +453,10 @@ def pySPFM(
     positive_only : bool, optional
         If True, the estimated signal will be forced to be positive, by default False
     regressors_fn : str, optional
-        Path to file containing regressors to include in deconvolution (not regularized),
-        by default None
+        Path to file containing regressors to include in deconvolution (not regularized).
+        Should be a .txt or .1D file with shape (n_timepoints, n_regressors),
+        where n_timepoints = n_scans for single-echo or n_scans * n_echoes for multi-echo data.
+        By default None.
     debug : bool, optional
         Logger option for debugging, by default False
     quiet : bool, optional

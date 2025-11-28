@@ -202,9 +202,10 @@ def fista(
         Use pylops library to solve FISTA instead of using pySPFM's FISTA, by default False
     positive_only : bool, optional
         If True, the estimated signal will be forced to be positive, by default False
-    regressors : ndarray
-        Matrix with regressors to be included in the deconvolution. Regressors are NOT
-        included in the regularization step. By default None.
+    regressors : ndarray, optional
+        Matrix with regressors to be included in the deconvolution with shape
+        (n_timepoints, n_regressors). Regressors are NOT included in the regularization step.
+        By default None.
 
     Returns
     -------
@@ -268,13 +269,16 @@ def fista(
         if regressors is not None:
             if regressors.ndim == 1:
                 regressors = regressors.reshape(-1, 1)
-            if regressors.shape[0] != n_scans and regressors.shape[1] == n_scans:
+            if regressors.shape[0] != hrf.shape[0] and regressors.shape[1] == hrf.shape[0]:
                 regressors = regressors.T
-            elif regressors.shape[0] != n_scans and regressors.shape[1] != n_scans:
+            elif regressors.shape[0] != hrf.shape[0] and regressors.shape[1] != hrf.shape[0]:
                 raise ValueError("The regressors matrix doesn't have the right dimensions.")
 
             n_regressors = regressors.shape[1]
             hrf = np.hstack((hrf, regressors))
+
+        # Recalculate c_ist after appending regressors to HRF
+        c_ist = 1 / (jnp.linalg.norm(hrf) ** 2)
 
         # Use FISTA with updating lambda
         hrf_trans = hrf.T
