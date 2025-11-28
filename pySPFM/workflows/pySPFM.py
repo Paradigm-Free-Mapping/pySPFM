@@ -51,7 +51,11 @@ def _get_parser():
         dest="data_fn",
         type=lambda x: is_valid_file(parser, x),
         nargs="+",
-        help="The name of the file containing fMRI data. ",
+        help=(
+            "The name of the nifti-like or txt-like file containing fMRI data. "
+            "If the file is txt-like, it is expected that columns are different "
+            "timeseries and rows are timepoints. Extension-less files are not supported."
+        ),
         required=True,
     )
     required.add_argument(
