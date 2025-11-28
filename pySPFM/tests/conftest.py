@@ -1,6 +1,4 @@
-import json
 import os
-from urllib.request import urlopen, urlretrieve
 
 import pytest
 
@@ -35,19 +33,16 @@ def fetch_file(osf_id, path, filename):
     full_path : str
         Full path to downloaded `filename`
     """
-    # Use OSF API v2 to get the download URL
-    api_url = f"https://api.osf.io/v2/files/{osf_id}/"
+    import requests
+
+    url = "https://osf.io/{}/download".format(osf_id)
     full_path = os.path.join(path, filename)
-
     if not os.path.isfile(full_path):
-        # Fetch metadata to get download link
-        with urlopen(api_url) as response:
-            metadata = json.load(response)
-            download_url = metadata["data"]["links"]["download"]
-
-        # Download the actual file
-        urlretrieve(download_url, full_path)
-
+        # Use requests instead of urlretrieve to handle HTTP 308 redirects
+        response = requests.get(url, allow_redirects=True)
+        response.raise_for_status()
+        with open(full_path, "wb") as f:
+            f.write(response.content)
     return full_path
 
 

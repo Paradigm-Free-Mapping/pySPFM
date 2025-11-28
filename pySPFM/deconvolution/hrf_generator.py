@@ -70,9 +70,9 @@ class HRFMatrix:
                     "Please make sure that your custom HRF is not longer than the number of scans."
                 )
         elif self.model == "spm":
-            hrf = spm_hrf(tr, oversampling=1, time_length=n_scans * tr)
+            hrf = spm_hrf(t_r=tr, oversampling=1, time_length=n_scans * tr)
         elif self.model == "glover":
-            hrf = glover_hrf(tr, oversampling=1, time_length=n_scans * tr)
+            hrf = glover_hrf(t_r=tr, oversampling=1, time_length=n_scans * tr)
         else:
             raise ValueError(
                 f"Model must be either 'spm', 'glover' or a custom '.1D' or '.txt' file, "
