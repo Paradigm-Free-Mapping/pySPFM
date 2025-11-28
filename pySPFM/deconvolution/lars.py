@@ -57,9 +57,10 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False,
         Criterion to find the optimal solution, by default "bic"
     use_fista : bool, optional
         Whether to use FISTA in favor of LARS to solve the regularization path.
-    regressors : ndarray
+    regressors : ndarray, optional
         Matrix with regressors to be included in the deconvolution. Regressors are NOT
-        included in the regularization step. By default None.
+        included in the regularization step. Only supported when use_fista=True.
+        By default None. By default None.
 
     Returns
     -------
