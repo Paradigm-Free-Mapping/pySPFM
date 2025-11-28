@@ -60,7 +60,7 @@ class HRFMatrix:
         """
         # Read custom HRF from file if self.model ends in .1D or .txt
         if self.model.endswith(".1D") or self.model.endswith(".txt"):
-            hrf = np.loadtxt(self.custom)
+            hrf = np.loadtxt(self.model)
 
             # Make sure that the HRF is not longer than the number of scans
             # If it is, then raise an error
