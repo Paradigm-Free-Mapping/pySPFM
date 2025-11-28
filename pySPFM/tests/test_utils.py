@@ -1,11 +1,8 @@
 """Tests for pySPFM utils module."""
 
 import logging
-import os
 import os.path as op
-import tempfile
 
-import pytest
 import yaml
 
 from pySPFM import utils

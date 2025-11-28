@@ -77,11 +77,7 @@ class TestIsValidFile:
             parser_utils.is_valid_file(parser, "/nonexistent/file.txt")
 
     def test_none_argument(self):
-        """Test with None argument - should return None without checking."""
+        """Test with None argument - should return None without error."""
         parser = argparse.ArgumentParser()
-        # The function checks `arg is not None` after `op.isfile(arg)`
-        # so None will cause TypeError. Let's skip this test or accept the behavior.
-        # Actually looking at the code: `if not op.isfile(arg) and arg is not None:`
-        # This should short-circuit, but os.stat is called first.
-        # This is a bug in the original code - arg should be checked for None first
-        pass  # Skip test as it exposes a bug in is_valid_file
+        result = parser_utils.is_valid_file(parser, None)
+        assert result is None
