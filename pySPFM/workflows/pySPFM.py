@@ -532,13 +532,14 @@ def pySPFM(
         if regressors.ndim == 1:
             regressors = regressors.reshape(-1, 1)
         LGR.info(
-            f"Loaded {regressors.shape[1]} regressor(s) with {regressors.shape[0]} timepoints."
+            f"Loaded {regressors.shape[1]} regressor(s) with " f"{regressors.shape[0]} timepoints."
         )
 
         # Validate dimensions
         if regressors.shape[0] != n_scans:
             raise ValueError(
-                f"Regressors file has {regressors.shape[0]} timepoints but data has {n_scans} scans."
+                f"Regressors file has {regressors.shape[0]} timepoints "
+                f"but data has {n_scans} scans."
             )
 
     # Run LARS if bic or aic on given.
