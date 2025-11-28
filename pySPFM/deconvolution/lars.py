@@ -9,7 +9,6 @@ from pySPFM.deconvolution.fista import fista
 
 LGR = logging.getLogger("GENERAL")
 
-
 def select_optimal_lambda(residuals, non_zero_count, n_scans, criterion="bic"):
     """Select optimal lambda based on the model selection criterion (BIC and AIC).
 
@@ -41,7 +40,6 @@ def select_optimal_lambda(residuals, non_zero_count, n_scans, criterion="bic"):
 
     return idx_optimal_lambda
 
-
 def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False, regressors=None):
     """Solve the regularization path with the LARS algorithm.
 
@@ -60,7 +58,7 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False,
     regressors : ndarray, optional
         Matrix with regressors to be included in the deconvolution. Regressors are NOT
         included in the regularization step. Only supported when use_fista=True.
-        By default None. By default None.
+        By default None.
 
     Returns
     -------
@@ -69,6 +67,10 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False,
     lambdas : ndarray
         Lambda of the optimal solution
     """
+    # Validate that regressors are only used with FISTA
+    if regressors is not None and not use_fista:
+        raise ValueError("Regressors are only supported when use_fista=True")
+
     n_scans = x.shape[1]
 
     # If y is a vector, add a dimension to make it a matrix
@@ -84,8 +86,7 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False,
         # Calculate the maximum lambda possible
         max_lambda = abs(np.dot(x.T, y)).max()
 
-        # Calculate the lambda values in a log scale from 5% to 95% (i.e., from 0.05 to
-        # 0.95 times)
+        # Calculate the lambda values in a log scale from 5% to 95% (i.e., from 0.05 to 0.95 times)
         # of the maximum lambda if the maximum lambda is not zero.
         lambdas = np.geomspace(0.05 * max_lambda, 0.95 * max_lambda, n_lambdas)
 
