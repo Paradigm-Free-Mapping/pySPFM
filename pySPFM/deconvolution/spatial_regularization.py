@@ -131,7 +131,8 @@ def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
         Estimates of activity-inducing or innovation signal after spatial regularization.
     """
     # Transform data from 2D into 4D
-    # unmask expects (samples, features) so we transpose (n_features, n_samples) -> (n_samples, n_features)
+    # unmask expects (samples, features) so we transpose
+    # (n_features, n_samples) -> (n_samples, n_features)
     # unmask returns nibabel image, need to get data array
     estimates_vol = unmask(estimates.T, mask).get_fdata()
     data_vol = unmask(data.T, mask).get_fdata()
