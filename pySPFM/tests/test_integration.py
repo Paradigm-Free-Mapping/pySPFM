@@ -117,7 +117,7 @@ def test_integration_five_echo(skip_integration, script_runner, mask_five_echo):
             "--bids",
         ]
     )
-    ret = script_runner.run(*args)
+    ret = script_runner.run(args)
     assert ret.success
 
     # compare the generated output files
@@ -165,7 +165,7 @@ def test_integration_lars(skip_integration, script_runner, mask_five_echo):
             "--debias",
         ]
     )
-    ret = script_runner.run(*args)
+    ret = script_runner.run(args)
     assert ret.success
 
     # compare the generated output files
@@ -217,7 +217,7 @@ def test_integration_stability_selection(skip_integration, script_runner, mask_f
         ]
     )
 
-    ret = script_runner.run(*args)
+    ret = script_runner.run(args)
     assert ret.success
 
     # compare the generated output files
@@ -269,7 +269,7 @@ def test_integration_auc_to_estimates(
         ]
     )
 
-    ret = script_runner.run(*args)
+    ret = script_runner.run(args)
     assert ret.success
 
     # compare the generated output files
@@ -306,7 +306,7 @@ def test_integration_auc_to_estimates(
         ]
     )
 
-    ret = script_runner.run(*args)
+    ret = script_runner.run(args)
     assert ret.success
 
     # compare the generated output files
@@ -339,7 +339,7 @@ def test_integration_auc_to_estimates(
         ]
     )
 
-    ret = script_runner.run(*args)
+    ret = script_runner.run(args)
     assert ret.success
 
     # compare the generated output files
@@ -372,7 +372,7 @@ def test_integration_auc_to_estimates(
         ]
     )
 
-    ret = script_runner.run(*args)
+    ret = script_runner.run(args)
     assert ret.success
 
     # compare the generated output files
