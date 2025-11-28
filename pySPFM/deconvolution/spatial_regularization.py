@@ -1,5 +1,6 @@
 """Spatial regularization functions as developed in Total Activation."""
 
+import nibabel as nib
 import numpy as np
 from nilearn.masking import apply_mask, unmask
 
@@ -39,8 +40,11 @@ def spatial_tikhonov(estimates, data, masker, niter, dim, lambda_, mu):
         Estimates of activity-inducing or innovation signal after spatial regularization.
     """
     # Transform data from 2D into 4D
-    estimates_vol = masker.inverse_transform(estimates)
-    data_vol = masker.inverse_trasnform(data)
+    # NiftiMasker expects (n_samples, n_features), but input is (n_features, n_samples)
+    estimates_img = masker.inverse_transform(estimates.T)
+    data_img = masker.inverse_transform(data.T)
+    estimates_vol = estimates_img.get_fdata()
+    data_vol = data_img.get_fdata()
 
     if dim == 2:
         h = generate_delta(dim=dim)
@@ -61,13 +65,13 @@ def spatial_tikhonov(estimates, data, masker, niter, dim, lambda_, mu):
                                 estimates_vol[:, :, slice_idx, time_idx],
                                 (estimates_vol.shape[0], estimates_vol.shape[1]),
                             )
-                        )
+                        ).real
                     )
 
     elif dim == 3:
         h = generate_delta(dim=dim)
 
-        h = np.fft.fftn(h, estimates_vol.shape[:2])
+        h = np.fft.fftn(h, estimates_vol.shape[:3])
 
         for iter_idx in range(niter):
             for time_idx in range(estimates_vol.shape[-1]):
@@ -79,11 +83,17 @@ def spatial_tikhonov(estimates, data, masker, niter, dim, lambda_, mu):
                     * np.fft.ifftn(
                         h
                         * np.conj(h)
-                        * np.fft.fftn(estimates_vol[:, :, :, time_idx], estimates_vol.shape[:2])
-                    )
+                        * np.fft.fftn(estimates_vol[:, :, :, time_idx], estimates_vol.shape[:3])
+                    ).real
                 )
 
-    final_estimates = masker.fit_trasform(estimates_vol)
+    # Take real part (FFT operations can introduce small imaginary components)
+    estimates_vol = np.real(estimates_vol)
+
+    # Create image from array and transform back to 2D
+    estimates_img_out = nib.Nifti1Image(estimates_vol, estimates_img.affine)
+    # transform returns (n_samples, n_features), we need (n_features, n_samples)
+    final_estimates = masker.transform(estimates_img_out).T
 
     return final_estimates
 
@@ -121,8 +131,14 @@ def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
         Estimates of activity-inducing or innovation signal after spatial regularization.
     """
     # Transform data from 2D into 4D
-    estimates_vol = unmask(estimates, mask)
-    data_vol = unmask(data, mask)
+    # unmask expects (samples, features) so we transpose
+    # (n_features, n_samples) -> (n_samples, n_features)
+    # unmask returns nibabel image, need to get data array
+    estimates_vol = unmask(estimates.T, mask).get_fdata()
+    data_vol = unmask(data.T, mask).get_fdata()
+
+    # Get mask array for clip function
+    mask_data = mask.get_fdata().astype(int)
 
     z = np.zeros(estimates_vol.shape)
 
@@ -130,7 +146,7 @@ def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
 
     max_eig = 144
 
-    h = np.fft.fftn(h, estimates_vol.shape[:2])
+    h = np.fft.fftn(h, estimates_vol.shape[:3])
 
     # Perform structured sparsity regularization
     for time_idx in range(estimates_vol.shape[-1]):
@@ -139,17 +155,21 @@ def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
                 z[:, :, :, time_idx]
                 + 1
                 / (lambda_ * max_eig)
-                * np.fft.ifftn(h * np.fft.fftn(data_vol[:, :, :, time_idx], dims[:2]))
-                - np.fft.ifftn(h * np.conj(h) * np.fft.fftn(z[:, :, :, time_idx], dims[:2]))
+                * np.fft.ifftn(h * np.fft.fftn(data_vol[:, :, :, time_idx], dims[:3])).real
+                - np.fft.ifftn(h * np.conj(h) * np.fft.fftn(z[:, :, :, time_idx], dims[:3])).real
                 / max_eig,
-                mask,
+                mask_data,
             )
-        estimates_vol[:, :, :, time_idx] = data_vol[:, :, :, time_idx] - lambda_ * np.fft.ifftn(
-            np.conj(h) * np.fft.fttn(z[:, :, :, time_idx], dims[:2])
+        estimates_vol[:, :, :, time_idx] = (
+            data_vol[:, :, :, time_idx]
+            - lambda_ * np.fft.ifftn(np.conj(h) * np.fft.fftn(z[:, :, :, time_idx], dims[:3])).real
         )
 
     # Transform data from 4D into 2D
-    final_estimates = apply_mask(estimates_vol, mask)
+    # Create nibabel image from array, then apply_mask
+    # apply_mask returns (samples, features), we need (features, samples) so transpose
+    estimates_img_out = nib.Nifti1Image(estimates_vol, mask.affine)
+    final_estimates = apply_mask(estimates_img_out, mask).T
 
     return final_estimates
 
