@@ -84,7 +84,8 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False,
         # Calculate the maximum lambda possible
         max_lambda = abs(np.dot(x.T, y)).max()
 
-        # Calculate the lambda values in a log scale from 0.05 to 0.95 percent
+        # Calculate the lambda values in a log scale from 5% to 95% (i.e., from 0.05 to
+        # 0.95 times)
         # of the maximum lambda if the maximum lambda is not zero.
         lambdas = np.geomspace(0.05 * max_lambda, 0.95 * max_lambda, n_lambdas)
 
