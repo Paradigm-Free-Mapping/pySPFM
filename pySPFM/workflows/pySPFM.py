@@ -312,6 +312,16 @@ def _get_parser():
         default=False,
     )
     optional.add_argument(
+        "--regressors",
+        dest="regressors_fn",
+        type=lambda x: is_valid_file(parser, x),
+        help=(
+            "Path to a file containing regressors to include in deconvolution (not regularized). "
+            "Should be a .txt or .1D file with shape (n_scans, n_regressors)."
+        ),
+        default=None,
+    )
+    optional.add_argument(
         "-debug",
         "--debug",
         dest="debug",
@@ -366,6 +376,7 @@ def pySPFM(
     use_bids=False,
     n_surrogates=50,
     positive_only=False,
+    regressors_fn=None,
     debug=False,
     quiet=False,
     command_str=None,
@@ -440,6 +451,9 @@ def pySPFM(
         Number of surrogates to generate for stability selection, by default 50
     positive_only : bool, optional
         If True, the estimated signal will be forced to be positive, by default False
+    regressors_fn : str, optional
+        Path to file containing regressors to include in deconvolution (not regularized),
+        by default None
     debug : bool, optional
         Logger option for debugging, by default False
     quiet : bool, optional
@@ -509,6 +523,21 @@ def pySPFM(
     LGR.info("Generating design matrix with shifted versions of HRF...")
     hrf_obj = hrf_generator.HRFMatrix(te=te, block=block_model, model=hrf_model)
     hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
+
+    # Load regressors if provided
+    regressors = None
+    if regressors_fn is not None:
+        LGR.info(f"Loading regressors from {regressors_fn}...")
+        regressors = np.loadtxt(regressors_fn)
+        if regressors.ndim == 1:
+            regressors = regressors.reshape(-1, 1)
+        LGR.info(f"Loaded {regressors.shape[1]} regressor(s) with {regressors.shape[0]} timepoints.")
+
+        # Validate dimensions
+        if regressors.shape[0] != n_scans:
+            raise ValueError(
+                f"Regressors file has {regressors.shape[0]} timepoints but data has {n_scans} scans."
+            )
 
     # Run LARS if bic or aic on given.
     # If another criterion is given, then solve with FISTA.
@@ -599,7 +628,7 @@ def pySPFM(
                 futures = []
                 for vox_idx in range(n_voxels):
                     fut = delayed_dask(lars.solve_regularization_path, pure=False)(
-                        hrf_fut, data_temp_reg[:, vox_idx], n_lambdas, criterion
+                        hrf_fut, data_temp_reg[:, vox_idx], n_lambdas, criterion, False, regressors
                     )
                     futures.append(fut)
 
@@ -630,6 +659,7 @@ def pySPFM(
                         factor=factor,
                         lambda_echo=lambda_echo,
                         positive_only=positive_only,
+                        regressors=regressors,
                     )
                     futures.append(fut)
 
