@@ -10,7 +10,6 @@ from pySPFM.deconvolution import fista, hrf_generator, lars
 def setup_data():
     """Set up test data for regressors tests."""
     n_scans = 100
-    n_voxels = 1
     tr = 2.0
     te = [0]
 
