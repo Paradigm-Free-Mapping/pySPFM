@@ -104,9 +104,9 @@ def solve_regularization_path(x, y, n_lambdas, criterion="bic", use_fista=False,
             eps=1e-9,
         )
 
-    # Store the results
-    coef_path[:, : len(lambdas_temp)] = coef_path_temp
-    lambdas[: len(lambdas_temp)] = lambdas_temp
+        # Store the results
+        coef_path[:, : len(lambdas_temp)] = coef_path_temp
+        lambdas[: len(lambdas_temp)] = lambdas_temp
 
     # Compute residuals for model selection criterion (BIC and AIC)
     residuals = np.sum((np.repeat(y, n_lambdas, axis=-1) - np.dot(x, coef_path)) ** 2, axis=0)
