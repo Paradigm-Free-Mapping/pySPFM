@@ -53,7 +53,6 @@ tox -e lint
 
 ## References
 
-
 - Caballero-Gaudes, C., Moia, S., Panwar, P., Bandettini, P. A., & Gonzalez-Castillo, J. (2019). A deconvolution algorithm for multi-echo functional MRI: Multi-echo Sparse Paradigm Free Mapping. NeuroImage, 202, 116081–116081. https://doi.org/10.1016/j.neuroimage.2019.116081
 - Caballero Gaudes, C., Petridou, N., Francis, S. T., Dryden, I. L., & Gowland, P. A. (2013). Paradigm free mapping with sparse regression automatically detects single-trial functional magnetic resonance imaging blood oxygenation level dependent responses. Human Brain Mapping. https://doi.org/10.1002/hbm.21452
 - Karahanoǧlu, F. I., Caballero-Gaudes, C., Lazeyras, F., & Van De Ville, D. (2013). Total activation: FMRI deconvolution through spatio-temporal regularization. NeuroImage. https://doi.org/10.1016/j.neuroimage.2013.01.067
