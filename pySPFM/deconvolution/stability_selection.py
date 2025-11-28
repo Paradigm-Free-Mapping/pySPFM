@@ -13,16 +13,18 @@ LGR = logging.getLogger("GENERAL")
 
 
 def get_subsampling_indices(n_scans, n_echos, mode="same"):
-    """Get subsampling indices for stability selection.
+    """
+    Get subsampling indices to generate surrogate data for stability selection.
 
     Parameters
     ----------
     n_scans : int
         Number of scans.
     n_echos : int
-        Number of echoes.
+        Number of echos.
     mode : str, optional
-        Mode of subsampling. Can be "same" or "different".
+        Mode of subsampling. For multi-echo data you can choose between "same" and "different"
+        subsampling indices across echos. The default is "same".
 
     Returns
     -------

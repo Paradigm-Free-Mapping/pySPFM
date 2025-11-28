@@ -1,6 +1,4 @@
 import os
-import ssl
-from urllib.request import urlretrieve
 
 import pytest
 
@@ -35,20 +33,16 @@ def fetch_file(osf_id, path, filename):
     full_path : str
         Full path to downloaded `filename`
     """
-    # This restores the same behavior as before.
-    # this three lines make tests dowloads work in windows
-    if os.name == "nt":
-        orig_sslsocket_init = ssl.SSLSocket.__init__
-        ssl.SSLSocket.__init__ = (
-            lambda *args, cert_reqs=ssl.CERT_NONE, **kwargs: orig_sslsocket_init(
-                *args, cert_reqs=ssl.CERT_NONE, **kwargs
-            )
-        )
-        ssl._create_default_https_context = ssl._create_unverified_context
+    import requests
+
     url = "https://osf.io/{}/download".format(osf_id)
     full_path = os.path.join(path, filename)
     if not os.path.isfile(full_path):
-        urlretrieve(url, full_path)
+        # Use requests instead of urlretrieve to handle HTTP 308 redirects
+        response = requests.get(url, allow_redirects=True)
+        response.raise_for_status()
+        with open(full_path, "wb") as f:
+            f.write(response.content)
     return full_path
 
 
@@ -126,3 +120,9 @@ def mean_AUC(testpath):
 @pytest.fixture
 def auc_4D_thr(testpath):
     return fetch_file("2pqmy", testpath, "test_AUC_4D_thr.nii.gz")
+
+
+@pytest.fixture
+def five_echo_data_tarball(testpath):
+    """Download the five-echo tar.gz file from OSF."""
+    return fetch_file("vg4wy", testpath, "five_echo.tar.gz")

@@ -67,8 +67,30 @@ jobs:
             apt-get update
             apt-get install -yqq make
             apt-get install -yqq curl
-            cp -r /opt/conda/envs/py<< parameters.PYTHON >>_env /opt/miniconda-latest/envs/py<< parameters.PYTHON >>_env
-            source activate py<< parameters.PYTHON >>_env
+            # Initialize conda for bash shell
+            eval "$(conda shell.bash hook)"
+            # Check what environments conda knows about
+            echo "Available conda environments:"
+            conda info --envs
+            # Ensure the environment exists and activate it properly
+            if conda env list | grep -q "py<< parameters.PYTHON >>_env"; then
+                echo "Environment py<< parameters.PYTHON >>_env found in conda list"
+                conda activate py<< parameters.PYTHON >>_env
+            elif [[ -d "/opt/conda/envs/py<< parameters.PYTHON >>_env" ]]; then
+                echo "Environment directory found but not registered, re-creating conda environment"
+                # Remove the directory and recreate properly
+                rm -rf "/opt/conda/envs/py<< parameters.PYTHON >>_env"
+                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
+                conda activate py<< parameters.PYTHON >>_env
+                pip install -e .[tests,doc]
+            else
+                echo "Environment not found, creating new one"
+                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
+                conda activate py<< parameters.PYTHON >>_env
+                pip install -e .[tests,doc]
+            fi
+            python --version
+            which python
             make unittest
           no_output_timeout: 20m
       - codecov/upload:
@@ -93,8 +115,30 @@ jobs:
             apt-get update
             apt-get install -yqq make
             apt-get install -yqq curl
-            cp -r /opt/conda/envs/py<< parameters.PYTHON >>_env /opt/miniconda-latest/envs/py<< parameters.PYTHON >>_env
-            source activate py<< parameters.PYTHON >>_env
+            # Initialize conda for bash shell
+            eval "$(conda shell.bash hook)"
+            # Check what environments conda knows about
+            echo "Available conda environments:"
+            conda info --envs
+            # Ensure the environment exists and activate it properly
+            if conda env list | grep -q "py<< parameters.PYTHON >>_env"; then
+                echo "Environment py<< parameters.PYTHON >>_env found in conda list"
+                conda activate py<< parameters.PYTHON >>_env
+            elif [[ -d "/opt/conda/envs/py<< parameters.PYTHON >>_env" ]]; then
+                echo "Environment directory found but not registered, re-creating conda environment"
+                # Remove the directory and recreate properly
+                rm -rf "/opt/conda/envs/py<< parameters.PYTHON >>_env"
+                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
+                conda activate py<< parameters.PYTHON >>_env
+                pip install -e .[tests,doc]
+            else
+                echo "Environment not found, creating new one"
+                conda create -n py<< parameters.PYTHON >>_env python=<< parameters.PYTHON >> -yq
+                conda activate py<< parameters.PYTHON >>_env
+                pip install -e .[tests,doc]
+            fi
+            python --version
+            which python
             make integrationtest
           no_output_timeout: 30m
       - codecov/upload:
@@ -108,11 +152,34 @@ jobs:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: v1-{{ checksum "pyproject.toml" }}-{{ "3.9" }}
+          key: v1-{{ checksum "pyproject.toml" }}-{{ "3.10" }}
       - run:
           name: Build documentation
           command: |
-            source activate py3.9_env
+            # Initialize conda for bash shell
+            eval "$(conda shell.bash hook)"
+            # Check what environments conda knows about
+            echo "Available conda environments:"
+            conda info --envs
+            # Ensure the environment exists and activate it properly
+            if conda env list | grep -q "py3.10_env"; then
+                echo "Environment py3.10_env found in conda list"
+                conda activate py3.10_env
+            elif [[ -d "/opt/conda/envs/py3.10_env" ]]; then
+                echo "Environment directory found but not registered, re-creating conda environment"
+                # Remove the directory and recreate properly
+                rm -rf "/opt/conda/envs/py3.10_env"
+                conda create -n py3.10_env python=3.10 -yq
+                conda activate py3.10_env
+                pip install -e .[tests,doc]
+            else
+                echo "Environment not found, creating new one"
+                conda create -n py3.10_env python=3.10 -yq
+                conda activate py3.10_env
+                pip install -e .[tests,doc]
+            fi
+            python --version
+            which python
             apt-get update
             apt-get install -yqq make pandoc
             make -C docs html
@@ -128,11 +195,34 @@ jobs:
       - attach_workspace: # get pySPFM
           at: /tmp
       - restore_cache: # load environment
-          key: v1-{{ checksum "pyproject.toml" }}-{{ "3.9" }}
+          key: v1-{{ checksum "pyproject.toml" }}-{{ "3.10" }}
       - run:
           name: Linting
           command: |
-            source activate py3.9_env
+            # Initialize conda for bash shell
+            eval "$(conda shell.bash hook)"
+            # Check what environments conda knows about
+            echo "Available conda environments:"
+            conda info --envs
+            # Ensure the environment exists and activate it properly
+            if conda env list | grep -q "py3.10_env"; then
+                echo "Environment py3.10_env found in conda list"
+                conda activate py3.10_env
+            elif [[ -d "/opt/conda/envs/py3.10_env" ]]; then
+                echo "Environment directory found but not registered, re-creating conda environment"
+                # Remove the directory and recreate properly
+                rm -rf "/opt/conda/envs/py3.10_env"
+                conda create -n py3.10_env python=3.10 -yq
+                conda activate py3.10_env
+                pip install -e .[tests,doc]
+            else
+                echo "Environment not found, creating new one"
+                conda create -n py3.10_env python=3.10 -yq
+                conda activate py3.10_env
+                pip install -e .[tests,doc]
+            fi
+            python --version
+            which python
             apt-get update
             apt-get install -yqq make
             make lint
@@ -147,24 +237,24 @@ workflows:
           name: py_env-<< matrix.PYTHON >>
           matrix:
             parameters:
-              PYTHON: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+              PYTHON: ["3.10", "3.11", "3.12"]
       - style_check:
           requires:
-            - py_env-3.9
+            - py_env-3.10
       - py_unittest:
           name: py_unittest-<< matrix.PYTHON >>
           matrix:
             parameters:
-              PYTHON: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+              PYTHON: ["3.10", "3.11", "3.12"]
           requires:
             - py_env-<< matrix.PYTHON >>
       - py_integration:
           name: py_integration-<< matrix.PYTHON >>
           matrix:
             parameters:
-              PYTHON: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+              PYTHON: ["3.10", "3.11", "3.12"]
           requires:
             - py_env-<< matrix.PYTHON >>
       - build_docs:
           requires:
-            - py_env-3.9
+            - py_env-3.10

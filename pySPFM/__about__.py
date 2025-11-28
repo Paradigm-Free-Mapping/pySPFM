@@ -8,7 +8,7 @@ except ImportError:
     __version__ = "0+unknown"
 
 __packagename__ = "pySPFM"
-__copyright__ = "Copyright 2024, Paradigm Free Mapping"
+__copyright__ = "Copyright 2025, Paradigm Free Mapping"
 __credits__ = (
     "Contributors: please check the ``.zenodo.json`` file at the top-level folder"
     "of the repository"

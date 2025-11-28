@@ -51,7 +51,11 @@ def _get_parser():
         dest="data_fn",
         type=lambda x: is_valid_file(parser, x),
         nargs="+",
-        help="The name of the file containing fMRI data. ",
+        help=(
+            "The name of the nifti-like or txt-like file containing fMRI data. "
+            "If the file is txt-like, it is expected that columns are different "
+            "timeseries and rows are timepoints. Extension-less files are not supported."
+        ),
         required=True,
     )
     required.add_argument(
@@ -325,7 +329,7 @@ def _get_parser():
         action="store_true",
         default=False,
     )
-    optional.add_argument("-v", "--version", action="version", version=("%(prog)s " + __version__))
+    optional.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
 
     parser._action_groups.append(optional)
 
@@ -701,7 +705,7 @@ def pySPFM(
                 fitts = np.dot(hrf, estimates_spike)
             else:
                 estimates_spike, fitts = debiasing.debiasing_spike(
-                    hrf, data_masked, final_estimates
+                    hrf, data_masked, final_estimates, non_negative=positive_only
                 )
         elif block_model:
             estimates_spike = np.dot(np.tril(np.ones(n_scans)), estimates_block)

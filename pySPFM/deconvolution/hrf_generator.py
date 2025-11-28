@@ -33,11 +33,12 @@ class HRFMatrix:
     ):
         # If te values are higher than 1, then assume they are in ms and convert to s
         # If te values are lower than 1, then assume they are in s
-
         if te is not None:
             if max(te) > 1:
                 te = [i / 1000 for i in te]
             self.te = te
+        else:
+            self.te = [0]
 
         self.model = model
         self.block = block
@@ -69,9 +70,9 @@ class HRFMatrix:
                     "Please make sure that your custom HRF is not longer than the number of scans."
                 )
         elif self.model == "spm":
-            hrf = spm_hrf(tr, oversampling=1, time_length=n_scans * tr)
+            hrf = spm_hrf(t_r=tr, oversampling=1, time_length=n_scans * tr)
         elif self.model == "glover":
-            hrf = glover_hrf(tr, oversampling=1, time_length=n_scans * tr)
+            hrf = glover_hrf(t_r=tr, oversampling=1, time_length=n_scans * tr)
         else:
             raise ValueError(
                 f"Model must be either 'spm', 'glover' or a custom '.1D' or '.txt' file, "

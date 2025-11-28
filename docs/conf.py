@@ -40,25 +40,50 @@ add_module_names = False
 # ones.
 extensions = [
     "matplotlib.sphinxext.plot_directive",
+    "myst_parser",
+    "sphinx_design",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.doctest",
     "sphinx.ext.ifconfig",
     "sphinx.ext.intersphinx",
     "sphinx.ext.linkcode",
+    "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
-    "sphinxarg.ext",
+    "sphinx_charts.charts",
+    "sphinx_gallery.load_style",
+    "sphinxcontrib.jquery",
 ]
+
+myst_enable_extensions = [
+    "colon_fence",
+    "dollarmath",
+]
+
+
+# # Update mime priority configuration with integer priorities
+# nb_mime_priority_overrides = [
+#     ("html", "application/vnd.plotly.v1+json", 10),  # Format: (format, mimetype, priority)
+#     ("html", "text/html", 5),
+#     ("html", "image/svg+xml", 4),
+#     ("html", "image/png", 3),
+#     ("html", "image/jpeg", 2),
+#     ("html", "text/plain", 1),
+# ]
+
+# Keep plotly plugin configuration
+# nb_render_plugin = "plotly"
+
 
 from distutils.version import LooseVersion
 
 import sphinx
 
-if LooseVersion(sphinx.__version__) < LooseVersion("1.4"):
-    extensions.append("sphinx.ext.pngmath")
-else:
-    extensions.append("sphinx.ext.imgmath")
+# if LooseVersion(sphinx.__version__) < LooseVersion("1.4"):
+#     extensions.append("sphinx.ext.pngmath")
+# else:
+#     extensions.append("sphinx.ext.imgmath")
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -73,8 +98,8 @@ master_doc = "index"
 from datetime import datetime  # access current time and date
 
 project = "pySPFM"
-copyright = "2017-" + datetime.today().strftime("%Y") + ", pySPFM developers"
-author = "pySPFM developers"
+copyright = "2019-" + datetime.today().strftime("%Y") + ", Eneko Uruñuela"
+author = "Eneko Uruñuela"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -92,7 +117,7 @@ release = pySPFM.__version__
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -123,32 +148,39 @@ napoleon_use_rtype = False
 
 # -- Options for HTML output ----------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-# installing theme package
-import sphinx_rtd_theme
-
-html_theme = "sphinx_rtd_theme"
-
-# Theme options are theme-specific and customize the look and feel of a theme
-# further.  For a list of options available for each theme, see the
-# documentation.
+# The theme to use for HTML and HTML Help pages.
+html_theme = "sphinx_book_theme"
 
 html_theme_options = {
-    "includehidden": False,
+    "navigation_depth": 4,
+    "collapse_navigation": False,
+    "sticky_navigation": True,
+    "includehidden": True,
+    "titles_only": False,
 }
+
+# Add autosummary settings to control display names
+autosummary_member_order = "groupwise"
+add_module_names = False  # Don't prefix module names
+modindex_common_prefix = ["pySPFM."]  # Remove common prefix from module index
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_css_files = ["theme_overrides.css"]
+
+# Add plotly.js and other required JavaScript files
+html_js_files = [
+    "https://cdn.plot.ly/plotly-2.20.0.min.js",  # Use specific version
+    "https://d3js.org/d3.v7.min.js",
+]
 
 
-# https://github.com/rtfd/sphinx_rtd_theme/issues/117
 def setup(app):
     app.add_css_file("theme_overrides.css")
     app.add_js_file("https://cdn.rawgit.com/chrisfilo/zenodo.js/v0.1/zenodo.js")
+    app.add_css_file("custom.css")
 
 
 html_favicon = "_static/pySPFM_favicon.png"
@@ -162,7 +194,9 @@ htmlhelp_basename = "pySPFMdoc"
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
     "pySPFM",
-    "https://github.com/eurunuela/" "pySPFM/blob/{revision}/" "{package}/{path}#L{lineno}",
+    "https://github.com/ParadigmFreeMapping/"
+    "pySPFM/blob/{revision}/"
+    "{package}/{path}#L{lineno}",
 )
 
 # Example configuration for intersphinx: refer to the Python standard library.
@@ -173,5 +207,5 @@ intersphinx_mapping = {
     "matplotlib": ("https://matplotlib.org/", None),
     "nibabel": ("https://nipy.org/nibabel/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
-    "nilearn": ("http://nilearn.github.io/", None),
+    "nilearn": ("http://nilearn.github.io/stable/", None),
 }
