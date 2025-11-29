@@ -37,7 +37,7 @@ def is_valid_file(parser, arg):
     arg : str
         Argument if it is an existing file.
     """
-    if not op.isfile(arg) and arg is not None:
+    if arg is not None and not op.isfile(arg):
         parser.error(f"The file {arg} does not exist!")
 
     return arg

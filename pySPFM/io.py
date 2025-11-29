@@ -53,7 +53,7 @@ def txt_to_nifti(data_fn):
     data_img = nib.Nifti1Image(data, np.eye(4))
 
     # Create mask image
-    mask_img = nib.Nifti1Image(np.ones((1, 1, data.size[2])), np.eye(4))
+    mask_img = nib.Nifti1Image(np.ones((1, 1, data.shape[2])), np.eye(4))
 
     return data_img, mask_img
 
