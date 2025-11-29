@@ -402,8 +402,8 @@ def auc_to_estimates(
         # Threshold the whole-brain AUC based on the thr provided by the user
         auc_thr = auc - thr
         auc_thr[auc_thr < 0] = 0
-    elif thr > 1 and len(mask_fn) != 1:
-        # Raise error if thr is not 0 and mask_fn has only one element
+    elif thr >= 1 and len(mask_fn) == 1:
+        # Raise error if thr is a percentile and mask_fn has only one element
         raise ValueError(
             "If the threshold is a percentile, then the 'mask' flag must have two elements."
         )

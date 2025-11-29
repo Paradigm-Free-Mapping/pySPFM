@@ -136,6 +136,12 @@ def get_keyword_description(keyword):
             "Estimated mean absolute deviation of the noise; i.e., noise level"
             "of the signal to be deconvolved."
         )
+    elif "auc" in keyword.lower():
+        keyword_description = (
+            "Area under the curve of the deconvolution-estimated activity-inducing signal."
+        )
+    else:
+        keyword_description = f"pySPFM output: {keyword}"
 
     return keyword_description
 
