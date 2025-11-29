@@ -297,6 +297,29 @@ class TestAucToEstimates:
                 quiet=True,
             )
 
+    def test_auc_to_estimates_percentile_boundary_thr1_raises(
+        self, nih_five_echo_1, mask_five_echo, test_AUC, testpath
+    ):
+        """Test auc_to_estimates raises error at boundary thr=1 with one mask."""
+        out_dir = op.join(testpath, "auc_test_error_boundary")
+
+        with pytest.raises(ValueError, match="must have two elements"):
+            auc_to_estimates.auc_to_estimates(
+                data_fn=[nih_five_echo_1],
+                auc_fn=test_AUC,
+                mask_fn=[mask_five_echo],  # Only one mask
+                output_filename="test_auc",
+                tr=2.0,
+                thr=1,  # Boundary case: minimum percentile value
+                out_dir=out_dir,
+                te=[0],
+                hrf_model="spm",
+                block_model=False,
+                n_jobs=1,
+                use_bids=False,
+                quiet=True,
+            )
+
     def test_auc_to_estimates_static_threshold_with_binary_mask(
         self, nih_five_echo_1, mask_five_echo, test_AUC, testpath
     ):
