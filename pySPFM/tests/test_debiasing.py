@@ -78,8 +78,8 @@ def test_debiasing_block(sim_data, sim_hrf):
     assert np.allclose(np.diff(beta) != 0, estimates != 0)
 
 
-def test_debiasing_spike_no_group(sim_data, sim_hrf):
-    """Test debiasing_spike without grouping."""
+def test_debiasing_spike_multiecho_no_group(sim_data, sim_hrf):
+    """Test debiasing_spike with multi-echo data and without grouping."""
     sim_data = np.load(sim_data, allow_pickle=True)[:, 0]
     sim_data = sim_data[:, np.newaxis]
 

@@ -1,3 +1,4 @@
+import json
 import os.path as op
 
 import nibabel as nib
@@ -188,8 +189,6 @@ def test_write_json(testpath):
     assert op.exists(json_path)
 
     # Read and verify content
-    import json
-
     with open(json_path, "r") as f:
         content = json.load(f)
 
@@ -206,8 +205,6 @@ def test_write_json_multi_bold(testpath):
 
     json_path = op.join(testpath, "dataset_description.json")
     assert op.exists(json_path)
-
-    import json
 
     with open(json_path, "r") as f:
         content = json.load(f)
