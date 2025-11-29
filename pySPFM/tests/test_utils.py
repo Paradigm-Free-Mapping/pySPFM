@@ -96,7 +96,7 @@ class TestGetKeywordDescription:
     def test_innovation_keyword(self):
         """Test description for innovation keyword."""
         desc = utils.get_keyword_description("innovation_signal")
-        assert "innovation" in desc.lower() or "derivative" in desc.lower()
+        assert "innovation" in desc.lower() and "derivative" in desc.lower()
 
     def test_beta_keyword(self):
         """Test description for beta keyword."""
@@ -106,12 +106,12 @@ class TestGetKeywordDescription:
     def test_activity_inducing_keyword(self):
         """Test description for activityInducing keyword."""
         desc = utils.get_keyword_description("activityInducing")
-        assert "R2*" in desc or "activity-inducing" in desc.lower()
+        assert "R2*" in desc and "activity-inducing" in desc.lower()
 
     def test_bold_keyword(self):
         """Test description for bold keyword."""
         desc = utils.get_keyword_description("bold_signal")
-        assert "BOLD" in desc or "denoised" in desc.lower()
+        assert "BOLD" in desc and "denoised" in desc.lower()
 
     def test_lambda_keyword(self):
         """Test description for lambda keyword."""
@@ -121,7 +121,7 @@ class TestGetKeywordDescription:
     def test_mad_keyword(self):
         """Test description for MAD keyword."""
         desc = utils.get_keyword_description("MAD_estimate")
-        assert "noise" in desc.lower() or "deviation" in desc.lower()
+        assert "noise" in desc.lower() and "deviation" in desc.lower()
 
 
 class TestDaskScheduler:
