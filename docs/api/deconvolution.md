@@ -1,8 +1,8 @@
 
-# Deconvolution
+# Solvers (Internal)
 
 ```{eval-rst}
-.. currentmodule:: pySPFM.deconvolution
+.. currentmodule:: pySPFM._solvers
 
 .. autosummary::
    :toctree: ../generated/
