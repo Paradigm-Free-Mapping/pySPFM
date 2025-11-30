@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # pySPFM documentation build configuration file, created by
 # sphinx-quickstart
@@ -76,9 +75,7 @@ myst_enable_extensions = [
 # nb_render_plugin = "plotly"
 
 
-from distutils.version import LooseVersion
 
-import sphinx
 
 # if LooseVersion(sphinx.__version__) < LooseVersion("1.4"):
 #     extensions.append("sphinx.ext.pngmath")
