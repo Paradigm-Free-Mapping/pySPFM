@@ -23,6 +23,7 @@ from os import path as op
 import numpy as np
 
 from pySPFM import __version__, utils
+from pySPFM._solvers.select_lambda import select_lambda
 from pySPFM.decomposition import (
     LowRankPlusSparse,
     SparseDeconvolution,
@@ -275,7 +276,7 @@ def _add_stability_arguments(parser):
     return parser
 
 
-def run_sparse(args):
+def run_sparse(args, command_str=None):
     """Run sparse deconvolution."""
     LGR.info("Running sparse deconvolution (SparseDeconvolution)")
 
@@ -302,10 +303,10 @@ def run_sparse(args):
     LGR.info("Model fitted successfully.")
 
     # Save outputs
-    _save_outputs(model, args, masker, data)
+    _save_outputs(model, args, masker, data, command_str=command_str)
 
 
-def run_lowrank(args):
+def run_lowrank(args, command_str=None):
     """Run low-rank plus sparse decomposition."""
     LGR.info("Running low-rank + sparse decomposition (LowRankPlusSparse)")
 
@@ -330,10 +331,10 @@ def run_lowrank(args):
     LGR.info(f"Model fitted in {model.n_iter_} iterations.")
 
     # Save outputs
-    _save_outputs(model, args, masker, data, save_lowrank=True)
+    _save_outputs(model, args, masker, data, save_lowrank=True, command_str=command_str)
 
 
-def run_stability(args):
+def run_stability(args, command_str=None):
     """Run stability selection."""
     LGR.info("Running stability selection (StabilitySelection)")
 
@@ -355,80 +356,111 @@ def run_stability(args):
     model.fit(data)
     LGR.info("Model fitted successfully.")
 
-    # Save selection frequencies
+    # Save outputs
     out_dir = op.abspath(args.out_dir)
-    output_name = f"{args.output}_selection_frequency.nii.gz"
+    if not op.isdir(out_dir):
+        os.makedirs(out_dir)
+
+    # Save command string to call.sh
+    if command_str is not None:
+        with open(op.join(out_dir, "call.sh"), "w") as f:
+            f.write(command_str)
+
+    # Save selection frequencies (AUC)
+    output_name = f"{args.output}_pySPFM_AUC.nii.gz"
     write_data(
         model.selection_frequency_,
         op.join(out_dir, output_name),
         masker,
         args.data_fn[0],
-        None,
+        command_str,
         args.use_bids,
     )
-    LGR.info(f"Saved selection frequencies to {output_name}")
+    LGR.info(f"Saved selection frequencies (AUC) to {output_name}")
 
 
-def _save_outputs(model, args, masker, data, save_lowrank=False):
+def _save_outputs(model, args, masker, data, save_lowrank=False, command_str=None):
     """Save model outputs to disk."""
     out_dir = op.abspath(args.out_dir)
     if not op.isdir(out_dir):
         os.makedirs(out_dir)
 
+    # Save command string to call.sh
+    if command_str is not None:
+        with open(op.join(out_dir, "call.sh"), "w") as f:
+            f.write(command_str)
+
     # Save coefficients (activity-inducing signals)
-    output_name = f"{args.output}_coef.nii.gz"
+    output_name = f"{args.output}_pySPFM_activityInducing.nii.gz"
     write_data(
         model.coef_,
         op.join(out_dir, output_name),
         masker,
         args.data_fn[0],
-        None,
+        command_str,
         args.use_bids,
     )
-    LGR.info(f"Saved coefficients to {output_name}")
+    LGR.info(f"Saved activity-inducing signal to {output_name}")
 
-    # Save fitted signal
+    # Save fitted signal (denoised bold)
     fitted = model.get_fitted_signal()
-    output_name = f"{args.output}_fitted.nii.gz"
+    output_name = f"{args.output}_pySPFM_denoised_bold.nii.gz"
     write_data(
         fitted,
         op.join(out_dir, output_name),
         masker,
         args.data_fn[0],
-        None,
+        command_str,
         args.use_bids,
     )
-    LGR.info(f"Saved fitted signal to {output_name}")
+    LGR.info(f"Saved denoised BOLD signal to {output_name}")
 
     # Save lambda map
     if hasattr(model, "lambda_"):
-        output_name = f"{args.output}_lambda.nii.gz"
+        output_name = f"{args.output}_pySPFM_lambda.nii.gz"
         write_data(
             np.expand_dims(model.lambda_, axis=0),
             op.join(out_dir, output_name),
             masker,
             args.data_fn[0],
-            None,
+            command_str,
             args.use_bids,
         )
         LGR.info(f"Saved lambda map to {output_name}")
 
+    # Save noise estimate (MAD)
+    if hasattr(model, "hrf_matrix_") and model.hrf_matrix_ is not None:
+        _, _, noise_estimate = select_lambda(hrf=model.hrf_matrix_, y=data)
+        output_name = f"{args.output}_pySPFM_MAD.nii.gz"
+        write_data(
+            np.expand_dims(noise_estimate, axis=0),
+            op.join(out_dir, output_name),
+            masker,
+            args.data_fn[0],
+            command_str,
+            args.use_bids,
+        )
+        LGR.info(f"Saved noise estimate (MAD) to {output_name}")
+
     # Save low-rank component if applicable
     if save_lowrank and hasattr(model, "low_rank_"):
-        output_name = f"{args.output}_lowrank.nii.gz"
+        output_name = f"{args.output}_pySPFM_lowrank.nii.gz"
         write_data(
             model.low_rank_,
             op.join(out_dir, output_name),
             masker,
             args.data_fn[0],
-            None,
+            command_str,
             args.use_bids,
         )
         LGR.info(f"Saved low-rank component to {output_name}")
 
 
 def main():
-    """Main entry point for the pySPFM CLI."""
+    """Entry point for the pySPFM CLI."""
+    # Build command string for reproducibility
+    command_str = "pySPFM " + " ".join(sys.argv[1:])
+
     parser = argparse.ArgumentParser(
         prog="pySPFM",
         description=(
@@ -484,22 +516,19 @@ def main():
         os.makedirs(out_dir)
 
     start_time = datetime.datetime.now().strftime("%Y-%m-%dT%H%M%S")
-    logname = op.join(out_dir, f"pySPFM_{start_time}.log")
+    logname = op.join(out_dir, f"pySPFM_{start_time}.tsv")
     refname = op.join(out_dir, "_references.txt")
     utils.setup_loggers(logname, refname, quiet=False, debug=args.debug)
 
     LGR.info(f"pySPFM version {__version__}")
     LGR.info(f"Command: {args.command}")
 
-    # Run the selected command
-    args.func(args)
+    # Run the selected command with command_str for reproducibility
+    args.func(args, command_str=command_str)
 
     LGR.info("pySPFM completed successfully.")
     utils.teardown_loggers()
 
-
-if __name__ == "__main__":
-    main()
 
 if __name__ == "__main__":
     main()
