@@ -7,7 +7,7 @@
 maxdepth: 2
 caption: API Documentation
 ---
-api/workflows
+api/cli
 api/deconvolution
 api/io
 api/utils

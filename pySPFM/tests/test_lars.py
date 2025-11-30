@@ -1,6 +1,6 @@
 import numpy as np
 
-from pySPFM.deconvolution import lars
+from pySPFM._solvers import lars
 
 
 def test_solve_regularization_path(sim_data, sim_hrf, coef_path_results):

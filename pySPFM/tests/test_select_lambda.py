@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from pySPFM.deconvolution.select_lambda import select_lambda
+from pySPFM._solvers.select_lambda import select_lambda
 
 
 def test_select_lambda(sim_data, sim_hrf):

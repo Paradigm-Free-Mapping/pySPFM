@@ -7,7 +7,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from pySPFM.deconvolution.lars import solve_regularization_path
+from pySPFM._solvers.lars import solve_regularization_path
 
 LGR = logging.getLogger("GENERAL")
 

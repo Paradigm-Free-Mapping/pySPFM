@@ -13,9 +13,9 @@ import numpy as np
 from pySPFM import __version__, utils
 from pySPFM._solvers.debiasing import debiasing_block, debiasing_spike
 from pySPFM._solvers.hrf_generator import HRFMatrix
+from pySPFM.cli._parser_utils import check_hrf_value, is_valid_file
 from pySPFM.io import read_data, write_data, write_json
 from pySPFM.utils import get_outname
-from pySPFM.workflows.parser_utils import check_hrf_value, is_valid_file
 
 LGR = logging.getLogger("GENERAL")
 RefLGR = logging.getLogger("REFERENCES")

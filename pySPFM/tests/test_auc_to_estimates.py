@@ -4,7 +4,7 @@ import os.path as op
 
 import pytest
 
-from pySPFM.workflows import auc_to_estimates
+from pySPFM.cli import auc_to_estimates
 
 
 class TestGetParser:

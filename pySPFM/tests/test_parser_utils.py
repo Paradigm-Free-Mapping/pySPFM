@@ -6,7 +6,7 @@ import os.path as op
 import numpy as np
 import pytest
 
-from pySPFM.workflows import parser_utils
+from pySPFM.cli import _parser_utils as parser_utils
 
 
 class TestCheckHrfValue:

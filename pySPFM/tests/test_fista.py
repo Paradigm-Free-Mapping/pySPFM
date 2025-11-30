@@ -1,6 +1,6 @@
 import numpy as np
 
-from pySPFM.deconvolution import fista
+from pySPFM._solvers.fista import fista
 
 
 def test_fista(sim_data, sim_hrf, fista_results):
@@ -8,7 +8,7 @@ def test_fista(sim_data, sim_hrf, fista_results):
     hrf_matrix = np.load(sim_hrf, allow_pickle=True)
 
     # Run FISTA without pylops
-    estimates, lambda_ = fista.fista(hrf_matrix, y, group=0.2, use_pylops=False, max_iter=50)
+    estimates, lambda_ = fista(hrf_matrix, y, group=0.2, use_pylops=False, max_iter=50)
 
     # Compare estimates
     assert np.allclose(lambda_, np.repeat(np.array([0.60157822]), y.shape[1], axis=0))
@@ -20,7 +20,7 @@ def test_fista_positives(sim_data, sim_hrf, fista_positives):
     hrf_matrix = np.load(sim_hrf, allow_pickle=True)
 
     # Run FISTA without pylops
-    estimates, lambda_ = fista.fista(
+    estimates, lambda_ = fista(
         hrf_matrix, y, group=0.2, use_pylops=False, max_iter=50, positive_only=True
     )
 
@@ -36,7 +36,7 @@ def test_fista_pylops(sim_data, sim_hrf, pylops_results):
     hrf_matrix = np.load(sim_hrf, allow_pickle=True)
 
     # Run FISTA with pylops
-    estimates, lambda_ = fista.fista(hrf_matrix, y, group=0.2, use_pylops=True, max_iter=50)
+    estimates, lambda_ = fista(hrf_matrix, y, group=0.2, use_pylops=True, max_iter=50)
 
     # Compare estimates
     assert np.allclose(lambda_, np.repeat(np.array([0.60157822]), y.shape[1], axis=0))

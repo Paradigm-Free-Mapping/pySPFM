@@ -4,13 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pySPFM"
-description = "A python package for Paradigm Free Mapping (3dPFM and 3dMEPFM)."
+description = "Sparse hemodynamic deconvolution of fMRI data with scikit-learn compatible estimators."
 readme = "README.md"
 authors = [{name = "Eneko Uruñuela"}]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
     "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -18,6 +19,14 @@ classifiers = [
 ]
 license = {file = "LICENSE"}
 requires-python = ">=3.10"
+keywords = [
+    "fmri",
+    "deconvolution",
+    "hemodynamic",
+    "neuroimaging",
+    "sparse",
+    "paradigm-free-mapping",
+]
 dependencies = [
     "dask",
     "dask_jobqueue",
@@ -25,8 +34,8 @@ dependencies = [
     "jax",
     "jaxlib",
     "nibabel",
-    "nilearn==0.12.1",
-    "numpy>=1.22,<=2.2.4",
+    "nilearn>=0.10.0",
+    "numpy>=1.22",
     "pylops>=1.18.2",
     "pyproximal>=0.4.0",
     "pywavelets",
@@ -36,7 +45,9 @@ dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://github.com/Paradigm-Free-Mapping/pySPFM"
-Documentation = "https://www.pySPFM.readthedocs.io"
+Documentation = "https://pySPFM.readthedocs.io"
+Repository = "https://github.com/Paradigm-Free-Mapping/pySPFM"
+Changelog = "https://github.com/Paradigm-Free-Mapping/pySPFM/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pre-commit"]
@@ -78,8 +89,10 @@ tests = [
 all = ["pySPFM[dev,doc,tests]"]
 
 [project.scripts]
-pySPFM = "pySPFM.workflows.pySPFM:_main"
-auc_to_estimates = "pySPFM.workflows.auc_to_estimates:_main"
+# Main CLI command with subcommands (sparse, lowrank, stability)
+pySPFM = "pySPFM.cli.run:main"
+# AUC to estimates workflow
+auc_to_estimates = "pySPFM.cli.auc_to_estimates:_main"
 
 #
 # Hatch configurations
