@@ -5,7 +5,7 @@ import pytest
 
 from pySPFM._solvers.fista import fista
 from pySPFM._solvers.hrf_generator import HRFMatrix
-from pySPFM._solvers.lars import select_optimal_lambda, solve_regularization_path
+from pySPFM._solvers.lars import solve_regularization_path
 
 
 @pytest.fixture
@@ -203,7 +203,7 @@ def test_lars_with_regressors(setup_data):
     assert estimates.shape[0] == n_scans
 
     # Check that we got a single lambda value (optimal)
-    assert isinstance(lambda_optimal, (int, float, np.number))
+    assert isinstance(lambda_optimal, int | float | np.number)
 
 
 def test_lars_without_regressors(setup_data):
@@ -226,7 +226,7 @@ def test_lars_without_regressors(setup_data):
     assert estimates.shape[0] == n_scans
 
     # Check that lambda is a scalar
-    assert isinstance(lambda_optimal, (int, float, np.number))
+    assert isinstance(lambda_optimal, int | float | np.number)
 
 
 def test_regressors_improve_fit(setup_data):

@@ -28,7 +28,7 @@ def _estimator_repr(estimator, N_CHAR_MAX=700):
             value_str = f"'{value}'"
         elif isinstance(value, float):
             value_str = f"{value:.4g}"
-        elif isinstance(value, (list, tuple)):
+        elif isinstance(value, list | tuple):
             if len(value) > 3:
                 value_str = f"[{value[0]}, {value[1]}, ..., {value[-1]}]"
             else:

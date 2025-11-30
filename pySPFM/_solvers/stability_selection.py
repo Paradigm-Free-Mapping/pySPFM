@@ -31,7 +31,7 @@ def get_subsampling_indices(n_scans, n_echos, mode="same"):
     subsample_idx : np.ndarray
         Subsampling indices.
     """
-    if "mode" in os.environ.keys():  # only for testing
+    if "mode" in os.environ:  # only for testing
         np.random.seed(200)
     # Subsampling for Stability Selection
     if mode == "different":  # different time points are selected across echoes
@@ -153,8 +153,8 @@ def _generate_shared_lambdas_space(coefs, lambdas, n_lambdas, n_surrogates):
         Sorted lambdas.
     """
     # Create shared space of lambdas and coefficients
-    lambdas_shared = lambdas.reshape((n_lambdas * n_surrogates))
-    coefs_shared = np.zeros((coefs.shape[0] * coefs.shape[1]))
+    lambdas_shared = lambdas.reshape(n_lambdas * n_surrogates)
+    coefs_shared = np.zeros(coefs.shape[0] * coefs.shape[1])
 
     # Project lambdas and coefficients into shared space
     for i in range(lambdas.shape[0]):
@@ -216,7 +216,7 @@ def stability_selection(hrf_norm, data, n_lambdas, n_surrogates, use_fista=False
         lambdas[:, surr_idx] = np.squeeze(stability_estimates[surr_idx][1])
 
     # Calculate the AUC for each TR
-    auc = np.zeros((n_scans))
+    auc = np.zeros(n_scans)
     calculate_auc_jit = jax.jit(calculate_auc)
     for tr_idx in range(n_scans):
         # Get lambdas and coefficients for the TR

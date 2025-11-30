@@ -23,13 +23,12 @@ from os import path as op
 import numpy as np
 
 from pySPFM import __version__, utils
-from pySPFM.cli._parser_utils import check_hrf_value, is_valid_file
 from pySPFM.decomposition import (
     LowRankPlusSparse,
     SparseDeconvolution,
     StabilitySelection,
 )
-from pySPFM.io import read_data, write_data, write_json
+from pySPFM.io import read_data, write_data
 
 LGR = logging.getLogger("GENERAL")
 

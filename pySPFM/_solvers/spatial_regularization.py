@@ -51,7 +51,7 @@ def spatial_tikhonov(estimates, data, masker, niter, dim, lambda_, mu):
 
         h = np.fft.fft2(h, (estimates_vol.shape[0], estimates_vol.shape[1]))
 
-        for iter_idx in range(niter):
+        for _iter_idx in range(niter):
             for time_idx in range(estimates_vol.shape[-1]):
                 for slice_idx in range(estimates_vol.shape[2]):
                     estimates_vol[:, :, slice_idx, time_idx] = (
@@ -73,7 +73,7 @@ def spatial_tikhonov(estimates, data, masker, niter, dim, lambda_, mu):
 
         h = np.fft.fftn(h, estimates_vol.shape[:3])
 
-        for iter_idx in range(niter):
+        for _iter_idx in range(niter):
             for time_idx in range(estimates_vol.shape[-1]):
                 estimates_vol[:, :, :, time_idx] = (
                     (1 - mu) * estimates_vol[:, :, :, time_idx]
@@ -150,7 +150,7 @@ def spatial_structured_sparsity(estimates, data, mask, niter, dims, lambda_):
 
     # Perform structured sparsity regularization
     for time_idx in range(estimates_vol.shape[-1]):
-        for iter_idx in range(niter):
+        for _iter_idx in range(niter):
             z[:, :, :, time_idx] = clip(
                 z[:, :, :, time_idx]
                 + 1

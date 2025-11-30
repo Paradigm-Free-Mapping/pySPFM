@@ -5,7 +5,6 @@ import pytest
 
 from pySPFM.base import (
     BaseEstimator,
-    DeconvolutionMixin,
     NotFittedError,
     TransformerMixin,
     check_is_fitted,

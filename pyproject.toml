@@ -70,19 +70,11 @@ doc = [
 tests = [
     "codecov",
     "coverage",
-    "flake8>=3.7",
-    "flake8-absolute-import",
-    "flake8-black",
-    "flake8-docstrings",
-    "flake8-isort",
-    "flake8-pyproject",
-    "flake8-unused-arguments",
-    "flake8-use-fstring",
-    "pep8-naming",
     "pytest",
     "pytest-cov>=4.0.0",
     "pytest-console-scripts",
     "requests",
+    "ruff",
 ]
 
 # Aliases
@@ -121,46 +113,61 @@ version-file = "pySPFM/_version.py"
 # Developer tool configurations
 #
 
-[tool.black]
+[tool.ruff]
 line-length = 99
-target-version = ['py310']
-include = '\.pyi?$'
-exclude = '''
-
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.github
-    | \.hg
-    | \.pytest_cache
-    | \.testing_data_cache
-    | _build
-    | build
-    | dist
-  )/
-  | pySPFM/_version.py
-)
-'''
-
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-
-[tool.flake8]
-max-line-length = 99
+target-version = "py310"
 exclude = [
-    "*build/",
+    ".eggs",
+    ".git",
+    ".github",
+    ".hg",
+    ".pytest_cache",
+    ".testing_data_cache",
+    "_build",
+    "build",
+    "dist",
     "pySPFM/_version.py",
-    "pySPFM/due.py",
-    "pySPFM/tests/*",
 ]
-ignore = ["E203", "E402", "W503", "N802", "N806", "D403"]
-per-file-ignores = [
-    "*/__init__.py: F401",
-    "pySPFM/tests/*: D",
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "D",      # pydocstyle
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
 ]
-docstring-convention = "numpy"
+ignore = [
+    "E203",   # whitespace before ':'
+    "E402",   # module level import not at top of file
+    "N802",   # function name should be lowercase
+    "N803",   # argument name should be lowercase (X is standard in sklearn)
+    "N806",   # variable in function should be lowercase
+    "N999",   # invalid module name (pySPFM is intentional)
+    "D100",   # missing docstring in public module
+    "D104",   # missing docstring in public package
+    "D401",   # first line should be in imperative mood
+    "D403",   # first word of first line should be capitalized
+    "B006",   # mutable default argument (used intentionally in some cases)
+    "SIM102", # nested if statements (sometimes clearer)
+    "SIM108", # ternary operator (sometimes less readable)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*/__init__.py" = ["F401"]
+"pySPFM/tests/*" = ["D"]
+"pySPFM/due.py" = ["D", "E", "W"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.isort]
+known-first-party = ["pySPFM"]
 
 [tool.pydocstringformatter]
 write = true

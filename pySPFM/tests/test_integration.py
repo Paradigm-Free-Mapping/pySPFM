@@ -24,8 +24,10 @@ def extract_test_data(tarball_path, outpath):
     outpath : str
         Path to directory where data should be extracted
     """
-    with open(tarball_path, "rb") as f:
-        t = tarfile.open(fileobj=GzipFile(fileobj=f))
+    with (
+        open(tarball_path, "rb") as f,
+        tarfile.open(fileobj=GzipFile(fileobj=f)) as t,
+    ):
         os.makedirs(outpath, exist_ok=True)
         t.extractall(outpath)
 
@@ -61,7 +63,7 @@ def check_integration_outputs(fname, outpath, workflow="pySPFM"):
     existing.remove(logfiles[0])
 
     # Compares remaining files with those expected
-    with open(fname, "r") as f:
+    with open(fname) as f:
         tocheck = f.read().splitlines()
     tocheck = [os.path.normpath(path) for path in tocheck]
     assert sorted(tocheck) == sorted(existing)

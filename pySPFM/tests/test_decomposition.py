@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from pySPFM.base import NotFittedError, check_is_fitted, clone
+from pySPFM.base import NotFittedError, clone
 
 
 class TestSparseDeconvolutionAPI:
@@ -209,7 +209,7 @@ class TestLowRankPlusSparseAPI:
         model.fit(sample_data)
 
         fitted = model.get_fitted_signal()
-        sparse_only = np.dot(model.hrf_matrix_, model.coef_)
+        np.dot(model.hrf_matrix_, model.coef_)
 
         # Fitted should include low-rank, so should differ from sparse-only
         # (unless low-rank is zero, which is unlikely with random data)
