@@ -4,13 +4,13 @@ all_tests: lint unittest integrationtest
 
 help:
 	@echo "Please use 'make <target>' where <target> is one of:"
-	@echo "  lint			to run flake8 on all Python files"
+	@echo "  lint			to run ruff on all Python files"
 	@echo "  unittest		to run unit tests on pySPFM"
 	@echo "  integrationtest		to run integration tests"
 
 lint:
-	@black --check --diff pySPFM
-	@flake8 pySPFM
+	@ruff check pySPFM
+	@ruff format --check pySPFM
 
 unittest:
 	@py.test --skipintegration --cov-append --cov-report xml --cov-report term-missing --cov=pySPFM pySPFM
