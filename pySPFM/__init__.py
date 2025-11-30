@@ -31,6 +31,7 @@ See Also
 pySPFM.base : Base classes and utilities.
 pySPFM.decomposition : All deconvolution estimators.
 """
+
 import warnings
 
 from pySPFM.__about__ import __copyright__, __credits__, __packagename__, __version__

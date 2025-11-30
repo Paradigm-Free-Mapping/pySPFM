@@ -74,7 +74,7 @@ tests = [
     "pytest-cov>=4.0.0",
     "pytest-console-scripts",
     "requests",
-    "ruff",
+    "ruff>=0.4.0",
 ]
 
 # Aliases
