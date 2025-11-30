@@ -1,533 +1,655 @@
-"""Main CLI entry point for pySPFM.
+"""Command-line interface for pySPFM.
 
-This module provides a unified command-line interface for all pySPFM
-deconvolution methods, following scikit-learn naming conventions.
-
-Usage
------
-pySPFM <command> [options]
-
-Commands:
-    sparse      Run sparse deconvolution (SPFM)
-    lowrank     Run low-rank plus sparse decomposition (SPLORA)
-    stability   Run stability selection
+This module provides the entry points for the pySPFM command-line interface.
 """
 
 import argparse
-import datetime
 import logging
 import os
 import sys
-from os import path as op
+from datetime import datetime
 
 import numpy as np
 
-from pySPFM import __version__, utils
-from pySPFM._solvers.select_lambda import select_lambda
-from pySPFM.decomposition import (
-    LowRankPlusSparse,
-    SparseDeconvolution,
-    StabilitySelection,
-)
-from pySPFM.io import read_data, write_data
+from pySPFM import __version__
+from pySPFM.io import read_data, write_data, write_json
+from pySPFM.utils import setup_loggers
 
 LGR = logging.getLogger("GENERAL")
+RefLGR = logging.getLogger("REFERENCES")
 
 
-def _add_common_arguments(parser):
-    """Add arguments common to all subcommands."""
-    required = parser.add_argument_group("Required Arguments")
-    required.add_argument(
+def _save_call_script(out_dir, argv):
+    """Save the command-line call to a shell script.
+
+    Parameters
+    ----------
+    out_dir : str
+        Output directory.
+    argv : list
+        Command-line arguments.
+    """
+    call_file = os.path.join(out_dir, "call.sh")
+    with open(call_file, "w") as f:
+        f.write("#!/bin/bash\n")
+        f.write(" ".join(argv) + "\n")
+    os.chmod(call_file, 0o755)
+
+
+def _add_common_args(parser):
+    """Add common arguments to subcommand parsers."""
+    parser.add_argument(
         "-i",
         "--input",
-        dest="data_fn",
-        type=str,
+        dest="data",
         nargs="+",
-        help="Input fMRI data file(s). Multiple files for multi-echo data.",
         required=True,
+        help="Input fMRI data file(s). For multi-echo, provide multiple files.",
     )
-    required.add_argument(
+    parser.add_argument(
         "-m",
         "--mask",
-        dest="mask_fn",
-        type=str,
-        help="Mask file for the fMRI data.",
+        dest="mask",
         required=True,
+        help="Mask file.",
     )
-    required.add_argument(
+    parser.add_argument(
         "-o",
         "--output",
-        dest="output",
-        type=str,
-        help="Output filename prefix (without extension).",
+        dest="out_prefix",
         required=True,
+        help="Output file prefix.",
     )
-    required.add_argument(
+    parser.add_argument(
+        "-d",
+        "--out-dir",
+        dest="out_dir",
+        default=".",
+        help="Output directory (default: current directory).",
+    )
+    parser.add_argument(
         "--tr",
         dest="tr",
         type=float,
-        help="Repetition time (TR) in seconds.",
         required=True,
+        help="Repetition time (TR) in seconds.",
     )
-
-    optional = parser.add_argument_group("Optional Arguments")
-    optional.add_argument(
-        "-d",
-        "--dir",
-        dest="out_dir",
-        type=str,
-        default=".",
-        help="Output directory. Default: current directory.",
-    )
-    optional.add_argument(
-        "--te",
+    parser.add_argument(
+        "-te",
+        "--echo-times",
         dest="te",
-        nargs="*",
+        nargs="+",
         type=float,
-        default=[0],
-        help="Echo times in ms for multi-echo data. Default: [0] (single-echo).",
+        default=None,
+        help="Echo times in ms for multi-echo data.",
     )
-    optional.add_argument(
-        "--hrf",
-        dest="hrf_model",
-        type=str,
-        default="spm",
-        help="HRF model: 'spm', 'glover', or path to custom HRF file. Default: 'spm'.",
-    )
-    optional.add_argument(
-        "--block",
-        dest="block_model",
-        action="store_true",
-        default=False,
-        help="Use block model (estimate innovation signals). Default: spike model.",
-    )
-    optional.add_argument(
+    parser.add_argument(
         "-j",
-        "--jobs",
+        "--n-jobs",
         dest="n_jobs",
         type=int,
-        default=4,
-        help="Number of parallel jobs. Default: 4.",
+        default=1,
+        help="Number of parallel jobs (default: 1).",
     )
-    optional.add_argument(
-        "--bids",
-        dest="use_bids",
-        action="store_true",
-        default=False,
-        help="Use BIDS-style output naming convention.",
-    )
-    optional.add_argument(
+    parser.add_argument(
         "--debug",
-        dest="debug",
         action="store_true",
-        default=False,
-        help="Enable debug logging.",
+        help="Enable debug output.",
     )
-    optional.add_argument(
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output.",
+    )
+    parser.add_argument(
+        "--hrf",
+        dest="hrf_model",
+        default="spm",
+        help="HRF model to use: 'spm', 'glover', or path to custom HRF file.",
+    )
+    parser.add_argument(
+        "--block",
+        action="store_true",
+        dest="block_model",
+        help="Use block model (innovation signal) instead of spike model.",
+    )
+    parser.add_argument(
+        "--bids",
+        action="store_true",
+        dest="use_bids",
+        help="Use BIDS naming convention for outputs.",
+    )
+
+
+def _add_sparse_args(parser):
+    """Add arguments specific to sparse deconvolution."""
+    parser.add_argument(
+        "--criterion",
+        dest="criterion",
+        default="bic",
+        choices=["bic", "aic", "mad", "mad_update", "ut", "lut", "factor", "pcg", "eigval"],
+        help="Criterion for lambda selection (default: bic).",
+    )
+    parser.add_argument(
+        "--max-iter",
+        dest="max_iter",
+        type=int,
+        default=400,
+        help="Maximum number of iterations (default: 400).",
+    )
+    parser.add_argument(
+        "--min-iter",
+        dest="min_iter",
+        type=int,
+        default=50,
+        help="Minimum number of iterations (default: 50).",
+    )
+    parser.add_argument(
+        "--tol",
+        dest="tol",
+        type=float,
+        default=1e-6,
+        help="Convergence tolerance (default: 1e-6).",
+    )
+    parser.add_argument(
+        "--debias",
+        action="store_true",
+        dest="debias",
+        help="Perform debiasing step.",
+    )
+    parser.add_argument(
+        "--group",
+        dest="group",
+        type=float,
+        default=0.0,
+        help="Group sparsity weight (default: 0.0).",
+    )
+    parser.add_argument(
+        "--pcg",
+        dest="pcg",
+        type=float,
+        default=0.8,
+        help="Percentage of maximum lambda (default: 0.8).",
+    )
+    parser.add_argument(
+        "--factor",
+        dest="factor",
+        type=float,
+        default=1.0,
+        help="Factor for noise estimate (default: 1.0).",
+    )
+    parser.add_argument(
+        "--regressors",
+        dest="regressors",
+        default=None,
+        help="Path to confound regressors file (.txt, .csv, or .tsv).",
+    )
+
+
+def _get_parser():
+    """Create the main argument parser.
+
+    Returns
+    -------
+    parser : argparse.ArgumentParser
+        The argument parser.
+    """
+    parser = argparse.ArgumentParser(
+        prog="pySPFM",
+        description="Sparse Paradigm Free Mapping for fMRI deconvolution.",
+    )
+    parser.add_argument(
         "-v",
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
     )
 
-    return parser
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
+    # Sparse deconvolution subcommand
+    sparse_parser = subparsers.add_parser(
+        "sparse",
+        help="Run sparse deconvolution (SPFM).",
+    )
+    _add_common_args(sparse_parser)
+    _add_sparse_args(sparse_parser)
 
-def _add_sparse_arguments(parser):
-    """Add arguments specific to sparse deconvolution."""
-    sparse_opts = parser.add_argument_group("Sparse Deconvolution Options")
-    sparse_opts.add_argument(
-        "--criterion",
-        dest="criterion",
-        type=str,
-        default="bic",
-        choices=["bic", "aic", "mad", "mad_update", "ut", "lut", "factor", "pcg", "eigval"],
-        help="Lambda selection criterion. Default: 'bic'.",
+    # Low-rank + sparse subcommand
+    lowrank_parser = subparsers.add_parser(
+        "lowrank",
+        help="Run low-rank plus sparse deconvolution (SPLORA).",
     )
-    sparse_opts.add_argument(
-        "--factor",
-        dest="factor",
-        type=float,
-        default=10.0,
-        help="Factor for lambda selection when criterion='factor'. Default: 10.",
-    )
-    sparse_opts.add_argument(
-        "--debias",
-        dest="debias",
-        action="store_true",
-        default=True,
-        help="Perform debiasing step. Default: True.",
-    )
-    sparse_opts.add_argument(
-        "--no-debias",
-        dest="debias",
-        action="store_false",
-        help="Skip debiasing step.",
-    )
-    sparse_opts.add_argument(
-        "--group",
-        dest="group",
-        type=float,
-        default=0.0,
-        help="Spatial grouping weight (L2,1-norm). Range [0, 1]. Default: 0.",
-    )
-    sparse_opts.add_argument(
-        "--max-iter",
-        dest="max_iter",
-        type=int,
-        default=400,
-        help="Maximum iterations for solver. Default: 400.",
-    )
-    sparse_opts.add_argument(
-        "--tol",
-        dest="tol",
-        type=float,
-        default=1e-6,
-        help="Convergence tolerance. Default: 1e-6.",
-    )
-    sparse_opts.add_argument(
-        "--positive",
-        dest="positive",
-        action="store_true",
-        default=False,
-        help="Enforce non-negative coefficients.",
-    )
-    sparse_opts.add_argument(
-        "--regressors",
-        dest="regressors",
-        type=str,
-        default=None,
-        help="Path to file with nuisance regressors (e.g., motion parameters).",
-    )
-    return parser
-
-
-def _add_lowrank_arguments(parser):
-    """Add arguments specific to low-rank plus sparse decomposition."""
-    lr_opts = parser.add_argument_group("Low-Rank + Sparse Options")
-    lr_opts.add_argument(
-        "--criterion",
-        dest="criterion",
-        type=str,
-        default="mad_update",
-        choices=["mad", "mad_update", "ut", "lut", "factor", "pcg", "eigval"],
-        help="Lambda selection criterion. Default: 'mad_update'.",
-    )
-    lr_opts.add_argument(
+    _add_common_args(lowrank_parser)
+    _add_sparse_args(lowrank_parser)
+    lowrank_parser.add_argument(
         "--eigval-threshold",
         dest="eigval_threshold",
         type=float,
         default=0.1,
-        help="Eigenvalue threshold for low-rank estimation. Default: 0.1.",
+        help="Eigenvalue threshold for low-rank (default: 0.1).",
     )
-    lr_opts.add_argument(
-        "--debias",
-        dest="debias",
-        action="store_true",
-        default=True,
-        help="Perform debiasing step. Default: True.",
-    )
-    lr_opts.add_argument(
-        "--no-debias",
-        dest="debias",
-        action="store_false",
-        help="Skip debiasing step.",
-    )
-    lr_opts.add_argument(
-        "--max-iter",
-        dest="max_iter",
-        type=int,
-        default=100,
-        help="Maximum iterations for solver. Default: 100.",
-    )
-    return parser
 
-
-def _add_stability_arguments(parser):
-    """Add arguments specific to stability selection."""
-    stab_opts = parser.add_argument_group("Stability Selection Options")
-    stab_opts.add_argument(
+    # Stability selection subcommand
+    stability_parser = subparsers.add_parser(
+        "stability",
+        help="Run stability selection.",
+    )
+    _add_common_args(stability_parser)
+    stability_parser.add_argument(
         "--n-surrogates",
         dest="n_surrogates",
         type=int,
         default=50,
-        help="Number of bootstrap surrogates. Default: 50.",
+        help="Number of surrogates for stability selection (default: 50).",
     )
-    stab_opts.add_argument(
+    stability_parser.add_argument(
+        "--n-lambdas",
+        dest="n_lambdas",
+        type=int,
+        default=None,
+        help="Number of lambda values (default: n_scans).",
+    )
+    stability_parser.add_argument(
         "--threshold",
         dest="threshold",
         type=float,
         default=0.6,
-        help="Selection threshold. Default: 0.6.",
+        help="Selection threshold (default: 0.6).",
     )
-    stab_opts.add_argument(
-        "--debias",
-        dest="debias",
-        action="store_true",
-        default=True,
-        help="Perform debiasing step. Default: True.",
-    )
-    stab_opts.add_argument(
-        "--no-debias",
-        dest="debias",
-        action="store_false",
-        help="Skip debiasing step.",
-    )
+
     return parser
 
 
-def run_sparse(args, command_str=None):
-    """Run sparse deconvolution."""
-    LGR.info("Running sparse deconvolution (SparseDeconvolution)")
+def _compute_mad(y, hrf_matrix, coef):
+    """Compute Median Absolute Deviation of residuals.
 
-    # Read data
-    data, masker = read_data(args.data_fn[0], args.mask_fn)
+    Parameters
+    ----------
+    y : ndarray of shape (n_timepoints, n_voxels)
+        Input fMRI data.
+    hrf_matrix : ndarray of shape (n_timepoints, n_scans)
+        HRF convolution matrix.
+    coef : ndarray of shape (n_scans, n_voxels)
+        Estimated coefficients.
 
-    # Create and fit estimator
+    Returns
+    -------
+    mad : ndarray of shape (n_voxels,)
+        MAD for each voxel.
+    """
+    fitted = np.dot(hrf_matrix, coef)
+    residuals = y - fitted
+    mad = 1.4826 * np.median(np.abs(residuals - np.median(residuals, axis=0)), axis=0)
+    return mad
+
+
+def _run_sparse(args, command_str, out_dir):
+    """Run sparse deconvolution workflow.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed command-line arguments.
+    command_str : str
+        The command string for logging.
+    out_dir : str
+        Output directory.
+    """
+    from pySPFM.decomposition import SparseDeconvolution
+
+    # Handle echo times
+    te = args.te if args.te is not None else [0]
+
+    # Read input data (may be multi-echo)
+    data_files = args.data
+    n_echoes = len(data_files)
+
+    # Read the first file to get dimensions
+    data, masker = read_data(data_files[0], args.mask)
+    n_scans, n_voxels = data.shape
+
+    if n_echoes > 1:
+        # Multi-echo: concatenate along time axis
+        all_data = [data]
+        for data_fn in data_files[1:]:
+            echo_data, _ = read_data(data_fn, args.mask)
+            all_data.append(echo_data)
+        data = np.vstack(all_data)
+
+    # Load regressors if provided
+    if args.regressors is not None:
+        LGR.info(f"Loading regressors from {args.regressors}")
+        regressors = np.genfromtxt(args.regressors)
+        if regressors.ndim == 1:
+            regressors = regressors.reshape(-1, 1)
+        # Regress out confounds
+        for vox_idx in range(n_voxels):
+            for echo_idx in range(n_echoes):
+                start_idx = echo_idx * n_scans
+                end_idx = (echo_idx + 1) * n_scans
+                y = data[start_idx:end_idx, vox_idx]
+                X_reg = np.hstack([np.ones((n_scans, 1)), regressors])
+                beta = np.linalg.lstsq(X_reg, y, rcond=None)[0]
+                data[start_idx:end_idx, vox_idx] = y - np.dot(X_reg[:, 1:], beta[1:])
+
+    # Create and fit the estimator
     model = SparseDeconvolution(
         tr=args.tr,
-        te=args.te,
+        te=te,
         hrf_model=args.hrf_model,
         block_model=args.block_model,
         criterion=args.criterion,
         debias=args.debias,
         group=args.group,
+        pcg=args.pcg,
+        factor=args.factor,
         max_iter=args.max_iter,
+        min_iter=args.min_iter,
         tol=args.tol,
         n_jobs=args.n_jobs,
-        positive=args.positive,
     )
 
-    LGR.info("Fitting model...")
+    LGR.info("Fitting sparse deconvolution model...")
     model.fit(data)
-    LGR.info("Model fitted successfully.")
 
-    # Save outputs
-    _save_outputs(model, args, masker, data, command_str=command_str)
+    # Generate output filenames
+    prefix = args.out_prefix
+    use_bids = args.use_bids
+
+    # Track output keywords for BIDS json
+    output_keywords = []
+
+    if use_bids:
+        # BIDS naming convention
+        coef_fn = f"{prefix}_desc-activityInducing.nii.gz"
+        lambda_fn = f"{prefix}_desc-stat-lambda_statmap.nii.gz"
+        output_keywords.append("activityInducing")
+
+        if args.block_model:
+            # Save innovation signal for block model
+            innov_fn = f"{prefix}_desc-innovation.nii.gz"
+            output_keywords.append("innovation")
+    else:
+        # Standard naming
+        coef_fn = f"{prefix}_pySPFM_activityInducing.nii.gz"
+        lambda_fn = f"{prefix}_pySPFM_lambda.nii.gz"
+
+    # Save activity-inducing signal
+    coef_path = os.path.join(out_dir, coef_fn)
+    write_data(model.coef_, coef_path, masker, data_files[0], command_str, use_bids=use_bids)
+    LGR.info(f"Saved activity-inducing signal to {coef_fn}")
+
+    # Save innovation signal for block model
+    if args.block_model and use_bids:
+        innov_path = os.path.join(out_dir, innov_fn)
+        # For block model, innovation is the derivative of activity-inducing
+        innovation = np.diff(model.coef_, axis=0, prepend=0)
+        write_data(innovation, innov_path, masker, data_files[0], command_str, use_bids=use_bids)
+        LGR.info(f"Saved innovation signal to {innov_fn}")
+
+    # Save lambda values
+    lambda_path = os.path.join(out_dir, lambda_fn)
+    write_data(
+        model.lambda_.reshape(1, -1), lambda_path, masker, data_files[0], command_str, use_bids
+    )
+    LGR.info(f"Saved lambda values to {lambda_fn}")
+
+    # Compute and save denoised BOLD
+    denoised = np.dot(model.hrf_matrix_, model.coef_)
+
+    if n_echoes > 1 and use_bids:
+        # Multi-echo BIDS: save per-echo denoised and MAD
+        for echo_idx in range(n_echoes):
+            echo_num = echo_idx + 1
+            start_idx = echo_idx * n_scans
+            end_idx = (echo_idx + 1) * n_scans
+
+            # Denoised BOLD for this echo
+            denoised_echo_fn = f"{prefix}_echo-{echo_num}_desc-denoised_bold.nii.gz"
+            denoised_echo_path = os.path.join(out_dir, denoised_echo_fn)
+            write_data(
+                denoised[start_idx:end_idx, :],
+                denoised_echo_path,
+                masker,
+                data_files[echo_idx],
+                command_str,
+                use_bids=use_bids,
+            )
+            LGR.info(f"Saved denoised BOLD for echo {echo_num} to {denoised_echo_fn}")
+            output_keywords.append(f"echo-{echo_num}_denoised_bold")
+
+            # MAD for this echo
+            mad_echo_fn = f"{prefix}_desc-echo-{echo_num}_MAD.nii.gz"
+            mad_echo_path = os.path.join(out_dir, mad_echo_fn)
+            mad_echo = _compute_mad(data[start_idx:end_idx, :], model.hrf_matrix_, model.coef_)
+            write_data(
+                mad_echo.reshape(1, -1),
+                mad_echo_path,
+                masker,
+                data_files[echo_idx],
+                command_str,
+                use_bids=use_bids,
+            )
+            LGR.info(f"Saved MAD for echo {echo_num} to {mad_echo_fn}")
+            output_keywords.append(f"echo-{echo_num}_MAD")
+    else:
+        # Single-echo or non-BIDS
+        if use_bids:
+            denoised_fn = f"{prefix}_desc-denoised_bold.nii.gz"
+            mad_fn = f"{prefix}_desc-MAD.nii.gz"
+        else:
+            denoised_fn = f"{prefix}_pySPFM_denoised_bold.nii.gz"
+            mad_fn = f"{prefix}_pySPFM_MAD.nii.gz"
+
+        denoised_path = os.path.join(out_dir, denoised_fn)
+        write_data(denoised, denoised_path, masker, data_files[0], command_str, use_bids=use_bids)
+        LGR.info(f"Saved denoised BOLD to {denoised_fn}")
+
+        # Compute and save MAD
+        mad = _compute_mad(data, model.hrf_matrix_, model.coef_)
+        mad_path = os.path.join(out_dir, mad_fn)
+        write_data(
+            mad.reshape(1, -1), mad_path, masker, data_files[0], command_str, use_bids=use_bids
+        )
+        LGR.info(f"Saved MAD to {mad_fn}")
+
+    # Write BIDS dataset_description.json if using BIDS
+    if use_bids:
+        write_json(output_keywords, out_dir)
+        LGR.info("Saved dataset_description.json")
 
 
-def run_lowrank(args, command_str=None):
-    """Run low-rank plus sparse decomposition."""
-    LGR.info("Running low-rank + sparse decomposition (LowRankPlusSparse)")
+def _run_lowrank(args, command_str, out_dir):
+    """Run low-rank plus sparse deconvolution workflow.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed command-line arguments.
+    command_str : str
+        The command string for logging.
+    out_dir : str
+        Output directory.
+    """
+    from pySPFM.decomposition import LowRankPlusSparse
+
+    # Handle echo times
+    te = args.te if args.te is not None else [0]
 
     # Read data
-    data, masker = read_data(args.data_fn[0], args.mask_fn)
+    data, masker = read_data(args.data[0], args.mask)
 
-    # Create and fit estimator
+    # Create and fit the estimator
     model = LowRankPlusSparse(
         tr=args.tr,
-        te=args.te,
+        te=te,
         hrf_model=args.hrf_model,
         block_model=args.block_model,
         criterion=args.criterion,
         eigval_threshold=args.eigval_threshold,
         debias=args.debias,
+        group=args.group,
+        factor=args.factor,
         max_iter=args.max_iter,
+        min_iter=args.min_iter,
+        tol=args.tol,
         n_jobs=args.n_jobs,
     )
 
-    LGR.info("Fitting model...")
+    LGR.info("Fitting low-rank plus sparse model...")
     model.fit(data)
-    LGR.info(f"Model fitted in {model.n_iter_} iterations.")
 
-    # Save outputs
-    _save_outputs(model, args, masker, data, save_lowrank=True, command_str=command_str)
+    # Generate output filenames
+    prefix = args.out_prefix
+    use_bids = args.use_bids
+
+    if use_bids:
+        coef_fn = f"{prefix}_desc-sparse.nii.gz"
+        lowrank_fn = f"{prefix}_desc-lowrank.nii.gz"
+        lambda_fn = f"{prefix}_desc-stat-lambda_statmap.nii.gz"
+    else:
+        coef_fn = f"{prefix}_pySPFM_sparse.nii.gz"
+        lowrank_fn = f"{prefix}_pySPFM_lowrank.nii.gz"
+        lambda_fn = f"{prefix}_pySPFM_lambda.nii.gz"
+
+    # Save sparse component
+    coef_path = os.path.join(out_dir, coef_fn)
+    write_data(model.coef_, coef_path, masker, args.data[0], command_str, use_bids=use_bids)
+    LGR.info(f"Saved sparse component to {coef_fn}")
+
+    # Save low-rank component
+    lowrank_path = os.path.join(out_dir, lowrank_fn)
+    write_data(model.low_rank_, lowrank_path, masker, args.data[0], command_str, use_bids=use_bids)
+    LGR.info(f"Saved low-rank component to {lowrank_fn}")
+
+    # Save lambda values
+    lambda_path = os.path.join(out_dir, lambda_fn)
+    write_data(
+        model.lambda_.reshape(1, -1),
+        lambda_path,
+        masker,
+        args.data[0],
+        command_str,
+        use_bids=use_bids,
+    )
+    LGR.info(f"Saved lambda values to {lambda_fn}")
 
 
-def run_stability(args, command_str=None):
-    """Run stability selection."""
-    LGR.info("Running stability selection (StabilitySelection)")
+def _run_stability(args, command_str, out_dir):
+    """Run stability selection workflow.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed command-line arguments.
+    command_str : str
+        The command string for logging.
+    out_dir : str
+        Output directory.
+    """
+    from pySPFM.decomposition import StabilitySelection
+
+    # Handle echo times
+    te = args.te if args.te is not None else [0]
 
     # Read data
-    data, masker = read_data(args.data_fn[0], args.mask_fn)
+    data, masker = read_data(args.data[0], args.mask)
 
-    # Create and fit estimator
+    # Create and fit the estimator
     model = StabilitySelection(
         tr=args.tr,
-        te=args.te,
+        te=te,
         hrf_model=args.hrf_model,
         block_model=args.block_model,
         n_surrogates=args.n_surrogates,
+        n_lambdas=args.n_lambdas,
         threshold=args.threshold,
         n_jobs=args.n_jobs,
     )
 
-    LGR.info("Fitting model...")
+    LGR.info("Fitting stability selection model...")
     model.fit(data)
-    LGR.info("Model fitted successfully.")
 
-    # Save outputs
-    out_dir = op.abspath(args.out_dir)
-    if not op.isdir(out_dir):
-        os.makedirs(out_dir)
+    # Generate output filenames
+    prefix = args.out_prefix
+    use_bids = args.use_bids
 
-    # Save command string to call.sh
-    if command_str is not None:
-        with open(op.join(out_dir, "call.sh"), "w") as f:
-            f.write(command_str)
+    if use_bids:
+        auc_fn = f"{prefix}_desc-AUC.nii.gz"
+    else:
+        auc_fn = f"{prefix}_pySPFM_AUC.nii.gz"
 
     # Save selection frequencies (AUC)
-    output_name = f"{args.output}_pySPFM_AUC.nii.gz"
+    auc_path = os.path.join(out_dir, auc_fn)
     write_data(
-        model.selection_frequency_,
-        op.join(out_dir, output_name),
-        masker,
-        args.data_fn[0],
-        command_str,
-        args.use_bids,
+        model.selection_frequency_, auc_path, masker, args.data[0], command_str, use_bids=use_bids
     )
-    LGR.info(f"Saved selection frequencies (AUC) to {output_name}")
+    LGR.info(f"Saved selection frequencies (AUC) to {auc_fn}")
 
 
-def _save_outputs(model, args, masker, data, save_lowrank=False, command_str=None):
-    """Save model outputs to disk."""
-    out_dir = op.abspath(args.out_dir)
-    if not op.isdir(out_dir):
-        os.makedirs(out_dir)
+def main(argv=None):
+    """Entry point for the pySPFM CLI.
 
-    # Save command string to call.sh
-    if command_str is not None:
-        with open(op.join(out_dir, "call.sh"), "w") as f:
-            f.write(command_str)
+    Parameters
+    ----------
+    argv : list, optional
+        Command-line arguments. If None, uses sys.argv.
+    """
+    if argv is None:
+        argv = sys.argv
 
-    # Save coefficients (activity-inducing signals)
-    output_name = f"{args.output}_pySPFM_activityInducing.nii.gz"
-    write_data(
-        model.coef_,
-        op.join(out_dir, output_name),
-        masker,
-        args.data_fn[0],
-        command_str,
-        args.use_bids,
-    )
-    LGR.info(f"Saved activity-inducing signal to {output_name}")
-
-    # Save fitted signal (denoised bold)
-    fitted = model.get_fitted_signal()
-    output_name = f"{args.output}_pySPFM_denoised_bold.nii.gz"
-    write_data(
-        fitted,
-        op.join(out_dir, output_name),
-        masker,
-        args.data_fn[0],
-        command_str,
-        args.use_bids,
-    )
-    LGR.info(f"Saved denoised BOLD signal to {output_name}")
-
-    # Save lambda map
-    if hasattr(model, "lambda_"):
-        output_name = f"{args.output}_pySPFM_lambda.nii.gz"
-        write_data(
-            np.expand_dims(model.lambda_, axis=0),
-            op.join(out_dir, output_name),
-            masker,
-            args.data_fn[0],
-            command_str,
-            args.use_bids,
-        )
-        LGR.info(f"Saved lambda map to {output_name}")
-
-    # Save noise estimate (MAD)
-    if hasattr(model, "hrf_matrix_") and model.hrf_matrix_ is not None:
-        _, _, noise_estimate = select_lambda(hrf=model.hrf_matrix_, y=data)
-        output_name = f"{args.output}_pySPFM_MAD.nii.gz"
-        write_data(
-            np.expand_dims(noise_estimate, axis=0),
-            op.join(out_dir, output_name),
-            masker,
-            args.data_fn[0],
-            command_str,
-            args.use_bids,
-        )
-        LGR.info(f"Saved noise estimate (MAD) to {output_name}")
-
-    # Save low-rank component if applicable
-    if save_lowrank and hasattr(model, "low_rank_"):
-        output_name = f"{args.output}_pySPFM_lowrank.nii.gz"
-        write_data(
-            model.low_rank_,
-            op.join(out_dir, output_name),
-            masker,
-            args.data_fn[0],
-            command_str,
-            args.use_bids,
-        )
-        LGR.info(f"Saved low-rank component to {output_name}")
-
-
-def main():
-    """Entry point for the pySPFM CLI."""
-    # Build command string for reproducibility
-    command_str = "pySPFM " + " ".join(sys.argv[1:])
-
-    parser = argparse.ArgumentParser(
-        prog="pySPFM",
-        description=(
-            "pySPFM: Sparse hemodynamic deconvolution of fMRI data.\n\n"
-            "Available commands:\n"
-            "  sparse      Sparse Paradigm Free Mapping (SPFM)\n"
-            "  lowrank     Low-Rank plus Sparse decomposition (SPLORA)\n"
-            "  stability   Stability selection for robust deconvolution"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    subparsers = parser.add_subparsers(dest="command", help="Deconvolution method")
-
-    # Sparse deconvolution subcommand
-    sparse_parser = subparsers.add_parser(
-        "sparse",
-        help="Sparse Paradigm Free Mapping (SPFM) using LARS or FISTA.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    _add_common_arguments(sparse_parser)
-    _add_sparse_arguments(sparse_parser)
-    sparse_parser.set_defaults(func=run_sparse)
-
-    # Low-rank + sparse subcommand
-    lowrank_parser = subparsers.add_parser(
-        "lowrank",
-        help="Low-Rank plus Sparse decomposition (SPLORA).",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    _add_common_arguments(lowrank_parser)
-    _add_lowrank_arguments(lowrank_parser)
-    lowrank_parser.set_defaults(func=run_lowrank)
-
-    # Stability selection subcommand
-    stability_parser = subparsers.add_parser(
-        "stability",
-        help="Stability selection for robust sparse deconvolution.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-    _add_common_arguments(stability_parser)
-    _add_stability_arguments(stability_parser)
-    stability_parser.set_defaults(func=run_stability)
-
-    args = parser.parse_args()
+    parser = _get_parser()
+    args = parser.parse_args(argv[1:])
 
     if args.command is None:
         parser.print_help()
         sys.exit(0)
 
-    # Setup logging
-    out_dir = op.abspath(args.out_dir)
-    if not op.isdir(out_dir):
-        os.makedirs(out_dir)
+    # Set up output directory
+    out_dir = os.path.abspath(args.out_dir)
+    os.makedirs(out_dir, exist_ok=True)
 
-    start_time = datetime.datetime.now().strftime("%Y-%m-%dT%H%M%S")
-    logname = op.join(out_dir, f"pySPFM_{start_time}.tsv")
-    refname = op.join(out_dir, "_references.txt")
-    utils.setup_loggers(logname, refname, quiet=False, debug=args.debug)
+    # Set up logging
+    debug = args.debug
+    quiet = not (args.debug or args.verbose)
+    timestamp = datetime.now().strftime("%Y-%m-%dT%H%M%S")
+    log_fn = os.path.join(out_dir, f"pySPFM_{timestamp}.tsv")
+    setup_loggers(logname=log_fn, quiet=quiet, debug=debug)
 
-    LGR.info(f"pySPFM version {__version__}")
-    LGR.info(f"Command: {args.command}")
+    # Save call script
+    _save_call_script(out_dir, argv)
 
-    # Run the selected command with command_str for reproducibility
-    args.func(args, command_str=command_str)
+    # Build command string for AFNI history
+    command_str = " ".join(argv)
+
+    LGR.info(f"pySPFM version: {__version__}")
+    LGR.info(f"Command: {command_str}")
+    LGR.info(f"Output directory: {out_dir}")
+
+    # Run the appropriate workflow
+    if args.command == "sparse":
+        _run_sparse(args, command_str, out_dir)
+    elif args.command == "lowrank":
+        _run_lowrank(args, command_str, out_dir)
+    elif args.command == "stability":
+        _run_stability(args, command_str, out_dir)
+
+    # Save references
+    refs_fn = os.path.join(out_dir, "_references.txt")
+    with open(refs_fn, "w") as f:
+        f.write("pySPFM references:\n\n")
+        f.write("Please cite the following papers when using pySPFM:\n\n")
+        f.write(
+            "Caballero-Gaudes, C., et al. (2013). Paradigm Free Mapping with "
+            "Sparse Regression Automatically Detects Single-Trial Functional "
+            "Magnetic Resonance Imaging Blood Oxygenation Level Dependent "
+            "Responses. Human Brain Mapping.\n"
+        )
+    LGR.info(f"Saved references to {refs_fn}")
 
     LGR.info("pySPFM completed successfully.")
-    utils.teardown_loggers()
 
 
 if __name__ == "__main__":
