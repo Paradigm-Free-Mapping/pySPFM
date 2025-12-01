@@ -228,7 +228,7 @@ and want to obtain debiased neural activity estimates from the AUC scores.
 #### Python API
 
 ```python
-from pySPFM.workflows.auc_to_estimates import auc_to_estimates
+from pySPFM.cli.auc_to_estimates import auc_to_estimates
 
 # Basic usage: convert AUC to activity estimates
 auc_to_estimates(
