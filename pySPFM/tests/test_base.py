@@ -161,3 +161,146 @@ class TestNotFittedError:
             raise NotFittedError("Test message")
         except NotFittedError as e:
             assert "Test message" in str(e)
+
+
+class TestCheckIsFittedEdgeCases:
+    """Additional tests for check_is_fitted to improve coverage."""
+
+    def test_not_an_estimator(self):
+        """Test that non-estimator raises TypeError."""
+        not_estimator = "just a string"
+        with pytest.raises(TypeError, match="is not an estimator"):
+            check_is_fitted(not_estimator)
+
+    def test_custom_message(self):
+        """Test custom error message."""
+        est = SimpleEstimator()
+        custom_msg = "Custom message for %(name)s"
+        with pytest.raises(NotFittedError, match="Custom message for SimpleEstimator"):
+            check_is_fitted(est, msg=custom_msg)
+
+    def test_all_or_any_parameter(self):
+        """Test all_or_any parameter."""
+        X = np.random.randn(10, 5)
+        est = SimpleEstimator()
+        est.fit(X)
+
+        # Should pass with any=any (one attribute exists)
+        check_is_fitted(est, ["coef_", "nonexistent_"], all_or_any=any)
+
+        # Should fail with all=all (not all attributes exist)
+        with pytest.raises(NotFittedError):
+            check_is_fitted(est, ["coef_", "nonexistent_"], all_or_any=all)
+
+
+class TestBaseEstimatorValidateParams:
+    """Tests for _validate_params method."""
+
+    def test_validate_params_no_constraints(self):
+        """Test that validation passes when no constraints defined."""
+        est = SimpleEstimator()
+        # Should not raise - no constraints defined
+        est._validate_params()
+
+    def test_validate_params_with_constraints(self):
+        """Test validation with constraints."""
+        from pySPFM import SparseDeconvolution
+
+        # SparseDeconvolution has _parameter_constraints defined
+        model = SparseDeconvolution(tr=2.0)
+        # Should not raise with valid params
+        model._validate_params()
+
+
+class TestDeconvolutionMixin:
+    """Tests for DeconvolutionMixin to improve coverage."""
+
+    @pytest.fixture
+    def fitted_model(self):
+        """Create a fitted SparseDeconvolution model."""
+        from pySPFM import SparseDeconvolution
+
+        np.random.seed(42)
+        X = np.random.randn(50, 10)
+        model = SparseDeconvolution(tr=2.0, criterion="bic", max_iter=10)
+        model.fit(X)
+        return model, X
+
+    def test_score_with_zero_variance(self, fitted_model):
+        """Test score when some voxels have zero variance."""
+        model, X = fitted_model
+
+        # Create data with zero variance in one column
+        X_zero_var = X.copy()
+        X_zero_var[:, 0] = 5.0  # Constant column
+
+        score = model.score(X_zero_var)
+
+        # Should still return a valid float
+        assert isinstance(score, float)
+
+    def test_get_residuals_1d(self, fitted_model):
+        """Test get_residuals with 1D input."""
+        model, _ = fitted_model
+
+        # Create 1D input
+        X_1d = np.random.randn(50)
+
+        # This should handle 1D input
+        residuals = model.get_residuals(X_1d)
+
+        assert residuals.ndim == 2
+
+
+class TestValidateData:
+    """Tests for _validate_data function."""
+
+    def test_validate_data_basic(self):
+        """Test basic _validate_data functionality."""
+        from pySPFM.base import _validate_data
+
+        est = SimpleEstimator()
+        X = np.random.randn(10, 5)
+
+        X_validated = _validate_data(est, X)
+
+        assert X_validated.shape == X.shape
+        assert est.n_features_in_ == 5
+        assert est.n_samples_ == 10
+
+    def test_validate_data_1d(self):
+        """Test _validate_data with 1D input."""
+        from pySPFM.base import _validate_data
+
+        est = SimpleEstimator()
+        X = np.random.randn(10)
+
+        X_validated = _validate_data(est, X)
+
+        assert X_validated.shape == (10, 1)
+
+    def test_validate_data_with_y(self):
+        """Test _validate_data with y input."""
+        from pySPFM.base import _validate_data
+
+        est = SimpleEstimator()
+        X = np.random.randn(10, 5)
+        y = np.random.randn(10)
+
+        X_validated, y_validated = _validate_data(est, X, y)
+
+        assert X_validated.shape == X.shape
+        assert y_validated.shape == y.shape
+
+    def test_validate_data_no_reset(self):
+        """Test _validate_data without resetting attributes."""
+        from pySPFM.base import _validate_data
+
+        est = SimpleEstimator()
+        est.n_features_in_ = 100  # Set existing value
+
+        X = np.random.randn(10, 5)
+        _validate_data(est, X, reset=False)
+
+        # Should keep the original value when reset=False
+        assert est.n_features_in_ == 100
