@@ -115,13 +115,13 @@ def innovation_to_block(hrf, y, estimates_matrix, is_ls):
     n_nonzero = len(nonzero_idxs)  # Number of nonzero coefficients
 
     # Initiates beta
-    beta = np.zeros((estimates_matrix.shape))
+    beta = np.zeros(estimates_matrix.shape)
     s = 0
 
     if n_nonzero != 0:
         # Initiates matrix s and array of labels
         s = np.zeros((hrf.shape[1], n_nonzero + 1))
-        labels = np.zeros((estimates_matrix.shape[0]))
+        labels = np.zeros(estimates_matrix.shape[0])
 
         # Gives values to s design matrix based on nonzeros in estimates_matrix
         # It also stores the labels of the changes in the design matrix

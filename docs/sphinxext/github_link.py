@@ -35,7 +35,6 @@ def _linkcode_resolve(domain, info, package, url_fmt, revision):
     ...                   revision='xxxx')
     'http://hg.python.org/cpython/file/xxxx/Lib/tty/tty.py#L18'
     """
-
     if revision is None:
         return
     if domain not in ("py", "pyx"):

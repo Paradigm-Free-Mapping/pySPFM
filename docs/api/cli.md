@@ -1,12 +1,12 @@
-# Workflows
+# Command-Line Interface
 
 ```{eval-rst}
-.. currentmodule:: pySPFM.workflows
+.. currentmodule:: pySPFM.cli
 
 .. autosummary::
    :toctree: ../generated/
    :template: module.rst
 
-   pySPFM
+   run
    auc_to_estimates
 ```

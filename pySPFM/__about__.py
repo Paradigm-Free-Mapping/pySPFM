@@ -9,10 +9,7 @@ except ImportError:
 
 __packagename__ = "pySPFM"
 __copyright__ = "Copyright 2025, Paradigm Free Mapping"
-__credits__ = (
-    "Contributors: please check the ``.zenodo.json`` file at the top-level folder"
-    "of the repository"
-)
+__credits__ = "Contributors: please check the ``.zenodo.json`` file at the top-level folder"
 __url__ = "https://github.com/Paradigm-Free-Mapping/pySPFM"
 
 DOWNLOAD_URL = (

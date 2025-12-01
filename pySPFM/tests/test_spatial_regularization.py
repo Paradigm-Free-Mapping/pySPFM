@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from nilearn.maskers import NiftiMasker
 
-from pySPFM.deconvolution.spatial_regularization import (
+from pySPFM._solvers.spatial_regularization import (
     clip,
     generate_delta,
     spatial_structured_sparsity,

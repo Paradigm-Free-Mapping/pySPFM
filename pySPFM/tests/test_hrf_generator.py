@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pytest
 
-from pySPFM.deconvolution import hrf_generator
+from pySPFM._solvers import hrf_generator
 
 
 def test_HRF_matrix(spm_single_echo, spm_single_echo_block, glover_multi_echo):

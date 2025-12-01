@@ -1,7 +1,6 @@
 import numpy as np
-import pytest
 
-from pySPFM.deconvolution import debiasing
+from pySPFM._solvers import debiasing
 
 
 def test_debiasing_spike(sim_data, sim_hrf):
@@ -11,7 +10,7 @@ def test_debiasing_spike(sim_data, sim_hrf):
 
     nt = sim_data.shape[0]
 
-    from pySPFM.deconvolution.hrf_generator import HRFMatrix
+    from pySPFM._solvers.hrf_generator import HRFMatrix
 
     hrf_generator = HRFMatrix(block=False, te=[0.018, 0.036, 0.052])
     sim_hrf = hrf_generator.generate_hrf(1, sim_data.shape[0]).hrf_
@@ -85,7 +84,7 @@ def test_debiasing_spike_multiecho_no_group(sim_data, sim_hrf):
 
     nt = sim_data.shape[0]
 
-    from pySPFM.deconvolution.hrf_generator import HRFMatrix
+    from pySPFM._solvers.hrf_generator import HRFMatrix
 
     hrf_generator = HRFMatrix(block=False, te=[0.018, 0.036, 0.052])
     sim_hrf = hrf_generator.generate_hrf(1, sim_data.shape[0]).hrf_

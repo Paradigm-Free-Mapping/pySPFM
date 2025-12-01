@@ -5,7 +5,7 @@ import logging
 import numpy as np
 from sklearn.linear_model import lars_path
 
-from pySPFM.deconvolution.fista import fista
+from pySPFM._solvers.fista import fista
 
 LGR = logging.getLogger("GENERAL")
 

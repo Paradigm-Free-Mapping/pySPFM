@@ -4,7 +4,7 @@ import os.path as op
 
 import pytest
 
-from pySPFM.workflows import auc_to_estimates
+from pySPFM.cli import auc_to_estimates
 
 
 class TestGetParser:
@@ -216,12 +216,12 @@ class TestAucToEstimates:
             n_jobs=1,
             use_bids=False,
             quiet=True,
-            command_str="auc_to_estimates -i test.nii.gz -a auc.nii.gz -m mask.nii.gz -o out -tr 2",
+            command_str="auc_to_estimates -i test.nii.gz -a auc.nii.gz -m mask.nii.gz -o out",
         )
 
         # Check command file exists
         assert op.exists(op.join(out_dir, "call.sh"))
-        with open(op.join(out_dir, "call.sh"), "r") as f:
+        with open(op.join(out_dir, "call.sh")) as f:
             content = f.read()
         assert "auc_to_estimates" in content
 

@@ -16,7 +16,7 @@ License:    BSD-2
 __version__ = "0.0.5"
 
 
-class InactiveDueCreditCollector(object):
+class InactiveDueCreditCollector:
     """Just a stub at the Collector which would not do anything"""
 
     def _donothing(self, *args, **kwargs):
@@ -51,7 +51,7 @@ except Exception as e:
     if type(e).__name__ != "ImportError":
         import logging
 
-        logging.getLogger("duecredit").error("Failed to import duecredit due to %s" % str(e))
+        logging.getLogger("duecredit").error(f"Failed to import duecredit due to {e}")
     # Initiate due stub
     due = InactiveDueCreditCollector()
     BibTeX = Doi = Url = _donothing_func

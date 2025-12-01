@@ -1,6 +1,8 @@
 # pySPFM
 
-The Python version of AFNI's [3dPFM](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dPFM.html) and [3dMEPFM](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dMEPFM.html) with some extra features like the addition of a spatial regularization similar to the one used by [Total Activation](https://miplab.epfl.ch/index.php/software/total-activation).
+A Python package for sparse hemodynamic deconvolution of fMRI data with **scikit-learn compatible estimators**.
+
+pySPFM provides estimators for Paradigm Free Mapping (PFM) and related sparse deconvolution methods for fMRI analysis. The package follows scikit-learn conventions, making it easy to integrate with existing machine learning pipelines.
 
 [![Latest Version](https://img.shields.io/pypi/v/pySPFM.svg)](https://pypi.python.org/pypi/pySPFM/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pySPFM.svg)](https://pypi.python.org/pypi/pySPFM/)
@@ -12,44 +14,117 @@ The Python version of AFNI's [3dPFM](https://afni.nimh.nih.gov/pub/dist/doc/prog
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
+## Features
+
+- **scikit-learn compatible API**: Use familiar `fit()`, `transform()`, `fit_transform()` methods
+- **Multiple deconvolution methods**:
+  - `SparseDeconvolution`: Sparse Paradigm Free Mapping (SPFM) using LARS or FISTA
+  - `LowRankPlusSparse`: SPLORA algorithm separating global and neuronal signals
+  - `StabilitySelection`: Robust feature selection via bootstrap resampling
+- **Multi-echo fMRI support**: Native support for multi-echo acquisitions
+- **Flexible regularization**: Multiple lambda selection criteria (BIC, AIC, MAD, etc.)
+- **Command-line interface**: Easy-to-use CLI for batch processing
+
+## Installation
+
+```bash
+pip install pySPFM
+```
+
+For development:
+```bash
+git clone https://github.com/Paradigm-Free-Mapping/pySPFM.git
+cd pySPFM
+pip install -e ".[dev,tests]"
+```
+
+## Quick Start
+
+### Python API
+
+```python
+from pySPFM import SparseDeconvolution
+import numpy as np
+
+# Load your fMRI data (n_timepoints, n_voxels)
+X = np.random.randn(200, 1000)  # Example data
+
+# Create and fit the model
+model = SparseDeconvolution(tr=2.0, criterion='bic')
+model.fit(X)
+
+# Get the deconvolved activity-inducing signals
+activity = model.coef_
+
+# Get the fitted (reconstructed) signal
+fitted = model.get_fitted_signal()
+
+# Compute explained variance
+score = model.score(X)
+print(f"Explained variance: {score:.2%}")
+```
+
+### Low-Rank + Sparse Decomposition (SPLORA)
+
+```python
+from pySPFM import LowRankPlusSparse
+
+model = LowRankPlusSparse(tr=2.0, eigval_threshold=0.1)
+model.fit(X)
+
+# Separate components
+sparse_activity = model.coef_      # Neuronal activity
+global_signal = model.low_rank_    # Global/structured component
+```
+
+### Command-Line Interface
+
+```bash
+# Sparse deconvolution
+pySPFM sparse -i data.nii.gz -m mask.nii.gz -o output --tr 2.0
+
+# Low-rank + sparse decomposition
+pySPFM lowrank -i data.nii.gz -m mask.nii.gz -o output --tr 2.0
+
+# Stability selection
+pySPFM stability -i data.nii.gz -m mask.nii.gz -o output --tr 2.0 --n-surrogates 50
+```
+
+## Estimators
+
+| Estimator | Description | Use Case |
+|-----------|-------------|----------|
+| `SparseDeconvolution` | Sparse PFM using LARS/FISTA | General deconvolution |
+| `LowRankPlusSparse` | SPLORA algorithm | Separating global signals |
+| `StabilitySelection` | Bootstrap-based selection | Robust feature detection |
+
+## API Reference
+
+All estimators follow scikit-learn conventions:
+
+- `fit(X)`: Fit the model to data
+- `transform(X)`: Return deconvolved signals
+- `fit_transform(X)`: Fit and transform in one step
+- `score(X)`: Return explained variance ratio
+- `get_params()` / `set_params()`: Parameter access
+- `clone()`: Create unfitted copy
+
 ## Development
 
-This project uses [uv](https://github.com/astral-sh/uv) for fast, reliable dependency management and [tox](https://tox.wiki/) for testing across multiple Python versions.
-
-### Setting up a development environment
-
-1. Create a virtual environment and install dependencies (including tests) in editable mode:
-   ```bash
-   uv sync --extra tests
-   ```
+This project uses [uv](https://github.com/astral-sh/uv) for dependency management and [tox](https://tox.wiki/) for testing.
 
 ### Running tests
 
-Run tests for your current Python version:
 ```bash
+# Current Python version
 pytest pySPFM/tests/
-```
 
-Run tests across all supported Python versions (3.10, 3.11, 3.12) using tox:
-```bash
+# All supported versions (3.10, 3.11, 3.12)
 tox
+
+# Specific version
+tox -e py310
 ```
-
-Run tests for a specific Python version:
-```bash
-tox -e py310  # For Python 3.10
-```
-
-Run linting checks:
-```bash
-tox -e lint
-```
-
-### Benefits of uv
-
-- **Fast**: 10-100x faster than pip for dependency resolution and installation
-- **Deterministic**: `uv.lock` ensures reproducible installations across all environments
-- **Reliable**: Resolves dependencies consistently
 
 ## References
 

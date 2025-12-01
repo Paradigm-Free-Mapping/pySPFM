@@ -1,6 +1,10 @@
 import numpy as np
 
-from pySPFM.deconvolution import stability_selection
+from pySPFM._solvers.stability_selection import (
+    calculate_auc,
+    get_subsampling_indices,
+    stability_selection,
+)
 
 
 def test_get_subsampling_indices():
@@ -11,14 +15,14 @@ def test_get_subsampling_indices():
     mode = "same"
     subsample_result = np.array([1, 3, 5, 6, 7, 8])
     np.random.seed(200)
-    subsample_idx = stability_selection.get_subsampling_indices(n_scans, n_echos, mode)
+    subsample_idx = get_subsampling_indices(n_scans, n_echos, mode)
     assert np.allclose(subsample_idx, subsample_result)
 
     # Test different mode
     mode = "different"
     subsample_result = np.array([1, 3, 5, 6, 7, 8, 10, 12, 14, 15, 17, 19, 21, 22, 23, 24, 28, 29])
     np.random.seed(200)
-    subsample_idx = stability_selection.get_subsampling_indices(n_scans, n_echos, mode)
+    subsample_idx = get_subsampling_indices(n_scans, n_echos, mode)
     assert np.allclose(
         subsample_idx,
         subsample_result,
@@ -32,7 +36,7 @@ def test_calculate_auc():
     coefs = np.random.rand(n_lambdas, n_surrogates)
 
     # Test if auc is calculated correctly
-    auc = np.round(stability_selection.calculate_auc(coefs, lambdas, n_surrogates))
+    auc = np.round(calculate_auc(coefs, lambdas, n_surrogates))
 
     assert auc <= 1.0
     assert auc >= 0.0
@@ -45,7 +49,7 @@ def test_stability_selection(sim_data, sim_hrf):
     n_surrogates = 20
 
     # Test if stability selection works
-    auc = stability_selection.stability_selection(hrf_matrix, y, n_lambdas, n_surrogates)
+    auc = stability_selection(hrf_matrix, y, n_lambdas, n_surrogates)
     assert auc.shape[0] == hrf_matrix.shape[1]
     assert np.count_nonzero(auc) > 0
     assert np.count_nonzero(auc) / auc.shape[0] < 0.5

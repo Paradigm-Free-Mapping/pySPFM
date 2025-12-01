@@ -171,7 +171,7 @@ def dask_scheduler(jobs, jobqueue=None):
         data = None
     else:
         LGR.info(f"Using jobqueue configuration file: {jobqueue}")
-        with open(jobqueue, "r") as stream:
+        with open(jobqueue) as stream:
             data = yaml.load(stream, Loader=yaml.FullLoader)
 
     if data is None:

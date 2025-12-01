@@ -4,13 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pySPFM"
-description = "A python package for Paradigm Free Mapping (3dPFM and 3dMEPFM)."
+description = "Sparse hemodynamic deconvolution of fMRI data with scikit-learn compatible estimators."
 readme = "README.md"
 authors = [{name = "Eneko Uruñuela"}]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
     "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -18,6 +19,14 @@ classifiers = [
 ]
 license = {file = "LICENSE"}
 requires-python = ">=3.10"
+keywords = [
+    "fmri",
+    "deconvolution",
+    "hemodynamic",
+    "neuroimaging",
+    "sparse",
+    "paradigm-free-mapping",
+]
 dependencies = [
     "dask",
     "dask_jobqueue",
@@ -25,8 +34,8 @@ dependencies = [
     "jax",
     "jaxlib",
     "nibabel",
-    "nilearn==0.12.1",
-    "numpy>=1.22,<=2.2.4",
+    "nilearn>=0.10.0",
+    "numpy>=1.22",
     "pylops>=1.18.2",
     "pyproximal>=0.4.0",
     "pywavelets",
@@ -36,7 +45,9 @@ dynamic = ["version"]
 
 [project.urls]
 Homepage = "https://github.com/Paradigm-Free-Mapping/pySPFM"
-Documentation = "https://www.pySPFM.readthedocs.io"
+Documentation = "https://pySPFM.readthedocs.io"
+Repository = "https://github.com/Paradigm-Free-Mapping/pySPFM"
+Changelog = "https://github.com/Paradigm-Free-Mapping/pySPFM/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pre-commit"]
@@ -59,27 +70,21 @@ doc = [
 tests = [
     "codecov",
     "coverage",
-    "flake8>=3.7",
-    "flake8-absolute-import",
-    "flake8-black",
-    "flake8-docstrings",
-    "flake8-isort",
-    "flake8-pyproject",
-    "flake8-unused-arguments",
-    "flake8-use-fstring",
-    "pep8-naming",
     "pytest",
     "pytest-cov>=4.0.0",
     "pytest-console-scripts",
     "requests",
+    "ruff>=0.4.0",
 ]
 
 # Aliases
 all = ["pySPFM[dev,doc,tests]"]
 
 [project.scripts]
-pySPFM = "pySPFM.workflows.pySPFM:_main"
-auc_to_estimates = "pySPFM.workflows.auc_to_estimates:_main"
+# Main CLI command with subcommands (sparse, lowrank, stability)
+pySPFM = "pySPFM.cli.run:main"
+# AUC to estimates workflow
+auc_to_estimates = "pySPFM.cli.auc_to_estimates:_main"
 
 #
 # Hatch configurations
@@ -108,46 +113,61 @@ version-file = "pySPFM/_version.py"
 # Developer tool configurations
 #
 
-[tool.black]
+[tool.ruff]
 line-length = 99
-target-version = ['py310']
-include = '\.pyi?$'
-exclude = '''
-
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.github
-    | \.hg
-    | \.pytest_cache
-    | \.testing_data_cache
-    | _build
-    | build
-    | dist
-  )/
-  | pySPFM/_version.py
-)
-'''
-
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-
-[tool.flake8]
-max-line-length = 99
+target-version = "py310"
 exclude = [
-    "*build/",
+    ".eggs",
+    ".git",
+    ".github",
+    ".hg",
+    ".pytest_cache",
+    ".testing_data_cache",
+    "_build",
+    "build",
+    "dist",
     "pySPFM/_version.py",
-    "pySPFM/due.py",
-    "pySPFM/tests/*",
 ]
-ignore = ["E203", "E402", "W503", "N802", "N806", "D403"]
-per-file-ignores = [
-    "*/__init__.py: F401",
-    "pySPFM/tests/*: D",
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "D",      # pydocstyle
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "SIM",    # flake8-simplify
 ]
-docstring-convention = "numpy"
+ignore = [
+    "E203",   # whitespace before ':'
+    "E402",   # module level import not at top of file
+    "N802",   # function name should be lowercase
+    "N803",   # argument name should be lowercase (X is standard in sklearn)
+    "N806",   # variable in function should be lowercase
+    "N999",   # invalid module name (pySPFM is intentional)
+    "D100",   # missing docstring in public module
+    "D104",   # missing docstring in public package
+    "D401",   # first line should be in imperative mood
+    "D403",   # first word of first line should be capitalized
+    "B006",   # mutable default argument (used intentionally in some cases)
+    "SIM102", # nested if statements (sometimes clearer)
+    "SIM108", # ternary operator (sometimes less readable)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*/__init__.py" = ["F401"]
+"pySPFM/tests/*" = ["D"]
+"pySPFM/due.py" = ["D", "E", "W"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.isort]
+known-first-party = ["pySPFM"]
 
 [tool.pydocstringformatter]
 write = true

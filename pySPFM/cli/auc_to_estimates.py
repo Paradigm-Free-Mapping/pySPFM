@@ -11,10 +11,11 @@ import nibabel as nib
 import numpy as np
 
 from pySPFM import __version__, utils
-from pySPFM.deconvolution import debiasing, hrf_generator
+from pySPFM._solvers.debiasing import debiasing_block, debiasing_spike
+from pySPFM._solvers.hrf_generator import HRFMatrix
+from pySPFM.cli._parser_utils import check_hrf_value, is_valid_file
 from pySPFM.io import read_data, write_data, write_json
 from pySPFM.utils import get_outname
-from pySPFM.workflows.parser_utils import check_hrf_value, is_valid_file
 
 LGR = logging.getLogger("GENERAL")
 RefLGR = logging.getLogger("REFERENCES")
@@ -416,16 +417,16 @@ def auc_to_estimates(
 
     # Generate design matrix with shifted versions of HRF
     LGR.info("Generating design matrix with shifted versions of HRF...")
-    hrf_obj = hrf_generator.HRFMatrix(te=te, block=block_model, model=hrf_model)
+    hrf_obj = HRFMatrix(te=te, block=block_model, model=hrf_model)
     hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
     # Solve ordinary least squares problem to calculate estimates
     LGR.info("Calculating estimates...")
     if block_model:
-        estimates_spike = debiasing.debiasing_block(hrf, data_masked, auc_thr, n_jobs, block_dist)
+        estimates_spike = debiasing_block(hrf, data_masked, auc_thr, n_jobs, block_dist)
         fitts = np.dot(hrf, estimates_spike)
     else:
-        estimates_spike, fitts = debiasing.debiasing_spike(
+        estimates_spike, fitts = debiasing_spike(
             hrf, data_masked, auc_thr, n_jobs, group=group, group_dist=group_distance
         )
 

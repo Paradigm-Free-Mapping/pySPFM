@@ -148,9 +148,9 @@ class HRFMatrix:
         while last_hrf_sample != 0:
             dur_hrf = 2 * dur_hrf
             hrf_command = (
-                "3dDeconvolve -x1D_stop -nodata %d %f -polort -1 -num_stimts 1 -stim_times 1 "
-                "'1D:0' '%s' -quiet -x1D stdout: | 1deval -a stdin: -expr 'a'"
-                % (dur_hrf, self, hrf_model)
+                f"3dDeconvolve -x1D_stop -nodata {dur_hrf} {self} -polort -1 "
+                f"-num_stimts 1 -stim_times 1 'D:0' '{hrf_model}' -quiet -x1D stdout: | "
+                f"1deval -a stdin: -expr 'a'"
             )
             hrf_tr_str = subprocess.check_output(
                 hrf_command, shell=True, universal_newlines=True

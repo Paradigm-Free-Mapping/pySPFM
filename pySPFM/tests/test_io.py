@@ -189,7 +189,7 @@ def test_write_json(testpath):
     assert op.exists(json_path)
 
     # Read and verify content
-    with open(json_path, "r") as f:
+    with open(json_path) as f:
         content = json.load(f)
 
     assert "bold" in content
@@ -206,7 +206,7 @@ def test_write_json_multi_bold(testpath):
     json_path = op.join(testpath, "dataset_description.json")
     assert op.exists(json_path)
 
-    with open(json_path, "r") as f:
+    with open(json_path) as f:
         content = json.load(f)
 
     # activityInducing should have s-1 units when multiple bold outputs

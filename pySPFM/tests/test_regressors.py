@@ -3,7 +3,9 @@
 import numpy as np
 import pytest
 
-from pySPFM.deconvolution import fista, hrf_generator, lars
+from pySPFM._solvers.fista import fista
+from pySPFM._solvers.hrf_generator import HRFMatrix
+from pySPFM._solvers.lars import solve_regularization_path
 
 
 @pytest.fixture
@@ -14,7 +16,7 @@ def setup_data():
     te = [0]
 
     # Generate HRF
-    hrf_obj = hrf_generator.HRFMatrix(te=te, block=False)
+    hrf_obj = HRFMatrix(te=te, block=False)
     hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
     # Generate synthetic signal with some activity
@@ -51,7 +53,7 @@ def test_fista_with_regressors(setup_data):
     regressors = setup_data["regressors"]
 
     # Run FISTA with regressors
-    estimates, lambda_val = fista.fista(
+    estimates, lambda_val = fista(
         hrf,
         data,
         criterion="mad",
@@ -77,7 +79,7 @@ def test_fista_without_regressors(setup_data):
     data = setup_data["data"]
 
     # Run FISTA without regressors
-    estimates, lambda_val = fista.fista(
+    estimates, lambda_val = fista(
         hrf,
         data,
         criterion="mad",
@@ -105,7 +107,7 @@ def test_fista_regressors_dimension_validation(setup_data):
 
     # This should raise a ValueError due to dimension mismatch
     with pytest.raises(ValueError, match="doesn't have the right dimensions"):
-        fista.fista(
+        fista(
             hrf,
             data,
             criterion="mad",
@@ -124,7 +126,7 @@ def test_fista_regressors_transpose(setup_data):
     regressors_transposed = regressors.T
 
     # Run FISTA with transposed regressors - should auto-transpose
-    estimates, lambda_val = fista.fista(
+    estimates, lambda_val = fista(
         hrf,
         data,
         criterion="mad",
@@ -148,7 +150,7 @@ def test_fista_single_regressor(setup_data):
     single_regressor = np.random.randn(n_scans)
 
     # Run FISTA with single regressor
-    estimates, lambda_val = fista.fista(
+    estimates, lambda_val = fista(
         hrf,
         data,
         criterion="mad",
@@ -170,7 +172,7 @@ def test_fista_regressors_with_pylops_raises_error(setup_data):
 
     # This should raise a ValueError
     with pytest.raises(ValueError, match="regressors option is not available with pylops"):
-        fista.fista(
+        fista(
             hrf,
             data,
             criterion="mad",
@@ -188,7 +190,7 @@ def test_lars_with_regressors(setup_data):
     n_scans = setup_data["n_scans"]
 
     # Run LARS with regressors using FISTA backend
-    estimates, lambda_optimal, _, _ = lars.solve_regularization_path(
+    estimates, lambda_optimal, _, _ = solve_regularization_path(
         hrf,
         data,
         n_lambdas=20,
@@ -201,7 +203,7 @@ def test_lars_with_regressors(setup_data):
     assert estimates.shape[0] == n_scans
 
     # Check that we got a single lambda value (optimal)
-    assert isinstance(lambda_optimal, (int, float, np.number))
+    assert isinstance(lambda_optimal, int | float | np.number)
 
 
 def test_lars_without_regressors(setup_data):
@@ -211,7 +213,7 @@ def test_lars_without_regressors(setup_data):
     n_scans = setup_data["n_scans"]
 
     # Run LARS without regressors
-    estimates, lambda_optimal, _, _ = lars.solve_regularization_path(
+    estimates, lambda_optimal, _, _ = solve_regularization_path(
         hrf,
         data,
         n_lambdas=20,
@@ -224,7 +226,7 @@ def test_lars_without_regressors(setup_data):
     assert estimates.shape[0] == n_scans
 
     # Check that lambda is a scalar
-    assert isinstance(lambda_optimal, (int, float, np.number))
+    assert isinstance(lambda_optimal, int | float | np.number)
 
 
 def test_regressors_improve_fit(setup_data):
@@ -234,7 +236,7 @@ def test_regressors_improve_fit(setup_data):
     regressors = setup_data["regressors"]
 
     # Run FISTA without regressors
-    estimates_no_reg, _ = fista.fista(
+    estimates_no_reg, _ = fista(
         hrf,
         data,
         criterion="mad",
@@ -245,7 +247,7 @@ def test_regressors_improve_fit(setup_data):
     )
 
     # Run FISTA with regressors
-    estimates_with_reg, _ = fista.fista(
+    estimates_with_reg, _ = fista(
         hrf,
         data,
         criterion="mad",
@@ -270,7 +272,7 @@ def test_fista_lasso_with_regressors(setup_data):
     regressors = setup_data["regressors"]
 
     # Run FISTA with regressors and group=0 (Lasso)
-    estimates, _ = fista.fista(
+    estimates, _ = fista(
         hrf,
         data,
         criterion="mad",
@@ -296,7 +298,7 @@ def test_fista_multi_echo_with_regressors():
     n_te = len(te)
 
     # Generate multi-echo HRF
-    hrf_obj = hrf_generator.HRFMatrix(te=te, block=False)
+    hrf_obj = HRFMatrix(te=te, block=False)
     hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
     # HRF should have shape (n_scans * n_te, n_scans)
@@ -321,7 +323,7 @@ def test_fista_multi_echo_with_regressors():
     )
 
     # Run FISTA with regressors
-    estimates, lambda_val = fista.fista(
+    estimates, lambda_val = fista(
         hrf,
         data,
         criterion="mad",
@@ -349,7 +351,7 @@ def test_fista_multi_echo_regressors_dimension_validation():
     n_te = len(te)
 
     # Generate multi-echo HRF
-    hrf_obj = hrf_generator.HRFMatrix(te=te, block=False)
+    hrf_obj = HRFMatrix(te=te, block=False)
     hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
     # Generate data
@@ -360,7 +362,7 @@ def test_fista_multi_echo_regressors_dimension_validation():
 
     # This should raise a ValueError due to dimension mismatch
     with pytest.raises(ValueError, match="doesn't have the right dimensions"):
-        fista.fista(
+        fista(
             hrf,
             data,
             criterion="mad",
@@ -377,7 +379,7 @@ def test_fista_multi_echo_regressors_transpose():
     n_te = len(te)
 
     # Generate multi-echo HRF
-    hrf_obj = hrf_generator.HRFMatrix(te=te, block=False)
+    hrf_obj = HRFMatrix(te=te, block=False)
     hrf = hrf_obj.generate_hrf(tr=tr, n_scans=n_scans).hrf_
 
     # Generate data
@@ -390,7 +392,7 @@ def test_fista_multi_echo_regressors_transpose():
     regressors_transposed = np.random.randn(n_regressors, n_scans * n_te) * 0.1
 
     # Run FISTA - should auto-transpose
-    estimates, lambda_val = fista.fista(
+    estimates, lambda_val = fista(
         hrf,
         data,
         criterion="mad",

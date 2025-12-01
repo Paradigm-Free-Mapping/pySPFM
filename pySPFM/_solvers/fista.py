@@ -9,7 +9,7 @@ import pylops
 from pyproximal.optimization.primal import AcceleratedProximalGradient
 from pyproximal.proximal import L1, L2, L21_plus_L1
 
-from pySPFM.deconvolution.select_lambda import select_lambda
+from pySPFM._solvers.select_lambda import select_lambda
 
 LGR = logging.getLogger("GENERAL")
 
