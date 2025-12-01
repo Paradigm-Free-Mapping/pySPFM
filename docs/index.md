@@ -94,17 +94,6 @@ across many subsampled datasets.
 - **Custom HRF**: Use SPM, Glover, or your own HRF model
 - **Block/Spike models**: Detect transient events or sustained activity
 
-## Use Cases
-
-| Use Case | Recommended Approach |
-|----------|---------------------|
-| Resting-state activity detection | `SparseDeconvolution` with `criterion='bic'` |
-| Naturalistic paradigm analysis | `SparseDeconvolution` with `criterion='mad'` |
-| Epileptic spike detection | `StabilitySelection` for robust detection |
-| Separating neural from physiological signals | `LowRankPlusSparse` |
-| Whole-brain multivariate analysis | `SparseDeconvolution` with `group > 0` |
-| Multi-echo fMRI deconvolution | Any estimator with `te=[TE1, TE2, ...]` |
-
 ## Quick Start
 
 ```python
