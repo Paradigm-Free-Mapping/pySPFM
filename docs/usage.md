@@ -296,7 +296,7 @@ auc_to_estimates -i my_fmri_data.nii.gz -a my_auc.nii.gz \
 | `-i, --input` | Input fMRI data file(s) |
 | `-a, --auc` | AUC map from stability selection |
 | `-m, --mask` | Brain mask and optional thresholding mask |
-| `-thr, --threshold` | Percentile threshold (1-100) or absolute threshold (0-1). Default: 95 |
+| `-thr, --threshold` | Percentile threshold (1-100) or absolute threshold [0, 1) (i.e., 0 to less than 1). Default: 95 |
 | `--strategy` | Thresholding strategy: `'static'` or `'time'` (time-dependent). Default: `'static'` |
 | `-block, --block` | Estimate innovation signals (block model) |
 | `--group` | Consider consecutive coefficients as belonging to the same block |
