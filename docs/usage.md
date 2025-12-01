@@ -164,6 +164,25 @@ pySPFM sparse -i my_fmri_data.nii.gz -m my_mask.nii.gz \
     -tr 2.0 --criterion mad
 ```
 
+With HRF model selection:
+
+```bash
+# Using the Glover HRF
+pySPFM sparse -i my_fmri_data.nii.gz -m my_mask.nii.gz \
+    -o my_subject -d my_results_directory \
+    -tr 2.0 --criterion bic --hrf-model glover
+
+# Using a custom HRF from file
+pySPFM sparse -i my_fmri_data.nii.gz -m my_mask.nii.gz \
+    -o my_subject -d my_results_directory \
+    -tr 2.0 --criterion mad --hrf-model /path/to/my_hrf.1D
+
+# Using the block model for sustained activity
+pySPFM sparse -i my_fmri_data.nii.gz -m my_mask.nii.gz \
+    -o my_subject -d my_results_directory \
+    -tr 2.0 --criterion factor --block
+```
+
 For multi-echo data:
 
 ```bash
@@ -192,6 +211,109 @@ For decomposing fMRI data into low-rank (structured noise) and sparse (neural ac
 pySPFM lowrank -i my_fmri_data.nii.gz -m my_mask.nii.gz \
     -o my_subject_lowrank -d my_results_directory \
     -tr 2.0 --criterion factor
+```
+
+## HRF Model Configuration
+
+The hemodynamic response function (HRF) is central to deconvolution. pySPFM supports
+three ways to specify the HRF model via the `hrf_model` parameter:
+
+### Built-in HRF Models
+
+pySPFM provides two canonical HRF models from the literature:
+
+```python
+from pySPFM import SparseDeconvolution
+
+# SPM canonical HRF (default)
+model_spm = SparseDeconvolution(tr=2.0, hrf_model="spm")
+
+# Glover HRF
+model_glover = SparseDeconvolution(tr=2.0, hrf_model="glover")
+```
+
+| Model | Description |
+|-------|-------------|
+| `'spm'` | SPM canonical HRF with default parameters (default) |
+| `'glover'` | Glover HRF model from FSL/FreeSurfer |
+
+Both models are implemented via [nilearn](https://nilearn.github.io/) and are commonly
+used in fMRI analysis. The SPM model is the default as it is widely adopted.
+
+### Custom HRF from File
+
+For advanced users who need a specific HRF shape (e.g., from a separate HRF estimation
+procedure), you can provide a custom HRF as a `.1D` or `.txt` file:
+
+```python
+from pySPFM import SparseDeconvolution
+
+# Use a custom HRF from a text file
+model = SparseDeconvolution(
+    tr=2.0,
+    hrf_model="/path/to/my_custom_hrf.1D",
+)
+```
+
+**Custom HRF file requirements:**
+
+- Format: Plain text file with one value per line (`.1D` or `.txt` extension)
+- Length: Must not exceed the number of scans in your data
+- Sampling: Should be sampled at the TR of your acquisition
+
+Example custom HRF file (`my_hrf.1D`):
+```
+0.0
+0.1
+0.5
+1.0
+0.8
+0.4
+0.1
+0.0
+-0.1
+-0.05
+0.0
+```
+
+### Block vs Spike Model
+
+The `block_model` parameter controls what type of signal is estimated:
+
+```python
+# Spike model (default): estimate activity-inducing signals
+model_spike = SparseDeconvolution(
+    tr=2.0,
+    block_model=False,  # Default
+)
+
+# Block model: estimate innovation signals (step functions)
+model_block = SparseDeconvolution(
+    tr=2.0,
+    block_model=True,
+)
+```
+
+| Parameter | Signal Type | Description |
+|-----------|-------------|-------------|
+| `block_model=False` | Activity-inducing | Neural events as impulses (spikes) |
+| `block_model=True` | Innovation | Sustained activity as step functions (blocks) |
+
+When `block_model=True`, the HRF matrix is modified to include an integrator
+(cumulative sum), which models sustained activity that starts at one timepoint
+and continues. This is useful for paradigm-free mapping of block-like neural responses.
+
+### Accessing the HRF Matrix
+
+After fitting, you can inspect the HRF convolution matrix:
+
+```python
+model = SparseDeconvolution(tr=2.0, hrf_model="glover")
+model.fit(X)
+
+# The HRF matrix used for deconvolution
+print(f"HRF matrix shape: {model.hrf_matrix_.shape}")
+# Shape: (n_timepoints * n_echoes, n_timepoints)
 ```
 
 ## Examples
@@ -229,6 +351,52 @@ model = SparseDeconvolution(
     criterion="mad",
 )
 model.fit(X)
+```
+
+### Using different HRF models
+
+```python
+from pySPFM import SparseDeconvolution
+import numpy as np
+
+X = np.random.randn(200, 100)
+
+# Using the Glover HRF instead of SPM
+model_glover = SparseDeconvolution(
+    tr=2.0,
+    hrf_model="glover",
+    criterion="bic",
+)
+model_glover.fit(X)
+
+# Using a custom HRF from file
+model_custom = SparseDeconvolution(
+    tr=2.0,
+    hrf_model="/path/to/my_estimated_hrf.1D",
+    criterion="mad",
+)
+# model_custom.fit(X)  # Uncomment with valid path
+```
+
+### Block model for sustained activity
+
+```python
+from pySPFM import SparseDeconvolution
+import numpy as np
+
+X = np.random.randn(200, 100)
+
+# Use block model for paradigm-free mapping of sustained activity
+model = SparseDeconvolution(
+    tr=2.0,
+    block_model=True,  # Estimate innovation signals (step functions)
+    criterion="factor",
+    factor=1.0,
+)
+model.fit(X)
+
+# coef_ now contains innovation signals representing
+# onsets/offsets of sustained activity
 ```
 
 ### Multivariate deconvolution with spatial grouping
