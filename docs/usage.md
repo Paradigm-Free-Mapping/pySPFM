@@ -284,7 +284,7 @@ auc_to_estimates(
 
 ```bash
 auc_to_estimates -i my_fmri_data.nii.gz -a my_auc.nii.gz \
-    -m my_mask.nii.gz my_auc_roi_mask.nii.gz \
+    -m my_mask.nii.gz my_roi_mask.nii.gz \
     -o my_subject_estimates -d my_results_directory \
     -tr 2.0 -thr 95
 ```
