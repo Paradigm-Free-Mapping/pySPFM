@@ -58,7 +58,8 @@ model.fit(X)
 
 When `group > 0`, all voxels are solved **jointly** using L2,1 mixed-norm regularization.
 This encourages **spatial grouping** of activity—if a neural event occurs at a particular
-timepoint, it tends to be detected across neighboring voxels simultaneously:
+timepoint, it tends to be detected across neighboring voxels simultaneously
+([Uruñuela et al., 2024](https://doi.org/10.1016/j.media.2024.103010)):
 
 ```python
 # Multivariate mode: all voxels solved jointly with spatial regularization
@@ -114,6 +115,9 @@ rows of the coefficient matrix (timepoints) to be jointly zero or non-zero acros
 
 ## Lambda Selection Criteria
 
+For a comprehensive review of regularization parameter selection methods in hemodynamic
+deconvolution, see [Uruñuela et al. (2023)](https://doi.org/10.52294/001c.87574).
+
 ### LARS-based criteria (univariate only)
 
 The following criteria use the Least Angle Regression (LARS) algorithm to efficiently
@@ -133,7 +137,7 @@ The following criteria use the FISTA (Fast Iterative Shrinkage-Thresholding Algo
 solver and support both univariate and multivariate modes:
 
 - `'mad'`: Median Absolute Deviation of fine-scale wavelet coefficients (Daubechies-3).
-  Robust noise estimation as in [Karahanoğlu et al. (2013)].
+  Robust noise estimation ([Karahanoğlu et al., 2013](https://doi.org/10.1016/j.neuroimage.2013.01.067); [Uruñuela et al., 2023](https://doi.org/10.52294/001c.87574)).
 
 - `'mad_update'`: MAD with iterative updating. The noise estimate is refined during optimization:
   $\lambda_{n+1} = \frac{N \sigma}{\frac{1}{2} \|\mathbf{y} - \mathbf{Hs}\|_2^2 \lambda_n}$
@@ -195,7 +199,8 @@ pySPFM sparse -i echo1.nii.gz echo2.nii.gz echo3.nii.gz \
 ### Stability Selection
 
 The stability selection procedure provides more robust estimates by solving the regularization
-problem across multiple subsampled surrogate datasets:
+problem across multiple subsampled surrogate datasets
+([Uruñuela et al., 2020](https://doi.org/10.1109/EMBC44109.2020.9175673)):
 
 ```bash
 pySPFM stability -i my_fmri_data.nii.gz -m my_mask.nii.gz \
@@ -203,9 +208,10 @@ pySPFM stability -i my_fmri_data.nii.gz -m my_mask.nii.gz \
     -tr 2.0 --n-surrogates 50
 ```
 
-### Low-Rank Plus Sparse
+### Low-Rank Plus Sparse (SPLORA)
 
-For decomposing fMRI data into low-rank (structured noise) and sparse (neural activity) components:
+For decomposing fMRI data into low-rank (structured noise) and sparse (neural activity) components
+([Uruñuela et al., 2021](https://doi.org/10.1109/ISBI48211.2021.9434129)):
 
 ```bash
 pySPFM lowrank -i my_fmri_data.nii.gz -m my_mask.nii.gz \
@@ -441,9 +447,56 @@ auc = model.auc_
 
 ## References
 
-- [Karahanoğlu et al. (2013)](https://doi.org/10.1016/j.neuroimage.2013.01.067):
-  Total activation: fMRI deconvolution through spatio-temporal regularization.
-- [Caballero-Gaudes et al. (2013)](https://doi.org/10.1002/hbm.21452):
-  Paradigm free mapping with sparse regression.
+### Core Methodology
+
 - [Uruñuela et al. (2023)](https://doi.org/10.52294/001c.87574):
-  Hemodynamic Deconvolution Demystified: Sparsity-Driven Regularization at Work.
+  **Hemodynamic Deconvolution Demystified: Sparsity-Driven Regularization at Work.**
+  *Aperture Neuro.* Comprehensive review of sparse deconvolution methods and regularization strategies.
+
+- [Caballero-Gaudes et al. (2013)](https://doi.org/10.1002/hbm.21452):
+  Paradigm free mapping with sparse regression. *Human Brain Mapping.*
+
+- [Karahanoğlu et al. (2013)](https://doi.org/10.1016/j.neuroimage.2013.01.067):
+  Total activation: fMRI deconvolution through spatio-temporal regularization. *NeuroImage.*
+
+### Stability Selection
+
+- [Uruñuela et al. (2020)](https://doi.org/10.1109/EMBC44109.2020.9175673):
+  **Stability-based sparse paradigm free mapping algorithm for deconvolution of functional MRI data.**
+  *IEEE EMBC.* Introduces the stability selection approach for robust sparse deconvolution.
+
+### Multivariate / Whole-Brain Deconvolution
+
+- [Uruñuela et al. (2024)](https://doi.org/10.1016/j.media.2024.103010):
+  **Whole-brain multivariate hemodynamic deconvolution for functional MRI with stability selection.**
+  *Medical Image Analysis.* Extends sparse deconvolution to whole-brain multivariate analysis.
+
+- [Uruñuela et al. (2019)](https://cds.ismrm.org/protected/19MProceedings/PDFfiles/3371.html):
+  Deconvolution of multi-echo functional MRI data with multivariate multi-echo sparse paradigm free mapping.
+  *ISMRM.*
+
+### Low-Rank Plus Sparse (SPLORA)
+
+- [Uruñuela et al. (2021)](https://doi.org/10.1109/ISBI48211.2021.9434129):
+  **A low rank and sparse paradigm free mapping algorithm for deconvolution of fMRI data.**
+  *IEEE ISBI.* Introduces the SPLORA algorithm for separating global and neural components.
+
+### Multi-Echo fMRI
+
+- [DuPre et al. (2021)](https://doi.org/10.21105/joss.03669):
+  TE-dependent analysis of multi-echo fMRI with tedana. *JOSS.*
+
+- [Ahmed et al. (2021)](https://doi.org/10.5281/zenodo.4725985):
+  ME-ICA/tedana. *Zenodo.*
+
+- [Moia et al. (2021)](https://doi.org/10.1016/j.neuroimage.2021.117914):
+  ICA-based denoising strategies in breath-hold induced cerebrovascular reactivity mapping
+  with multi echo BOLD fMRI. *NeuroImage.*
+
+### Related Software & Data
+
+- [Moia et al. (2020)](https://doi.org/10.18112/openneuro.ds003192.v1.0.1):
+  EuskalIBUR dataset. *OpenNeuro.*
+
+- [Ravasi et al. (2024)](https://doi.org/10.21105/joss.06326):
+  PyProximal: scalable convex optimization in Python. *JOSS.*
