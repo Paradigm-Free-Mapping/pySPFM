@@ -480,23 +480,3 @@ auc = model.auc_
 - [Uruñuela et al. (2021)](https://doi.org/10.1109/ISBI48211.2021.9434129):
   **A low rank and sparse paradigm free mapping algorithm for deconvolution of fMRI data.**
   *IEEE ISBI.* Introduces the SPLORA algorithm for separating global and neural components.
-
-### Multi-Echo fMRI
-
-- [DuPre et al. (2021)](https://doi.org/10.21105/joss.03669):
-  TE-dependent analysis of multi-echo fMRI with tedana. *JOSS.*
-
-- [Ahmed et al. (2021)](https://doi.org/10.5281/zenodo.4725985):
-  ME-ICA/tedana. *Zenodo.*
-
-- [Moia et al. (2021)](https://doi.org/10.1016/j.neuroimage.2021.117914):
-  ICA-based denoising strategies in breath-hold induced cerebrovascular reactivity mapping
-  with multi echo BOLD fMRI. *NeuroImage.*
-
-### Related Software & Data
-
-- [Moia et al. (2020)](https://doi.org/10.18112/openneuro.ds003192.v1.0.1):
-  EuskalIBUR dataset. *OpenNeuro.*
-
-- [Ravasi et al. (2024)](https://doi.org/10.21105/joss.06326):
-  PyProximal: scalable convex optimization in Python. *JOSS.*
