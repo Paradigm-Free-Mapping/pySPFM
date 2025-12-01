@@ -12,6 +12,7 @@ from datetime import datetime
 import numpy as np
 
 from pySPFM import __version__
+from pySPFM.cli._preprocessing import remove_regressors
 from pySPFM.io import read_data, write_data, write_json
 from pySPFM.utils import setup_loggers
 
@@ -322,17 +323,7 @@ def _run_sparse(args, command_str, out_dir):
     if args.regressors is not None:
         LGR.info(f"Loading regressors from {args.regressors}")
         regressors = np.genfromtxt(args.regressors)
-        if regressors.ndim == 1:
-            regressors = regressors.reshape(-1, 1)
-        # Regress out confounds
-        for vox_idx in range(n_voxels):
-            for echo_idx in range(n_echoes):
-                start_idx = echo_idx * n_scans
-                end_idx = (echo_idx + 1) * n_scans
-                y = data[start_idx:end_idx, vox_idx]
-                X_reg = np.hstack([np.ones((n_scans, 1)), regressors])
-                beta = np.linalg.lstsq(X_reg, y, rcond=None)[0]
-                data[start_idx:end_idx, vox_idx] = y - np.dot(X_reg[:, 1:], beta[1:])
+        data = remove_regressors(data, regressors, n_scans, n_echoes)
 
     # Create and fit the estimator
     model = SparseDeconvolution(
