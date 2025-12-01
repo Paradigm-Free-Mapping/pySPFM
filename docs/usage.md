@@ -223,7 +223,64 @@ pySPFM lowrank -i my_fmri_data.nii.gz -m my_mask.nii.gz \
 
 The `auc_to_estimates` workflow converts stability selection AUC (Area Under the Curve) maps
 back into activity-inducing signal estimates. This is useful when you've run stability selection
-and want to obtain debiased neural activity estimates from the AUC scores:
+and want to obtain debiased neural activity estimates from the AUC scores.
+
+#### Python API
+
+```python
+from pySPFM.workflows.auc_to_estimates import auc_to_estimates
+
+# Basic usage: convert AUC to activity estimates
+auc_to_estimates(
+    data_fn=["my_fmri_data.nii.gz"],
+    auc_fn="my_auc.nii.gz",
+    mask_fn=["my_mask.nii.gz", "my_roi_mask.nii.gz"],
+    output_filename="my_subject_estimates",
+    tr=2.0,
+    thr=95.0,  # 95th percentile threshold
+    out_dir="my_results_directory",
+)
+
+# With time-dependent thresholding
+auc_to_estimates(
+    data_fn=["my_fmri_data.nii.gz"],
+    auc_fn="my_auc.nii.gz",
+    mask_fn=["my_mask.nii.gz", "my_roi_mask.nii.gz"],
+    output_filename="my_subject_estimates",
+    tr=2.0,
+    thr=90.0,
+    thr_strategy="time",  # Apply threshold at each TR
+    out_dir="my_results_directory",
+)
+
+# Multi-echo data
+auc_to_estimates(
+    data_fn=["echo1.nii.gz", "echo2.nii.gz", "echo3.nii.gz"],
+    auc_fn="my_auc.nii.gz",
+    mask_fn=["my_mask.nii.gz"],
+    output_filename="my_subject_estimates",
+    tr=2.0,
+    te=[14.5, 38.5, 62.5],  # Echo times in ms
+    thr=95.0,
+    out_dir="my_results_directory",
+)
+
+# Block model with grouping
+auc_to_estimates(
+    data_fn=["my_fmri_data.nii.gz"],
+    auc_fn="my_auc.nii.gz",
+    mask_fn=["my_mask.nii.gz", "my_roi_mask.nii.gz"],
+    output_filename="my_subject_estimates",
+    tr=2.0,
+    thr=95.0,
+    block_model=True,  # Estimate innovation signals
+    group=True,        # Group consecutive coefficients
+    group_distance=3,  # Max distance between grouped coefficients
+    out_dir="my_results_directory",
+)
+```
+
+#### Command Line Interface
 
 ```bash
 auc_to_estimates -i my_fmri_data.nii.gz -a my_auc.nii.gz \
@@ -245,7 +302,7 @@ auc_to_estimates -i my_fmri_data.nii.gz -a my_auc.nii.gz \
 | `--group` | Consider consecutive coefficients as belonging to the same block |
 | `--group-distance` | Maximum distance between coefficients in the same block. Default: 3 |
 
-**Example with time-dependent thresholding:**
+**CLI example with time-dependent thresholding:**
 
 ```bash
 auc_to_estimates -i my_fmri_data.nii.gz -a my_auc.nii.gz \
@@ -254,7 +311,7 @@ auc_to_estimates -i my_fmri_data.nii.gz -a my_auc.nii.gz \
     -tr 2.0 -thr 90 --strategy time
 ```
 
-**Example with multi-echo data:**
+**CLI example with multi-echo data:**
 
 ```bash
 auc_to_estimates -i echo1.nii.gz echo2.nii.gz echo3.nii.gz \
