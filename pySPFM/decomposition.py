@@ -148,13 +148,25 @@ class SparseDeconvolution(_BaseDeconvolution):
     deconvolution of fMRI data. It estimates activity-inducing signals
     (spike model) or innovation signals (block model) from BOLD timeseries.
 
+    The estimator supports two solving modes:
+
+    **Univariate mode** (``group=0.0``, default):
+        Each voxel is solved independently using pure L1 (LASSO) regularization.
+        This is efficient and suitable when spatial structure is not important.
+
+    **Multivariate mode** (``group > 0.0``):
+        All voxels are solved jointly using L2,1 mixed-norm regularization,
+        which encourages spatial grouping of activity across voxels at the
+        same timepoint. This leverages spatial structure in 4D fMRI data.
+        Requires a FISTA-compatible criterion ('mad', 'factor', etc.).
+
     Parameters
     ----------
     tr : float
         Repetition time (TR) of the fMRI acquisition in seconds.
     te : list of float, default=None
-        Echo times in seconds for multi-echo data. If None or [0], assumes
-        single-echo data.
+        Echo times in milliseconds for multi-echo data. If None or [0],
+        assumes single-echo data.
     hrf_model : str, default='spm'
         HRF model to use. Options are 'spm', 'glover', or a path to a custom
         HRF file (.1D or .txt).
@@ -164,25 +176,33 @@ class SparseDeconvolution(_BaseDeconvolution):
     criterion : str, default='bic'
         Criterion for lambda selection:
 
-        - 'bic', 'aic': Information criteria (use LARS solver).
+        - 'bic', 'aic': Information criteria (LARS solver, univariate only).
         - 'mad', 'mad_update', 'ut', 'lut', 'factor', 'pcg', 'eigval':
-          Noise-based criteria (use FISTA solver).
+          Noise-based criteria (FISTA solver, supports multivariate).
 
     debias : bool, default=True
         If True, perform debiasing step to recover true amplitude.
     group : float, default=0.0
-        Weight for spatial grouping (L2,1-norm). Range [0, 1].
-        0 means no grouping (pure L1/LASSO).
+        Weight for spatial grouping using L2,1 mixed-norm regularization.
+        Range [0, 1] where:
+
+        - ``group=0.0``: Pure L1/LASSO (univariate, voxel-wise independent).
+        - ``group=1.0``: Pure L2,1 (multivariate, maximum spatial grouping).
+        - ``0 < group < 1``: Elastic net-like mix of L1 and L2,1.
+
+        When ``group > 0``, the solver operates on all voxels jointly
+        (multivariate mode) and requires a FISTA-compatible criterion.
     pcg : float, default=0.8
         Percentage of maximum lambda to use (for criterion='pcg').
     factor : float, default=1.0
         Factor to multiply noise estimate for lambda selection.
     max_iter : int, default=400
-        Maximum number of iterations for the solver.
+        Maximum number of iterations for the FISTA solver.
     tol : float, default=1e-6
         Convergence tolerance.
     n_jobs : int, default=1
-        Number of parallel jobs for voxel-wise computation.
+        Number of parallel jobs. Only used in univariate mode (group=0).
+        In multivariate mode, computation is inherently joint.
     positive : bool, default=False
         If True, enforce non-negative coefficients.
 
@@ -190,8 +210,9 @@ class SparseDeconvolution(_BaseDeconvolution):
     ----------
     coef_ : ndarray of shape (n_timepoints, n_voxels)
         Estimated activity-inducing (spike) or innovation (block) signals.
-    lambda_ : ndarray of shape (n_voxels,)
-        Selected regularization parameter for each voxel.
+    lambda_ : ndarray of shape (n_voxels,) or float
+        Selected regularization parameter. In multivariate mode, a single
+        lambda is used for all voxels.
     hrf_matrix_ : ndarray of shape (n_timepoints * n_echoes, n_timepoints)
         The HRF convolution matrix used for deconvolution.
     n_features_in_ : int
@@ -201,18 +222,20 @@ class SparseDeconvolution(_BaseDeconvolution):
 
     Examples
     --------
+    Univariate deconvolution (each voxel independent):
+
     >>> from pySPFM import SparseDeconvolution
     >>> import numpy as np
-    >>> # Simulate fMRI data (100 timepoints, 50 voxels)
-    >>> X = np.random.randn(100, 50)
-    >>> # Fit sparse deconvolution
-    >>> model = SparseDeconvolution(tr=2.0, criterion='bic')
+    >>> X = np.random.randn(100, 50)  # 100 timepoints, 50 voxels
+    >>> model = SparseDeconvolution(tr=2.0, criterion='bic', group=0.0)
     >>> model.fit(X)
-    SparseDeconvolution(criterion='bic', tr=2.0)
-    >>> # Get deconvolved signals
-    >>> coef = model.transform(X)
-    >>> coef.shape
-    (100, 50)
+    SparseDeconvolution(criterion='bic', group=0.0, tr=2.0)
+
+    Multivariate deconvolution (joint spatial regularization):
+
+    >>> model = SparseDeconvolution(tr=2.0, criterion='factor', group=0.5)
+    >>> model.fit(X)  # All voxels solved jointly
+    SparseDeconvolution(criterion='factor', group=0.5, tr=2.0)
 
     See Also
     --------
@@ -283,6 +306,12 @@ class SparseDeconvolution(_BaseDeconvolution):
         -------
         self : object
             Fitted estimator.
+
+        Raises
+        ------
+        ValueError
+            If ``group > 0`` is used with a LARS criterion ('bic', 'aic'),
+            since multivariate mode requires FISTA.
         """
         X = np.asarray(X)
         if X.ndim == 1:
@@ -295,6 +324,14 @@ class SparseDeconvolution(_BaseDeconvolution):
         self.n_features_in_ = n_voxels
         self.n_samples_ = n_total
 
+        # Validate group parameter compatibility with criterion
+        if self.group > 0 and self.criterion in self._lars_criteria:
+            raise ValueError(
+                f"Multivariate mode (group={self.group}) is not compatible with "
+                f"LARS-based criterion '{self.criterion}'. Use a FISTA-compatible "
+                f"criterion: {self._fista_criteria}."
+            )
+
         # Generate HRF matrix
         self.hrf_matrix_ = self._generate_hrf_matrix(n_scans)
 
@@ -304,9 +341,15 @@ class SparseDeconvolution(_BaseDeconvolution):
 
         # Solve using LARS or FISTA
         if self.criterion in self._lars_criteria:
+            # Univariate mode only (group=0)
             self._fit_lars(X, n_scans, n_voxels)
         elif self.criterion in self._fista_criteria:
-            self._fit_fista(X, n_scans, n_voxels)
+            if self.group > 0:
+                # Multivariate mode: solve all voxels jointly
+                self._fit_fista_multivariate(X, n_scans, n_voxels)
+            else:
+                # Univariate mode: solve each voxel independently
+                self._fit_fista(X, n_scans, n_voxels)
         else:
             raise ValueError(
                 f"Invalid criterion '{self.criterion}'. Must be one of "
@@ -342,7 +385,7 @@ class SparseDeconvolution(_BaseDeconvolution):
             self.lambda_[vox_idx] = np.squeeze(results[vox_idx][1])
 
     def _fit_fista(self, X, n_scans, n_voxels):
-        """Fit using FISTA algorithm."""
+        """Fit using FISTA algorithm (univariate, voxel-wise)."""
         futures = []
         for vox_idx in range(n_voxels):
             fut = delayed_dask(fista, pure=False)(
@@ -352,7 +395,7 @@ class SparseDeconvolution(_BaseDeconvolution):
                 max_iter=self.max_iter,
                 min_iter=self.min_iter,
                 tol=self.tol,
-                group=self.group,
+                group=0.0,  # Univariate mode: no grouping
                 pcg=self.pcg,
                 factor=self.factor,
                 lambda_echo=self.lambda_echo,
@@ -365,6 +408,36 @@ class SparseDeconvolution(_BaseDeconvolution):
         for vox_idx in range(n_voxels):
             self.coef_[:, vox_idx] = np.squeeze(results[vox_idx][0])
             self.lambda_[vox_idx] = np.squeeze(results[vox_idx][1])
+
+    def _fit_fista_multivariate(self, X, n_scans, n_voxels):
+        """Fit using FISTA algorithm (multivariate, joint spatial regularization).
+
+        When group > 0, all voxels are solved jointly using L2,1 mixed-norm
+        regularization, which encourages spatial grouping of activity.
+        """
+        LGR.info(
+            f"Multivariate mode: solving {n_voxels} voxels jointly with "
+            f"L2,1 regularization (group={self.group})"
+        )
+
+        # Solve all voxels together - fista handles (n_timepoints, n_voxels) input
+        coef, lambda_val = fista(
+            self.hrf_matrix_,
+            X,
+            criterion=self.criterion,
+            max_iter=self.max_iter,
+            min_iter=self.min_iter,
+            tol=self.tol,
+            group=self.group,
+            pcg=self.pcg,
+            factor=self.factor,
+            lambda_echo=self.lambda_echo,
+            positive_only=self.positive,
+        )
+
+        self.coef_ = np.squeeze(coef)
+        # In multivariate mode, a single lambda is used for all voxels
+        self.lambda_ = np.full(n_voxels, lambda_val)
 
     def _debias(self, X, n_scans):
         """Perform debiasing step."""
