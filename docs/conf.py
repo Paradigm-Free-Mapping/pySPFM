@@ -181,6 +181,7 @@ def setup(app):
 
 
 html_favicon = "_static/pySPFM_favicon.png"
+html_logo = "_static/pySPFM_favicon.png"
 
 
 # -- Options for HTMLHelp output ------------------------------------------
