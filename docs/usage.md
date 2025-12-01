@@ -219,6 +219,50 @@ pySPFM lowrank -i my_fmri_data.nii.gz -m my_mask.nii.gz \
     -tr 2.0 --criterion factor
 ```
 
+### AUC to Estimates
+
+The `auc_to_estimates` workflow converts stability selection AUC (Area Under the Curve) maps
+back into activity-inducing signal estimates. This is useful when you've run stability selection
+and want to obtain debiased neural activity estimates from the AUC scores:
+
+```bash
+auc_to_estimates -i my_fmri_data.nii.gz -a my_auc.nii.gz \
+    -m my_mask.nii.gz my_auc_roi_mask.nii.gz \
+    -o my_subject_estimates -d my_results_directory \
+    -tr 2.0 -thr 95
+```
+
+**Key parameters:**
+
+| Parameter | Description |
+|-----------|-------------|
+| `-i, --input` | Input fMRI data file(s) |
+| `-a, --auc` | AUC map from stability selection |
+| `-m, --mask` | Brain mask and optional thresholding mask |
+| `-thr, --threshold` | Percentile threshold (1-100) or absolute threshold (0-1). Default: 95 |
+| `--strategy` | Thresholding strategy: `'static'` or `'time'` (time-dependent). Default: `'static'` |
+| `-block, --block` | Estimate innovation signals (block model) |
+| `--group` | Consider consecutive coefficients as belonging to the same block |
+| `--group-distance` | Maximum distance between coefficients in the same block. Default: 3 |
+
+**Example with time-dependent thresholding:**
+
+```bash
+auc_to_estimates -i my_fmri_data.nii.gz -a my_auc.nii.gz \
+    -m my_mask.nii.gz my_roi_mask.nii.gz \
+    -o my_subject_estimates -d my_results_directory \
+    -tr 2.0 -thr 90 --strategy time
+```
+
+**Example with multi-echo data:**
+
+```bash
+auc_to_estimates -i echo1.nii.gz echo2.nii.gz echo3.nii.gz \
+    -a my_auc.nii.gz -m my_mask.nii.gz \
+    -o my_subject_estimates -d my_results_directory \
+    -tr 2.0 -te 14.5 38.5 62.5 -thr 95
+```
+
 ## HRF Model Configuration
 
 The hemodynamic response function (HRF) is central to deconvolution. pySPFM supports
