@@ -63,6 +63,7 @@ doc = [
     "sphinx_design",
     "sphinx_gallery",
     "sphinx-book-theme",
+    "setuptools",
     "sphinx_charts",
     "sphinxcontrib-jquery",
 ]

@@ -8,9 +8,9 @@ import re
 import shutil
 import tarfile
 from gzip import GzipFile
+from importlib.resources import files
 
 import pytest
-from pkg_resources import resource_filename
 
 
 def extract_test_data(tarball_path, outpath):
@@ -292,7 +292,7 @@ def test_integration_auc_to_estimates(
     assert ret.success
 
     # compare the generated output files
-    fn = resource_filename("pySPFM", "tests/data/auc_to_estimates_outputs.txt")
+    fn = str(files("pySPFM") / "tests" / "data" / "auc_to_estimates_outputs.txt")
     check_integration_outputs(fn, out_dir, "auc_to_estimates")
 
     ############################
@@ -329,7 +329,7 @@ def test_integration_auc_to_estimates(
     assert ret.success
 
     # compare the generated output files
-    fn = resource_filename("pySPFM", "tests/data/auc_to_estimates_outputs.txt")
+    fn = str(files("pySPFM") / "tests" / "data" / "auc_to_estimates_outputs.txt")
     check_integration_outputs(fn, out_dir, "auc_to_estimates")
 
     ############################
@@ -362,7 +362,7 @@ def test_integration_auc_to_estimates(
     assert ret.success
 
     # compare the generated output files
-    fn = resource_filename("pySPFM", "tests/data/auc_to_estimates_outputs.txt")
+    fn = str(files("pySPFM") / "tests" / "data" / "auc_to_estimates_outputs.txt")
     check_integration_outputs(fn, out_dir, "auc_to_estimates")
 
     ############################
@@ -395,7 +395,7 @@ def test_integration_auc_to_estimates(
     assert ret.success
 
     # compare the generated output files
-    fn = resource_filename("pySPFM", "tests/data/auc_to_estimates_outputs.txt")
+    fn = str(files("pySPFM") / "tests" / "data" / "auc_to_estimates_outputs.txt")
     check_integration_outputs(fn, out_dir, "auc_to_estimates")
 
 
