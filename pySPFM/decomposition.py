@@ -121,6 +121,10 @@ class _BaseDeconvolution(DeconvolutionMixin, TransformerMixin, BaseEstimator):
         results : list
             Computed results in the same order as ``futures``.
         """
+        if self.n_jobs == 0 or self.n_jobs < -1:
+            raise ValueError(
+                f"n_jobs must be -1 (use all CPUs) or a positive integer >= 1, got {self.n_jobs!r}"
+            )
         if self.n_jobs == 1:
             return compute(futures, scheduler="synchronous")[0]
         num_workers = None if self.n_jobs == -1 else self.n_jobs
