@@ -50,7 +50,6 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
-    "sphinx_charts.charts",
     "sphinx_gallery.load_style",
     "sphinxcontrib.jquery",
 ]
@@ -73,8 +72,6 @@ myst_enable_extensions = [
 
 # Keep plotly plugin configuration
 # nb_render_plugin = "plotly"
-
-
 
 
 # if LooseVersion(sphinx.__version__) < LooseVersion("1.4"):
@@ -192,9 +189,7 @@ htmlhelp_basename = "pySPFMdoc"
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve(
     "pySPFM",
-    "https://github.com/ParadigmFreeMapping/"
-    "pySPFM/blob/{revision}/"
-    "{package}/{path}#L{lineno}",
+    "https://github.com/ParadigmFreeMapping/pySPFM/blob/{revision}/{package}/{path}#L{lineno}",
 )
 
 # Example configuration for intersphinx: refer to the Python standard library.
