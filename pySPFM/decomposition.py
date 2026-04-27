@@ -103,6 +103,29 @@ class _BaseDeconvolution(DeconvolutionMixin, TransformerMixin, BaseEstimator):
         hrf_obj.generate_hrf(tr=self.tr, n_scans=n_scans)
         return hrf_obj.hrf_
 
+    def _dask_compute(self, futures):
+        """Run dask compute with the scheduler selected by ``n_jobs``.
+
+        Uses the synchronous scheduler when ``n_jobs=1`` (default, safe for
+        all environments) and the threaded scheduler otherwise.  Because the
+        per-voxel solvers (LARS, FISTA) call into numpy/scipy C extensions
+        that release the GIL, threads provide real parallelism here.
+
+        Parameters
+        ----------
+        futures : list of dask.delayed
+            Delayed objects to compute.
+
+        Returns
+        -------
+        results : list
+            Computed results in the same order as ``futures``.
+        """
+        if self.n_jobs == 1:
+            return compute(futures, scheduler="synchronous")[0]
+        num_workers = None if self.n_jobs == -1 else self.n_jobs
+        return compute(futures, scheduler="threads", num_workers=num_workers)[0]
+
     @abstractmethod
     def fit(self, X, y=None):
         """Fit the deconvolution model.
@@ -378,7 +401,7 @@ class SparseDeconvolution(_BaseDeconvolution):
             )
             futures.append(fut)
 
-        results = compute(futures, scheduler="synchronous")[0]
+        results = self._dask_compute(futures)
 
         for vox_idx in range(n_voxels):
             self.coef_[:, vox_idx] = np.squeeze(results[vox_idx][0])
@@ -403,7 +426,7 @@ class SparseDeconvolution(_BaseDeconvolution):
             )
             futures.append(fut)
 
-        results = compute(futures, scheduler="synchronous")[0]
+        results = self._dask_compute(futures)
 
         for vox_idx in range(n_voxels):
             self.coef_[:, vox_idx] = np.squeeze(results[vox_idx][0])
@@ -628,7 +651,7 @@ class LowRankPlusSparse(_BaseDeconvolution):
                 )
                 futures.append(fut)
 
-            results = compute(futures, scheduler="synchronous")[0]
+            results = self._dask_compute(futures)
 
             for vox_idx in range(n_voxels):
                 self.coef_[:, vox_idx] = np.squeeze(results[vox_idx][0])
@@ -806,7 +829,7 @@ class StabilitySelection(_BaseDeconvolution):
             )
             futures.append(fut)
 
-        results = compute(futures, scheduler="synchronous")[0]
+        results = self._dask_compute(futures)
 
         for vox_idx in range(n_voxels):
             self.selection_frequency_[:, vox_idx] = np.squeeze(results[vox_idx])
