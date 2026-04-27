@@ -484,3 +484,48 @@ class TestStabilitySelectionCoverage:
         # coef_ should only contain 0s and 1s
         unique_vals = np.unique(model.coef_)
         assert set(unique_vals).issubset({0.0, 1.0})
+
+
+class TestDaskCompute:
+    """Tests for _BaseDeconvolution._dask_compute scheduler selection."""
+
+    def test_n_jobs_1_uses_synchronous(self):
+        """n_jobs=1 must select the synchronous scheduler."""
+        from unittest.mock import patch
+
+        from pySPFM import SparseDeconvolution
+
+        model = SparseDeconvolution(tr=2.0, n_jobs=1)
+        with patch("pySPFM.decomposition.compute", return_value=([],)) as mock_compute:
+            model._dask_compute([])
+        mock_compute.assert_called_once_with([], scheduler="synchronous")
+
+    def test_n_jobs_gt1_uses_threaded(self):
+        """n_jobs=2 must select the threaded scheduler with num_workers=2."""
+        from unittest.mock import patch
+
+        from pySPFM import SparseDeconvolution
+
+        model = SparseDeconvolution(tr=2.0, n_jobs=2)
+        with patch("pySPFM.decomposition.compute", return_value=([],)) as mock_compute:
+            model._dask_compute([])
+        mock_compute.assert_called_once_with([], scheduler="threads", num_workers=2)
+
+    def test_n_jobs_minus1_uses_all_cpus(self):
+        """n_jobs=-1 must select the threaded scheduler with num_workers=None."""
+        from unittest.mock import patch
+
+        from pySPFM import SparseDeconvolution
+
+        model = SparseDeconvolution(tr=2.0, n_jobs=-1)
+        with patch("pySPFM.decomposition.compute", return_value=([],)) as mock_compute:
+            model._dask_compute([])
+        mock_compute.assert_called_once_with([], scheduler="threads", num_workers=None)
+
+    def test_invalid_n_jobs_raises(self):
+        """n_jobs=0 must raise ValueError with a message mentioning n_jobs."""
+        from pySPFM import SparseDeconvolution
+
+        model = SparseDeconvolution(tr=2.0, n_jobs=0)
+        with pytest.raises(ValueError, match="n_jobs"):
+            model._dask_compute([])
