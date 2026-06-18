@@ -13,7 +13,7 @@ import numpy as np
 
 from pySPFM import __version__
 from pySPFM.cli._preprocessing import remove_regressors
-from pySPFM.io import read_data, write_data, write_json
+from pySPFM.io import read_data, read_spatial_map, write_data, write_json
 from pySPFM.utils import setup_loggers
 
 LGR = logging.getLogger("GENERAL")
@@ -216,6 +216,18 @@ def _get_parser():
     )
     _add_common_args(sparse_parser)
     _add_sparse_args(sparse_parser)
+    sparse_parser.add_argument(
+        "--weights",
+        dest="weights",
+        default=None,
+        help=(
+            "Path to a per-voxel weight NIfTI map for the L1 sparsity penalty in "
+            "multivariate mode (--group > 0). Adaptive-LASSO style: the effective "
+            "threshold is lambda/w per voxel, so higher weights penalize less "
+            "(retain more activity) and lower weights penalize more. Values must "
+            "be strictly positive."
+        ),
+    )
 
     # Low-rank + sparse subcommand
     lowrank_parser = subparsers.add_parser(
@@ -325,6 +337,12 @@ def _run_sparse(args, command_str, out_dir):
         regressors = np.genfromtxt(args.regressors)
         data = remove_regressors(data, regressors, n_scans, n_echoes)
 
+    # Load per-voxel weight map if provided (multivariate mode only)
+    weights = None
+    if args.weights is not None:
+        LGR.info(f"Loading weight map from {args.weights}")
+        weights = read_spatial_map(args.weights, masker)
+
     # Create and fit the estimator
     model = SparseDeconvolution(
         tr=args.tr,
@@ -340,6 +358,7 @@ def _run_sparse(args, command_str, out_dir):
         min_iter=args.min_iter,
         tol=args.tol,
         n_jobs=args.n_jobs,
+        weights=weights,
     )
 
     LGR.info("Fitting sparse deconvolution model...")

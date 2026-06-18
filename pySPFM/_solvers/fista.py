@@ -44,8 +44,11 @@ def proximal_operator_mixed_norm(y, thr, rho_val=0.8, groups="space"):
     ----------
     y : ndarray
         Input data to be soft-thresholded.
-    thr : float
-        Thresholding value.
+    thr : float or ndarray
+        Thresholding value. May be a per-voxel row vector of shape
+        ``(1, n_voxels)`` to apply a different threshold to each voxel; it then
+        scales both the L1 (sparsity) and L2,1 (grouping) terms of the mixed
+        norm, broadcasting across time.
     rho_val : float, optional
         Weight for sparsity over grouping effect, by default 0.8
     groups : str, optional
@@ -170,6 +173,7 @@ def fista(
     use_pylops=False,
     positive_only=False,
     regressors=None,
+    weights=None,
 ):
     """FISTA solver for PFM.
 
@@ -206,6 +210,15 @@ def fista(
         Matrix with regressors to be included in the deconvolution with shape
         (n_timepoints, n_regressors). Regressors are NOT included in the regularization step.
         By default None.
+    weights : ndarray, optional
+        Per-voxel weight map of shape (n_voxels,) modulating the multivariate
+        (L2,1 + L1 mixed-norm) penalty in multivariate mode (``group > 0``),
+        adaptive-LASSO style: the effective threshold for voxel ``j`` is
+        ``lambda / w_j``, scaling both the sparsity and grouping terms. Higher
+        weights mean less penalty (more activity retained); lower weights mean
+        more penalty. Weights must be strictly positive; ``w_j = 1`` is neutral.
+        Only supported for the multivariate FISTA path (not pylops). By default
+        None (no weighting).
 
     Returns
     -------
@@ -220,6 +233,23 @@ def fista(
     else:
         n_voxels = y.shape[1]
     n_scans = hrf.shape[1]
+
+    # Validate per-voxel weights and build the threshold multiplier (1 / w).
+    # Adaptive-LASSO style: higher weight -> smaller threshold -> less penalty.
+    # The multiplier scales the whole per-voxel mixed-norm threshold (both the
+    # L1 sparsity and L2,1 grouping terms).
+    thr_weight = 1.0
+    if weights is not None:
+        if group <= 0:
+            raise ValueError("weights are only supported in multivariate mode (group > 0).")
+        if use_pylops:
+            raise ValueError("weights are not supported with the pylops backend.")
+        weights = np.asarray(weights, dtype=np.float32).reshape(-1)
+        if weights.shape != (n_voxels,):
+            raise ValueError(f"weights must have shape ({n_voxels},), got {weights.shape}.")
+        if np.any(weights <= 0):
+            raise ValueError("weights must be strictly positive.")
+        thr_weight = (1.0 / weights).reshape(1, -1)
 
     # Select lambda
     if lambda_ is None:
@@ -318,7 +348,7 @@ def fista(
 
                 if group > 0:
                     s_hrf = proximal_operator_mixed_norm_jit(
-                        z_hrf, c_ist * lambda_, rho_val=(1 - group)
+                        z_hrf, c_ist * lambda_ * thr_weight, rho_val=(1 - group)
                     ).block_until_ready()
                 else:
                     s_hrf = proximal_operator_lasso_jit(z_hrf, c_ist * lambda_).block_until_ready()
@@ -327,7 +357,7 @@ def fista(
             else:
                 if group > 0:
                     s = proximal_operator_mixed_norm_jit(
-                        z_ista_s, c_ist * lambda_, rho_val=(1 - group)
+                        z_ista_s, c_ist * lambda_ * thr_weight, rho_val=(1 - group)
                     ).block_until_ready()
                 else:
                     s = proximal_operator_lasso_jit(z_ista_s, c_ist * lambda_).block_until_ready()
