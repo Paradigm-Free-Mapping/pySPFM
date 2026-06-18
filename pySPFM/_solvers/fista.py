@@ -71,7 +71,7 @@ def proximal_operator_mixed_norm(y, thr, rho_val=0.8, groups="space"):
         foo = foo.reshape(len(foo), 1)
         foo = jnp.dot(foo, jnp.ones((1, y.shape[1])))
     else:
-        foo = jnp.sum(jnp.maximum(np.zeros(y.shape), jnp.abs(y) - thr * rho_val) ** 2, axis=0)
+        foo = jnp.sum(jnp.maximum(jnp.zeros(y.shape), jnp.abs(y) - thr * rho_val) ** 2, axis=0)
         foo = foo.reshape(1, len(foo))
         foo = jnp.dot(jnp.ones((y.shape[0], 1)), foo)
 
@@ -216,8 +216,9 @@ def fista(
         adaptive-LASSO style: the effective threshold for voxel ``j`` is
         ``lambda / w_j``, scaling both the sparsity and grouping terms. Higher
         weights mean less penalty (more activity retained); lower weights mean
-        more penalty. Weights must be strictly positive; ``w_j = 1`` is neutral.
-        Only supported for the multivariate FISTA path (not pylops). By default
+        more penalty. Weights must be finite and strictly positive; ``w_j = 1``
+        is neutral. Only supported for the multivariate FISTA path (not pylops).
+        By default
         None (no weighting).
 
     Returns
@@ -247,8 +248,8 @@ def fista(
         weights = np.asarray(weights, dtype=np.float32).reshape(-1)
         if weights.shape != (n_voxels,):
             raise ValueError(f"weights must have shape ({n_voxels},), got {weights.shape}.")
-        if np.any(weights <= 0):
-            raise ValueError("weights must be strictly positive.")
+        if not np.all(np.isfinite(weights)) or np.any(weights <= 0):
+            raise ValueError("weights must be finite and strictly positive.")
         thr_weight = (1.0 / weights).reshape(1, -1)
 
     # Select lambda

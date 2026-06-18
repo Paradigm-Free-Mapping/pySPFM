@@ -207,6 +207,19 @@ class TestSparseDeconvolutionAPI:
         with pytest.raises(ValueError, match="weights must have shape"):
             model.fit(sample_data)
 
+    def test_weights_non_positive(self, sample_data):
+        """Non-positive or non-finite weights are rejected at the estimator level."""
+        from pySPFM import SparseDeconvolution
+
+        for bad_val in (0.0, -1.0, np.nan, np.inf):
+            bad = np.ones(sample_data.shape[1])
+            bad[0] = bad_val
+            model = SparseDeconvolution(
+                tr=2.0, criterion="factor", group=0.5, max_iter=10, weights=bad
+            )
+            with pytest.raises(ValueError, match="finite and strictly positive"):
+                model.fit(sample_data)
+
 
 class TestLowRankPlusSparseAPI:
     """Tests for LowRankPlusSparse scikit-learn API compliance."""

@@ -94,6 +94,13 @@ def test_fista_weights_validation(sim_data, sim_hrf):
     with pytest.raises(ValueError, match="strictly positive"):
         fista(hrf_matrix, y, group=0.2, max_iter=5, weights=bad)
 
+    # Non-finite values (NaN / Inf)
+    for bad_val in (np.nan, np.inf):
+        bad_nf = np.ones(n_voxels)
+        bad_nf[0] = bad_val
+        with pytest.raises(ValueError, match="finite and strictly positive"):
+            fista(hrf_matrix, y, group=0.2, max_iter=5, weights=bad_nf)
+
     # Weights require multivariate mode (group > 0)
     with pytest.raises(ValueError, match="multivariate mode"):
         fista(hrf_matrix, y, group=0.0, max_iter=5, weights=np.ones(n_voxels))

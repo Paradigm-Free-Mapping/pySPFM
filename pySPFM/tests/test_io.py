@@ -206,6 +206,28 @@ def test_read_spatial_map(testpath):
     assert np.allclose(weights, 2.0)
 
 
+def test_read_spatial_map_rejects_4d_multivolume(testpath):
+    """read_spatial_map rejects 4D maps with more than one volume."""
+    data_4d = np.random.randn(4, 4, 4, 20).astype(np.float32)
+    data_path = op.join(testpath, "test_smap4d_data.nii.gz")
+    nib.save(nib.Nifti1Image(data_4d, np.eye(4)), data_path)
+
+    mask_data = np.zeros((4, 4, 4), dtype=np.int16)
+    mask_data[1:3, 1:3, 1:3] = 1
+    mask_path = op.join(testpath, "test_smap4d_mask.nii.gz")
+    nib.save(nib.Nifti1Image(mask_data, np.eye(4)), mask_path)
+
+    _, masker = io.read_data(data_path, mask_path)
+
+    # 4D map with 3 volumes -> rejected
+    bad_map = np.random.randn(4, 4, 4, 3).astype(np.float32)
+    bad_path = op.join(testpath, "test_smap4d_weights.nii.gz")
+    nib.save(nib.Nifti1Image(bad_map, np.eye(4)), bad_path)
+
+    with pytest.raises(ValueError, match="single 3D spatial map"):
+        io.read_spatial_map(bad_path, masker)
+
+
 def test_write_json(testpath):
     """Test write_json function."""
     keywords = ["bold", "activityInducing", "innovation", "lambda", "MAD", "beta"]

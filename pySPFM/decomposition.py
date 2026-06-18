@@ -237,8 +237,8 @@ class SparseDeconvolution(_BaseDeconvolution):
         penalty in multivariate mode (``group > 0``), adaptive-LASSO style: the
         effective threshold for voxel ``j`` is ``lambda / w_j``, scaling both the
         sparsity and grouping terms. Higher weights penalize less (retain more
-        activity); lower weights penalize more. Must be strictly positive
-        (``w_j = 1`` is neutral). Only valid in multivariate mode; passing
+        activity); lower weights penalize more. Must be finite and strictly
+        positive (``w_j = 1`` is neutral). Only valid in multivariate mode; passing
         ``weights`` with ``group == 0`` (or a LARS criterion) raises ``ValueError``.
 
     Attributes
@@ -382,6 +382,8 @@ class SparseDeconvolution(_BaseDeconvolution):
                 raise ValueError(
                     f"weights must have shape ({n_voxels},), got {weights_check.shape}."
                 )
+            if not np.all(np.isfinite(weights_check)) or np.any(weights_check <= 0):
+                raise ValueError("weights must be finite and strictly positive.")
 
         # Generate HRF matrix
         self.hrf_matrix_ = self._generate_hrf_matrix(n_scans)
