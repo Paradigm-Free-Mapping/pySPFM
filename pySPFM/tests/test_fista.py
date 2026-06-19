@@ -110,3 +110,33 @@ def test_fista_weights_validation(sim_data, sim_hrf):
     # Weights are not supported with the pylops backend
     with pytest.raises(ValueError, match="pylops"):
         fista(hrf_matrix, y, group=0.2, max_iter=5, use_pylops=True, weights=np.ones(n_voxels))
+
+
+def test_fista_univariate_batched_equals_per_voxel(sim_data, sim_hrf):
+    """Univariate (group=0) FISTA over all voxels at once == solving each voxel alone.
+
+    SparseDeconvolution relies on this equivalence to batch the univariate path
+    into a single solve instead of one call per voxel (~50x faster on whole-brain
+    data). The lasso proximal operator is element-wise, so batching changes only
+    the convergence gating, not the per-voxel result (up to float32 rounding).
+    """
+    y = np.load(sim_data, allow_pickle=True)
+    hrf_matrix = np.load(sim_hrf, allow_pickle=True)
+
+    batched, lambdas = fista(hrf_matrix, y, group=0.0, criterion="ut", max_iter=100)
+    batched = np.asarray(batched)
+
+    # The batched solve covers all voxels; only loop over a small deterministic
+    # subset for the per-voxel comparison so the test stays fast in CI.
+    n_check = min(5, y.shape[1])
+    per_voxel = np.zeros((batched.shape[0], n_check))
+    for v in range(n_check):
+        coef_v, _ = fista(hrf_matrix, y[:, v], group=0.0, criterion="ut", max_iter=100)
+        per_voxel[:, v] = np.squeeze(np.asarray(coef_v))
+    batched_subset = batched[:, :n_check]
+
+    # One lambda per voxel, identical sparse support, near-identical amplitudes.
+    assert np.asarray(lambdas).reshape(-1).shape == (y.shape[1],)
+    support_match = (np.abs(batched_subset) > 1e-6) == (np.abs(per_voxel) > 1e-6)
+    assert support_match.mean() > 0.99
+    assert np.allclose(batched_subset, per_voxel, atol=1e-3)
