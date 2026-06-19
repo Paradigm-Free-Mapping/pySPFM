@@ -337,13 +337,16 @@ def fista(
         _fista_update_jit = jax.jit(_fista_update)
         _has_converged_jit = jax.jit(_has_converged)
 
-        # Perform FISTA
+        # Perform FISTA. The intermediate forward/prox/update steps are left
+        # async -- JAX pipelines them and the convergence check below forces the
+        # single sync per iteration that's actually needed. (Calling
+        # ``block_until_ready`` after every op serialized the loop for no benefit.)
         for num_iter in range(max_iter):
             # Save results from previous iteration
             s_old = s.copy()
             y_ista_s = y_fista_s.copy()
 
-            z_ista_s = _fista_forward_jit(v, hrf_cov, y_ista_s, c_ist).block_until_ready()
+            z_ista_s = _fista_forward_jit(v, hrf_cov, y_ista_s, c_ist)
 
             # Per-voxel weighted threshold for the mixed-norm prox. With no
             # weights this is exactly ``c_ist * lambda_`` (bit-identical to the
@@ -357,29 +360,26 @@ def fista(
                 z_regs = z_ista_s[n_scans:]
 
                 if group > 0:
-                    s_hrf = proximal_operator_mixed_norm_jit(
-                        z_hrf, mixed_thr, rho_val=(1 - group)
-                    ).block_until_ready()
+                    s_hrf = proximal_operator_mixed_norm_jit(z_hrf, mixed_thr, rho_val=(1 - group))
                 else:
-                    s_hrf = proximal_operator_lasso_jit(z_hrf, c_ist * lambda_).block_until_ready()
+                    s_hrf = proximal_operator_lasso_jit(z_hrf, c_ist * lambda_)
 
                 s = jnp.vstack((s_hrf, z_regs))
             else:
                 if group > 0:
-                    s = proximal_operator_mixed_norm_jit(
-                        z_ista_s, mixed_thr, rho_val=(1 - group)
-                    ).block_until_ready()
+                    s = proximal_operator_mixed_norm_jit(z_ista_s, mixed_thr, rho_val=(1 - group))
                 else:
-                    s = proximal_operator_lasso_jit(z_ista_s, c_ist * lambda_).block_until_ready()
+                    s = proximal_operator_lasso_jit(z_ista_s, c_ist * lambda_)
 
             if positive_only:
                 s = np.sign(hrf[1, 0]) * jnp.maximum(np.sign(hrf[1, 0]) * s, 0)
 
             t_fista, y_fista_s = _fista_update_jit(t_fista, s, s_old)
 
-            # Convergence. Pass (current, previous) so _has_converged normalizes
-            # the change by |s_old| as documented (the args were previously swapped).
-            if num_iter >= min_iter and _has_converged_jit(s, s_old, tol).block_until_ready():
+            # Convergence: pass (current, previous) so _has_converged normalizes
+            # by |s_old| as documented. This is also the single per-iteration sync
+            # (the forward/prox/update steps above are left async).
+            if num_iter >= min_iter and bool(_has_converged_jit(s, s_old, tol)):
                 break
 
             LGR.debug(f"Iteration: {str(num_iter)} / {str(max_iter)}")
