@@ -238,8 +238,9 @@ def fista(
     # Validate per-voxel weights and build the threshold multiplier (1 / w).
     # Adaptive-LASSO style: higher weight -> smaller threshold -> less penalty.
     # The multiplier scales the whole per-voxel mixed-norm threshold (both the
-    # L1 sparsity and L2,1 grouping terms).
-    thr_weight = 1.0
+    # L1 sparsity and L2,1 grouping terms). Left as None when no weights are
+    # supplied so the threshold stays bit-identical to the unweighted solver.
+    thr_weight = None
     if weights is not None:
         if group <= 0:
             raise ValueError("weights are only supported in multivariate mode (group > 0).")
@@ -342,6 +343,12 @@ def fista(
 
             z_ista_s = _fista_forward_jit(v, hrf_cov, y_ista_s, c_ist).block_until_ready()
 
+            # Per-voxel weighted threshold for the mixed-norm prox. With no
+            # weights this is exactly ``c_ist * lambda_`` (bit-identical to the
+            # unweighted solver); the per-voxel multiplier is only applied when
+            # weights are supplied.
+            mixed_thr = c_ist * lambda_ if thr_weight is None else c_ist * lambda_ * thr_weight
+
             # Estimate s
             if n_regressors > 0:
                 z_hrf = z_ista_s[:n_scans]
@@ -349,7 +356,7 @@ def fista(
 
                 if group > 0:
                     s_hrf = proximal_operator_mixed_norm_jit(
-                        z_hrf, c_ist * lambda_ * thr_weight, rho_val=(1 - group)
+                        z_hrf, mixed_thr, rho_val=(1 - group)
                     ).block_until_ready()
                 else:
                     s_hrf = proximal_operator_lasso_jit(z_hrf, c_ist * lambda_).block_until_ready()
@@ -358,7 +365,7 @@ def fista(
             else:
                 if group > 0:
                     s = proximal_operator_mixed_norm_jit(
-                        z_ista_s, c_ist * lambda_ * thr_weight, rho_val=(1 - group)
+                        z_ista_s, mixed_thr, rho_val=(1 - group)
                     ).block_until_ready()
                 else:
                     s = proximal_operator_lasso_jit(z_ista_s, c_ist * lambda_).block_until_ready()
