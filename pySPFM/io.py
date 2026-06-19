@@ -101,6 +101,44 @@ def read_data(data_fn, mask_fn):
     return data, masker
 
 
+def read_spatial_map(map_fn, masker):
+    """Read a 3D spatial map and extract its values with an already-fitted masker.
+
+    Parameters
+    ----------
+    map_fn : str or path
+        Path to a 3D NIfTI map (e.g. a per-voxel weight map). A single-volume
+        4D image is also accepted; 4D maps with more than one volume and other
+        dimensionalities are rejected.
+    masker : nilearn.maskers.NiftiMasker or nilearn.maskers.NiftiLabelsMasker
+        A masker already fitted on the data, used to extract the map values in
+        the same voxel order as the data.
+
+    Returns
+    -------
+    values : (S,) ndarray
+        Map values, one per voxel, in the masker's voxel order.
+
+    Raises
+    ------
+    ValueError
+        If the map is not a single 3D volume (or single-volume 4D image).
+    """
+    map_img = nib.load(map_fn)
+    if map_img.ndim == 4:
+        if map_img.shape[3] != 1:
+            raise ValueError(
+                f"Expected a single 3D spatial map, got a 4D image with "
+                f"{map_img.shape[3]} volumes."
+            )
+    elif map_img.ndim == 3:
+        # Promote a 3D map to a single-volume 4D image so the masker accepts it
+        map_img = new_img_like(map_img, np.asarray(map_img.dataobj)[..., np.newaxis])
+    else:
+        raise ValueError(f"Expected a 3D (or single-volume 4D) map, got {map_img.ndim}D.")
+    return masker.transform(map_img).reshape(-1)
+
+
 def update_header(filename, command):
     """Update history of data to be read with 3dInfo.
 

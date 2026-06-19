@@ -157,6 +157,69 @@ class TestSparseDeconvolutionAPI:
         assert "tr=" in repr_str
         assert "criterion=" in repr_str
 
+    def test_weights_multivariate(self, sample_data):
+        """Per-voxel weights are accepted and threaded through multivariate mode."""
+        from pySPFM import SparseDeconvolution
+
+        n_voxels = sample_data.shape[1]
+        rng = np.random.default_rng(0)
+        weights = rng.uniform(0.5, 2.0, size=n_voxels)
+
+        model = SparseDeconvolution(
+            tr=2.0, criterion="factor", group=0.5, max_iter=10, weights=weights
+        )
+        model.fit(sample_data)
+
+        assert model.coef_.shape == sample_data.shape
+        assert model.lambda_.shape == (n_voxels,)
+
+    def test_weights_require_multivariate(self, sample_data):
+        """Weights with univariate/LARS settings raise ValueError."""
+        from pySPFM import SparseDeconvolution
+
+        weights = np.ones(sample_data.shape[1])
+
+        # group == 0 (univariate FISTA) would silently ignore weights -> reject
+        model = SparseDeconvolution(
+            tr=2.0, criterion="factor", group=0.0, max_iter=10, weights=weights
+        )
+        with pytest.raises(ValueError, match="multivariate mode"):
+            model.fit(sample_data)
+
+        # LARS criterion does not support weights
+        model = SparseDeconvolution(
+            tr=2.0, criterion="bic", group=0.0, max_iter=10, weights=weights
+        )
+        with pytest.raises(ValueError, match="multivariate mode"):
+            model.fit(sample_data)
+
+    def test_weights_wrong_shape(self, sample_data):
+        """Weights with the wrong shape raise ValueError."""
+        from pySPFM import SparseDeconvolution
+
+        model = SparseDeconvolution(
+            tr=2.0,
+            criterion="factor",
+            group=0.5,
+            max_iter=10,
+            weights=np.ones(sample_data.shape[1] + 3),
+        )
+        with pytest.raises(ValueError, match="weights must have shape"):
+            model.fit(sample_data)
+
+    def test_weights_non_positive(self, sample_data):
+        """Non-positive or non-finite weights are rejected at the estimator level."""
+        from pySPFM import SparseDeconvolution
+
+        for bad_val in (0.0, -1.0, np.nan, np.inf):
+            bad = np.ones(sample_data.shape[1])
+            bad[0] = bad_val
+            model = SparseDeconvolution(
+                tr=2.0, criterion="factor", group=0.5, max_iter=10, weights=bad
+            )
+            with pytest.raises(ValueError, match="finite and strictly positive"):
+                model.fit(sample_data)
+
 
 class TestLowRankPlusSparseAPI:
     """Tests for LowRankPlusSparse scikit-learn API compliance."""

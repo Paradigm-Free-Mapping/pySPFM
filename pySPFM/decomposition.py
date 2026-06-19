@@ -232,6 +232,14 @@ class SparseDeconvolution(_BaseDeconvolution):
         In multivariate mode, computation is inherently joint.
     positive : bool, default=False
         If True, enforce non-negative coefficients.
+    weights : ndarray of shape (n_voxels,), default=None
+        Per-voxel weight map modulating the multivariate (L2,1 + L1 mixed-norm)
+        penalty in multivariate mode (``group > 0``), adaptive-LASSO style: the
+        effective threshold for voxel ``j`` is ``lambda / w_j``, scaling both the
+        sparsity and grouping terms. Higher weights penalize less (retain more
+        activity); lower weights penalize more. Must be finite and strictly
+        positive (``w_j = 1`` is neutral). Only valid in multivariate mode; passing
+        ``weights`` with ``group == 0`` (or a LARS criterion) raises ``ValueError``.
 
     Attributes
     ----------
@@ -298,6 +306,7 @@ class SparseDeconvolution(_BaseDeconvolution):
         tol=1e-6,
         n_jobs=1,
         positive=False,
+        weights=None,
     ):
         super().__init__(
             tr=tr,
@@ -316,6 +325,7 @@ class SparseDeconvolution(_BaseDeconvolution):
         self.min_iter = min_iter
         self.tol = tol
         self.positive = positive
+        self.weights = weights
 
     def fit(self, X, y=None):
         """Fit the sparse deconvolution model.
@@ -358,6 +368,22 @@ class SparseDeconvolution(_BaseDeconvolution):
                 f"LARS-based criterion '{self.criterion}'. Use a FISTA-compatible "
                 f"criterion: {self._fista_criteria}."
             )
+
+        # Validate weights: only meaningful in multivariate mode (group > 0 with FISTA),
+        # otherwise they would be silently ignored by the univariate/LARS solvers.
+        if self.weights is not None:
+            if self.group <= 0 or self.criterion not in self._fista_criteria:
+                raise ValueError(
+                    "weights are only supported in multivariate mode (group > 0 with a "
+                    f"FISTA-compatible criterion: {self._fista_criteria})."
+                )
+            weights_check = np.asarray(self.weights).reshape(-1)
+            if weights_check.shape != (n_voxels,):
+                raise ValueError(
+                    f"weights must have shape ({n_voxels},), got {weights_check.shape}."
+                )
+            if not np.all(np.isfinite(weights_check)) or np.any(weights_check <= 0):
+                raise ValueError("weights must be finite and strictly positive.")
 
         # Generate HRF matrix
         self.hrf_matrix_ = self._generate_hrf_matrix(n_scans)
@@ -460,6 +486,7 @@ class SparseDeconvolution(_BaseDeconvolution):
             factor=self.factor,
             lambda_echo=self.lambda_echo,
             positive_only=self.positive,
+            weights=self.weights,
         )
 
         self.coef_ = np.squeeze(coef)
