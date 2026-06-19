@@ -148,11 +148,13 @@ def _has_converged(s, s_old, tol=1e-6):
     bool
         True if FISTA has converged, False otherwise
     """
-    # Calculate normalized error between current and previous estimate
-    estimate_error = jnp.abs(s - s_old) / jnp.abs(s_old)
+    # Normalized change between iterates. Guard the denominator against the
+    # zeros that sparsity produces: 0 -> 0 reads as converged, 0 -> nonzero as a
+    # real change (a bare |s_old| denominator yields NaN/inf and blocks stopping).
+    estimate_error = jnp.abs(s - s_old) / jnp.maximum(jnp.abs(s_old), 1e-10)
 
     # Check if the error is smaller than the tolerance for all voxels
-    return jnp.all(jnp.abs(estimate_error) <= tol).astype(jnp.bool_)
+    return jnp.all(estimate_error <= tol).astype(jnp.bool_)
 
 
 def fista(
