@@ -337,8 +337,9 @@ def fista(
 
             t_fista, y_fista_s = _fista_update_jit(t_fista, s, s_old)
 
-            # Convergence
-            if num_iter >= min_iter and _has_converged_jit(s_old, s, tol).block_until_ready():
+            # Convergence. Pass (current, previous) so _has_converged normalizes
+            # the change by |s_old| as documented (the args were previously swapped).
+            if num_iter >= min_iter and _has_converged_jit(s, s_old, tol).block_until_ready():
                 break
 
             LGR.debug(f"Iteration: {str(num_iter)} / {str(max_iter)}")
