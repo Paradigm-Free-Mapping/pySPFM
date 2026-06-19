@@ -151,11 +151,13 @@ def _has_converged(s, s_old, tol=1e-6):
     bool
         True if FISTA has converged, False otherwise
     """
-    # Calculate normalized error between current and previous estimate
-    estimate_error = jnp.abs(s - s_old) / jnp.abs(s_old)
+    # Normalized change between iterates. Guard the denominator against the
+    # zeros that sparsity produces: 0 -> 0 reads as converged, 0 -> nonzero as a
+    # real change (a bare |s_old| denominator yields NaN/inf and blocks stopping).
+    estimate_error = jnp.abs(s - s_old) / jnp.maximum(jnp.abs(s_old), 1e-10)
 
     # Check if the error is smaller than the tolerance for all voxels
-    return jnp.all(jnp.abs(estimate_error) <= tol).astype(jnp.bool_)
+    return jnp.all(estimate_error <= tol).astype(jnp.bool_)
 
 
 def fista(
@@ -375,8 +377,9 @@ def fista(
 
             t_fista, y_fista_s = _fista_update_jit(t_fista, s, s_old)
 
-            # Convergence
-            if num_iter >= min_iter and _has_converged_jit(s_old, s, tol).block_until_ready():
+            # Convergence. Pass (current, previous) so _has_converged normalizes
+            # the change by |s_old| as documented (the args were previously swapped).
+            if num_iter >= min_iter and _has_converged_jit(s, s_old, tol).block_until_ready():
                 break
 
             LGR.debug(f"Iteration: {str(num_iter)} / {str(max_iter)}")

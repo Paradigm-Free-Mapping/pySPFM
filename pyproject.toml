@@ -31,8 +31,13 @@ dependencies = [
     "dask",
     "dask_jobqueue",
     "distributed",
-    "jax",
-    "jaxlib",
+    # Pinned: unconstrained, jax/jaxlib resolved to an incompatible pair in the
+    # lockfile (import failed) and to different versions per Python (jaxlib 0.6.2
+    # on 3.10 vs 0.10.2 on 3.11/3.12). Newer jaxlib also shifts FISTA float32
+    # output past the atol=1e-6 reference tests. 0.6.2 matches the references and
+    # supports 3.10-3.12; bump together with regenerated references (see #154).
+    "jax==0.6.2",
+    "jaxlib==0.6.2",
     "nibabel",
     "nilearn>=0.10.0",
     "numpy>=1.22",
